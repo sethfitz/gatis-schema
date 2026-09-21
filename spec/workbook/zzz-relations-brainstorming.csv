@@ -1,2 +1,0 @@
-"Applies to these edge types","Name","Type","Maturity Level","Presence","ML0","ML1","ML2","ML3","Description","Default if blank","Example Value","Rating for keeping (1 -5) (1 = throw out, 5 = keep)","Notes","OSM Mapping?"
-"edge-to-edge","bike_movement","enum","","","","","","","Two-stage-left-turn","","","","","https://wiki.openstreetmap.org/wiki/Proposal:Two-stage_bicycle_turn (good links for this one)"

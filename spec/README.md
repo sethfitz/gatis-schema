@@ -1,73 +1,78 @@
 # Upstream spec snapshot
 
-A pinned copy of the two upstream GATIS sources. Refresh with `scripts/snapshot-spec`;
-`MANIFEST.json` records the Drive revision and a SHA-256 of every file.
+A pinned copy of the published GATIS v1.0 specification, taken from
+[`dotbts/BPA`](https://github.com/dotbts/BPA). Refresh with `scripts/snapshot-spec`;
+`MANIFEST.json` records the commit and a SHA-256 of every file.
 
 | Path | Source |
 | --- | --- |
-| `workbook/*.csv` | [`Draft_GATIS_Specification`](https://docs.google.com/spreadsheets/d/1qs0x58V-Gcikm70AKxsXxKH7D4TL6z8FlBgf4P4kqJQ/edit), one CSV per tab (all 25, hidden ones included) |
-| `document.md` | [GATIS v2 DRAFT](https://docs.google.com/document/d/13sJdh-GmfxNb_tfUXKkpZgofuBU60ag6HpqbGVUlsZE/edit), exported as Markdown |
+| `specification/*.json` | `draft_gatis_specification/specification_jsons/` -- types, attributes and the full presence matrix. The generation source. |
+| `json-schemas/*.json` | `draft_gatis_specification/json_schemas/` -- upstream's own validator. Not read by the reader; compared against ours by `scripts/compare-json-schema`. |
+| `explorer/**` | `gatis_explorer/data/` -- the same content as CSV, rendered at [the GATIS Explorer](https://dotbts.github.io/BPA/). A cross-check, not a source. |
+| `introduction.html` | `gatis_explorer/pages/specification_introduction.html` -- the narrative sections the attribute tables assume. |
 
-The only transform applied is to `document.md`: Docs emits each figure as a
-base64 `data:` URI, which is 97% of the export's bytes and re-encodes on every
-render. Those definition lines are replaced with `<data:image stripped>`.
+## Why a repository and not a Google Sheet
 
-## The workbook is normative, not the document
+Until 2026-09-21 this snapshot was a Drive export of the
+`Draft_GATIS_Specification` workbook. Upstream's README calls that sheet **Draft
+#2**; draft #3 moved to a different sheet, and v1.0 was voted through on
+2026-02-27. The snapshot was two drafts behind, and the export path could not have
+noticed -- the sheet still existed and still had the same revision history.
 
-Section 3.0 of the document is a stub. Every field and type table in 3.2-3.4 reads
-*"Moved here"* and links to a workbook tab. The `** README **` tab states the
-direction of travel: *"The 'final' tabs are imported into the Google Doc for the
-spec."*
+v1.0 also publishes what the workbook only implied. `specification/*.json` carries
+the `(feature type x field x tier)` presence matrix as structured JSON:
 
-That import is manual and has not kept up. As snapshotted, the workbook was modified
-**2026-01-30** and the document **2025-11-12**, and the tables pasted into the
-document are two and a half months stale.
-
-The derivation chain, and which link to trust:
-
-```
-*_Fields, *_Types   authoritative -- hand-maintained, the actual spec
-      |
-      v
-*_Presence, Presence Tables   derived pivots, stale
-      |
-      v
-document sections 3.3.1 / 3.4.1   pasted from the pivots, stale
+```json
+"width_in": { "type": "Integer", "presence": {
+    "sidewalk": ["optional", "required", null, null] } }
 ```
 
-Generate from `*_Fields` and `*_Types`. Anything taken from the document's presence
-tables will name fields the workbook does not define -- `road_speed`, `width_min`,
-`surface_quality`, `car_freeflow_speed`, `ada_compliance`, `rail`, and a
-`detectable_warning` that exists only on nodes.
+Four slots, one per tier, `null` meaning unchanged from the tier before. That
+retired the workbook exporter, the packed-presence-cell parser, and most of the
+defect list this file used to carry -- trailing-space field names, duplicated
+`Points_Fields` rows, the `mutli_use_path` misspelling and `elevator` having no
+fields at all are all fixed upstream.
 
-The document remains the only source for the metadata file (section 3.1), the
-presence descriptors (3.3), the attribute types (3.4) and all of the narrative that
-the field tables assume: tiers (2.1), routability (2.2.1), directionality and the
-left/right modifiers (2.2.1), segmentation (2.2.2), and representation conventions
-(2.3).
+## What v1.0 still gets wrong
 
-## Known upstream defects
+Each is pinned by a test in `tests/`, so an upstream fix shows up as a failure
+rather than going unnoticed.
 
-The reader surfaces these rather than crashing or silently picking a side. Each is
-pinned by a test in `tests/test_spec_source.py`.
-
-- **Three edge field names carry a trailing space** (`ped_traffic_control `,
-  `vehicle_traffic_control `, `cross_vehicle_traffic_control `). Stripped on read;
-  unstripped they would generate unreachable fields.
-- **`Points_Fields` lists `impediment` and `surface_issue` twice**, with value sets
-  that disagree with each other and with the node equivalents.
-- **One `Points_Fields` `impediment` row is column-shifted**: its name and
-  description are pasted into the two presence columns. Reported as a `SpecDefect`.
-- **`*_Types` and `*_Fields` disagree on which types exist.** `elevator` is a
-  declared edge type with no presence column, so the workbook gives it no fields at
-  all -- not even `edge_id`. `Points_Types` declares `object`, `sign`,
-  `transit_stop` and `issue`; `Points_Fields` has columns for `object` and `point`,
-  and `point` is not a declared type.
-- **`Presence Tables` and the document still spell `multi_use_path` as
-  `mutli_use_path`** and `traffic_island` as `raisedtraffic_island`. `Edges_Types`
-  and `Edges_Fields` have the correct spellings.
-- **`node.width` is `Float` while `edge.width` is `Integer`**, though both
-  descriptions say inches rounded to the nearest inch.
-- **Two cells hold an editorial comment where values belong**: `edge.incline` and
-  `node.traffic_calming_type` both have `[JG1]Grabbed from NACTO Bike design guide`
-  in Listed Values.
+- **`json_schemas/*_schema.json` is wrong for every `Array<Enum>` field.** Its
+  generator reuses the last such field's vocabulary: `edges` gives
+  `allowed_uses`, `prohibited_uses` and `cross_vehicle_traffic_control` the
+  pedestrian-signal-timing list belonging to `ped_protection`; `nodes` gives
+  `impediment` and `rail_crossing_control` the `surface_issue` list; `points`
+  gives it to `accessibility_features`. Seven fields across three files.
+  `specification_jsons` is the artifact to trust. `scripts/compare-json-schema`
+  reports the difference.
+- **Upstream's JSON Schema declares no required fields at all**, on any of the
+  four files, so it cannot check presence -- which is most of what the spec says.
+- **`edges.json` carries a `virtual_link` presence column for a type it no longer
+  declares**, on all 78 attributes. Generating from the presence columns would put
+  a type back into the union that v1.0 removed, so generation reads
+  `types` instead and `fields_without_types` reports the orphan.
+- **Three edge types forbid a field that does not exist.** `sidewalk`, `bikeway`
+  and `multi_use_path` list `road_associated` in
+  `forbidden_field_if_allowed_on_road`; v1.0 removed the attribute.
+- **Nine field names carry a different vocabulary depending on the file.**
+  `status` has three (`edges` adds "proposed and funded", `nodes` "planned",
+  `zones` "other"); `impediment`, `surface_issue`, `other_issue`, `presence`,
+  `allowed_uses`, `prohibited_uses`, `surface_material` and `ada_compliant_with`
+  all differ too. Five of them also change *declared type* between files --
+  `surface_issue` is `Text` on edges and `Array<Enum>` on nodes and points.
+- **Six `listed_values` arrays do not survive publication.** v1.0 splits a
+  spreadsheet cell on newlines, so a hard-wrapped definition fragments
+  (`separation_permeable_car` becomes six entries including `"curbs)"` and two
+  empty strings), a blank line becomes an empty value (`markings`), a
+  run-together line stays fused (`separation_elements`'s `"trees  unknown"`,
+  `allowed_uses`'s `"motor_vehicle ebike class 2 ebike class 3 other"`), and
+  `traffic_calming` interleaves section headings with values. Corrected in
+  [`repairs.json`](repairs.json), which records every departure from the verbatim
+  snapshot and why.
+- **Null-versus-omitted is unstated.** Nothing in `specification_jsons` says
+  whether an unset property should be omitted or written as `null`, and the two
+  published sample datasets choose differently -- Austin omits, Newark writes
+  nulls for 57% of its slots. Upstream's JSON Schema permits `null` on 159 of 370
+  edge properties, so these models accept it and treat it as absent; see
+  `drop_null_properties`.

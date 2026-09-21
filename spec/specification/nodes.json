@@ -1,0 +1,360 @@
+{
+  "types": {
+    "generic": {
+      "description": "Used to create nodes for routing in places where specific physical infrastructure doesn\u2019t exist, but where edges are split because attributes are different, or where other nodes don\u2019t suit the purpose. Used for connecting edges within bike infrastructure for routing purposes. \n",
+      "tier": 3
+    },
+    "curb_ramp": {
+      "description": "In Tiers 1-2, a node that indicates the location of curb ramps. In Tier 1, this node may be placed anywhere in the curb ramp space. In Tier 2, this node should be placed as close to the point of transition between the curb (safe pedestrian space) and street as possible, with footway edges and generic nodes used where needed to fully connect the node to sidewalk, crossing and other connected edges. In Tiers 3-4, the curb_ramp node is replaced with the sidewalk_to_ramp_transition and ramp_to_street_transition nodes (as well as the associated edge), and with more granular mapping of the curb ramp space.",
+      "tier": 1
+    },
+    "sidewalk_to_ramp_transition": {
+      "description": "A node that, in pedestrian infrastructure, connects a curb ramp edge (type=curb_ramp_runslope) to a turning area (or top landing; type=curb_ramp_toplanding) edge. \n\nThis node often represents the threshold over which a user transitions from sidewalk or turning spaces which are of no/low-slope to a sloped surface that, at its other end, is flush with the street level/crossing. \n\nThis node should be placed spatially in the center of the interface between the ramp and the turning area (perpendicular to the direction of travel) such that user applications can model the ramp's width attribute in two equal parts on each side of this node. See the GATIS Playbook https://docs.google.com/presentation/d/1NJIyzpRFZYbStU7Esa5gB3ZS8yMq78rL/edit?slide=id.p4#slide=id.p4 for examples and guidance on where/how to use.",
+      "tier": 3
+    },
+    "ramp_to_street_transition": {
+      "description": "A node that, in pedestrian infrastructure, connects a crossing to a ramp edge (type=curb_ramp_runslope). This node type often represents the threshold over which a user transitions from a ramp (i.e. pedestiran space) to vehicle/street-space or vice-versa depending on their direction of travel across the crossing/edges associated with this node. \n\nBecause of this possible transition from pedestrian to vehicle space and the safety implications therein, it's critical this node be placed as accurately as possible (spatially) and as often as possible in the dataset where applicable to provide users the best information on when and where this critical transition occurs. \n\nThis node should be placed spatially in the center of the interface between the ramp and the street surface such that user applications can model the ramp's width attribute in two equal parts on each side of this node. See https://docs.google.com/presentation/d/1NJIyzpRFZYbStU7Esa5gB3ZS8yMq78rL/edit?slide=id.p4#slide=id.p4 for examples and guidance on where/how to use.",
+      "tier": 3
+    }
+  },
+  "attributes": [
+    {
+      "name": "node_id",
+      "description": "A unique identifier for the node. \n\n[NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.] ",
+      "type": "ID",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["required",null,null,null],
+        "curb_ramp": ["required",null,null,null],
+        "sidewalk_to_ramp_transition": ["required",null,null,null],
+        "ramp_to_street_transition": ["required",null,null,null]
+      }
+    },
+    {
+      "name": "node_type",
+      "description": "Indicates the type of node.",
+      "type": "Enum",
+      "listed_values": ["(Same as Node Types)"],
+      "example": null,
+      "presence": {
+        "generic": ["required",null,null,null],
+        "curb_ramp": ["required",null,null,null],
+        "sidewalk_to_ramp_transition": ["required",null,null,null],
+        "ramp_to_street_transition": ["required",null,null,null]
+      }
+    },
+    {
+      "name": "curb_ramp_system_id",
+      "description": "An identifier to link any nodes and/or edges that are involved in the same \"curb ramp system\", which we define as the network of elements that sidewalk users use to transition from a sidewalk to a crossing or other pedestrian edge. For clarity, use the same curb_ramp_system_id for all elements of the same ramp system. The ID can be any unique number to the system.  \n\nCurb ramp systems may include sidewalk edges, curb_ramp_toplanding, curb_ramp_runslope, and crosswalk edges; as well as sidewalk_to_ramp_transition, ramp_to_street_transition or generic nodes. ",
+      "type": "Text",
+      "listed_values": null,
+      "example": "ramp348971\n33",
+      "presence": {
+        "generic": ["optional",null,null,null],
+        "curb_ramp": ["forbidden",null,null,null],
+        "sidewalk_to_ramp_transition": ["required",null,null,null],
+        "ramp_to_street_transition": ["required",null,null,null]
+      }
+    },
+    {
+      "name": "presence",
+      "description": "Indicates whether the piece of infrastructure exists or is present. When other attributes are provided, the existence of the infrastructure can be assumed. This attribute is useful for identifying where a curb ramp or other infrastructure might be missing or where its presence is unknown. Conditionally required if no other identifying attributes provided.",
+      "type": "Enum",
+      "listed_values": ["yes","no | missing","unknown"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,null,null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "reference_ids",
+      "description": "Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. ",
+      "type": "Array<Object>",
+      "listed_values": null,
+      "example": "[ \n{ \"source\": \"OpenStreetMap\", \"id\": \"w1234\" }, \n{ \"source\": \"TIGER\", \"id\": \"110739476769\" } \n{ \"source\": \"ARNOLD\", \"id\": \"140\", \"begin_mi\": 2.3, \"end_mi\": 4.5}\n] ",
+      "presence": {
+        "generic": ["optional",null,null,null],
+        "curb_ramp": ["optional",null,null,null],
+        "sidewalk_to_ramp_transition": ["optional",null,null,null],
+        "ramp_to_street_transition": ["optional",null,null,null]
+      }
+    },
+    {
+      "name": "date_built",
+      "description": "When the facility was officially opened for use. date_built represents the original opening date. Use the Events extension to record details about construction history, remodeling, removal and other physical changes.\n\nReport in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.",
+      "type": "Date",
+      "listed_values": null,
+      "example": "2025-03\n2014",
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["optional",null,"recommended",null],
+        "ramp_to_street_transition": ["optional",null,"recommended",null]
+      }
+    },
+    {
+      "name": "last_inspection_date",
+      "description": "The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.",
+      "type": "Date",
+      "listed_values": null,
+      "example": "2025-03\n2014",
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["optional",null,"recommended",null],
+        "ramp_to_street_transition": ["optional",null,"recommended",null]
+      }
+    },
+    {
+      "name": "curb_type",
+      "description": "The type of curb that is present, if there is not a curb ramp.  ",
+      "type": "Enum",
+      "listed_values": ["raised","rolled","flush","driveway","other"],
+      "example": null,
+      "presence": {
+        "generic": ["optional",null,"recommended",null],
+        "curb_ramp": ["forbidden",null,null,null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "ada_compliance_date",
+      "description": "Indicates the date when ADA compliance was assessed. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available. This field is conditionally required if \"ada_compliant_with\" is filled out.",
+      "type": "Date",
+      "listed_values": null,
+      "example": "2025-03\n2014",
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional","recommended",null,null],
+        "sidewalk_to_ramp_transition": ["optional",null,"recommended",null],
+        "ramp_to_street_transition": ["optional",null,"recommended",null]
+      }
+    },
+    {
+      "name": "ada_compliant_with",
+      "description": "If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment. Also fill out \"ada_compliance_date.\" If no ADA assessment is being reported, leave blank.",
+      "type": "Enum",
+      "listed_values": ["2010","PROWAG","other"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional","recommended",null,null],
+        "sidewalk_to_ramp_transition": ["optional",null,"recommended",null],
+        "ramp_to_street_transition": ["optional",null,"recommended",null]
+      }
+    },
+    {
+      "name": "incline",
+      "description": "Indicates the incline or running slope of the ramp, following the possible directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision.",
+      "type": "Float",
+      "listed_values": null,
+      "example": 0.0325,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "cross_slope",
+      "description": "Indicates the cross slope of the ramp, which runs perpendicular to the incline / directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision. Cannot be negative.",
+      "type": "Float",
+      "listed_values": null,
+      "example": 0.0325,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "width_in",
+      "description": "Indicates the minimum width of the ramp, measured between the handrails if handrails are provided. Reported as a whole number rounded to the nearest inch.\n\nNote that it is assumed that 80\" of height clearance is available for the full width given in this field.",
+      "type": "Float",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "ramp_type",
+      "description": "Indicates the orientation of the ramp in relation to the pedestrian direction of travel at the location. Where a double curb ramp exists, map each ramp as a separate curb_ramp node.",
+      "type": "Text",
+      "listed_values": ["diagonal","directional","parallel","perpendicular","built-up","combination","transition","cut-through (median/island ramp)","unknown"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,null,null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "detectable_warning",
+      "description": "Describes whether tactile paving is present, and whether or not it has a constrasting color (which should meet ADA guidelines for the amount of contrast). ",
+      "type": "Enum",
+      "listed_values": ["tactile and contrasted","tactile and not contrasted","not tactile and contrasted","no"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "impediment",
+      "description": "Identifies the presence of an object that may pose a challenge for travelers passing through this node. Mark a node with this attribute only if the impediment is close enough to the pedestrian way or bike path to potentially pose a challenge. If left blank, the assumed value for this attribute is \u201cunknown.\u201d",
+      "type": "Array<Enum>",
+      "listed_values": ["yes","no","low overgrowth (more than 48\" remaining)","high overgrowth (less than 48\" remaining)","sign","low protrusion (more than 48\" remaining)","high protrusion (less than 48\" remaining)","utility cover","stormwater grate","metal plate","metal decking (ex. on bridges)","other surface impediment","other impediment"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "rail_crossing_control",
+      "description": "Describes the pedestrian traffic warnings and controls in the approach to the rail crossing. The nodes mark the location of the controls on each side of the tracks. Mark the crossing itself as a crossing edge with attribute rail_crossing=yes.",
+      "type": "Array<Enum>",
+      "listed_values": ["Gates and flashing lights","flashing lights only","crossbucks or stop sign only","tactile markings","other"],
+      "example": null,
+      "presence": {
+        "generic": ["optional",null,"recommended",null],
+        "curb_ramp": ["forbidden",null,null,null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "surface_issue",
+      "description": "Description of surface quality issues that may pose a challenge for travelers passing through this node.",
+      "type": "Array<Enum>",
+      "listed_values": ["yes","no","cracking","scaling","spalling","uneven joints","displacement","frequent water pooling","heaving","missing bricks/stones","potholes/holes","slickness","detectable warning surface damage","longitudinal cracks and seams","metal plates","other"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "status",
+      "description": "Most recent operating status of the node. Whether the infrastructure is open and available for use. If left blank, status is assumed \"open\"",
+      "type": "Enum",
+      "listed_values": ["open","closed","under construction","planned","unknown"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "other_issue",
+      "description": "Identifies whether this node has another type of issue that may pose a challenge for travelers, besides impediments and surface damage. Includes design, construction and other issue types.",
+      "type": "Enum",
+      "listed_values": ["yes","no","detectable warning not aligned with crossing","push button not working","markings worn","markings missing","turning space missing","other"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "last_inspection_type",
+      "description": "The type of inspection that was carried out on the piece of infrastructure, on the date listed under last_inspection_date.",
+      "type": "Text",
+      "listed_values": ["routine maintenance check","ADA","safety audit","construction inspection","post-crash audit","other"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "lifecycle_stage",
+      "description": "The lifecycle stage of this piece of infrastructure, as of the last_inspection_date.",
+      "type": "Text",
+      "listed_values": ["new","operational","nearing replacement","replacement planned or in planning"],
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "maintenance_schedule",
+      "description": "Description of the maintenance schedule, frequency of inspection, replacement schedule or other information about when the piece of infrastructure is maintained.",
+      "type": "Text",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "planned_work",
+      "description": "Description of any planned work ahead for the infrastructure. This may include plans for construction or remodeling, upcoming work orders or other types of planned improvements.",
+      "type": "Text",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "owner",
+      "description": "The entity that owns this piece of infrastructure. If a department, office or subagency is responsible for the infrastructure, list that department, office or subagency. ",
+      "type": "Text",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    },
+    {
+      "name": "maintainer",
+      "description": "The entity that is responsible for maintaining this piece of infrastructure. It may or may not be the same as owner. If a department, office or subagency is responsible for the infrastructure, list that department, office or subagency.",
+      "type": "Text",
+      "listed_values": null,
+      "example": null,
+      "presence": {
+        "generic": ["forbidden",null,null,null],
+        "curb_ramp": ["optional",null,"recommended",null],
+        "sidewalk_to_ramp_transition": ["forbidden",null,null,null],
+        "ramp_to_street_transition": ["forbidden",null,null,null]
+      }
+    }
+  ]
+}

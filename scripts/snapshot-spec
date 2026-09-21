@@ -1,130 +1,87 @@
 #!/usr/bin/env bash
-# Pull a versioned snapshot of the upstream GATIS spec sources into spec/.
+# Pull a versioned snapshot of the upstream GATIS spec into spec/.
 #
-# Sources (both Google-hosted, both pinned by Drive revision in spec/MANIFEST.json):
-#   - Draft_GATIS_Specification workbook -> spec/workbook/<tab>.csv
-#   - GATIS v2 DRAFT document            -> spec/document.md
+# Source: the dotbts/BPA repository, pinned by commit SHA in spec/MANIFEST.json.
+# GATIS v1.0 was voted through on 2026-02-27 and is published from that repo; the
+# Google Sheets drafts this script used to export are superseded (upstream's README
+# labels the sheet we pinned "Draft #2"). See spec/README.md.
 #
-# Requires `gws` (Google Workspace CLI) authenticated as someone with read access.
+#   specification_jsons/*.json -> spec/specification/    the generation source
+#   json_schemas/*.json        -> spec/json-schemas/     upstream's own validator
+#   gatis_explorer/data/**     -> spec/explorer/         CSV mirror, a cross-check
+#   pages/specification_introduction.html -> spec/introduction.html   the prose
+#
+# Pass a commit SHA, tag or branch to move the pin; defaults to the pinned commit.
+# Requires `gh` (authenticated) and `jq`.
 set -euo pipefail
 
-SHEET_ID=1qs0x58V-Gcikm70AKxsXxKH7D4TL6z8FlBgf4P4kqJQ
-DOC_ID=13sJdh-GmfxNb_tfUXKkpZgofuBU60ag6HpqbGVUlsZE
+REPO=dotbts/BPA
+DEFAULT_REF=ecc45ff86fba1cfeb76508d1569412ae894a9adc
 
 main() {
-  local root spec
+  local root spec ref sha tarball stage prefix
   root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
   spec="$root/spec"
+  ref=${1:-$DEFAULT_REF}
 
-  command -v gws >/dev/null || { echo "gws not on PATH" >&2; exit 1; }
-  command -v jq  >/dev/null || { echo "jq not on PATH" >&2; exit 1; }
+  command -v gh >/dev/null || { echo "gh not on PATH" >&2; exit 1; }
+  command -v jq >/dev/null || { echo "jq not on PATH" >&2; exit 1; }
 
-  rm -rf "$spec/workbook"
-  mkdir -p "$spec/workbook"
+  echo "==> resolving $REPO@$ref"
+  local commit
+  commit=$(gh api "repos/$REPO/commits/$ref")
+  sha=$(jq -r '.sha' <<<"$commit")
 
-  echo "==> reading workbook metadata"
-  local tabs
-  tabs=$(gws_json sheets spreadsheets get \
-    "{\"spreadsheetId\":\"$SHEET_ID\",\"fields\":\"sheets.properties\"}" \
-    | jq -r '.sheets[].properties.title')
+  stage=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$stage'" EXIT
 
-  local tab slug n=0
-  while IFS= read -r tab; do
-    [ -n "$tab" ] || continue
-    slug=$(slugify "$tab")
-    echo "    $tab -> workbook/$slug.csv"
-    tab_csv "$tab" > "$spec/workbook/$slug.csv"
-    n=$((n + 1))
-  done <<< "$tabs"
+  echo "==> fetching tarball $sha"
+  tarball="$stage/repo.tar.gz"
+  gh api "repos/$REPO/tarball/$sha" > "$tarball"
+  tar xzf "$tarball" -C "$stage"
+  prefix=$(find "$stage" -maxdepth 1 -type d -name '*-BPA-*' -print -quit)
+  [ -n "$prefix" ] || { echo "unexpected tarball layout" >&2; exit 1; }
 
-  echo "==> exporting document"
-  export_document "$spec" > "$spec/document.md"
+  echo "==> staging spec/"
+  rm -rf "$spec/specification" "$spec/json-schemas" "$spec/explorer"
+  mkdir -p "$spec/specification" "$spec/json-schemas" "$spec/explorer"
+
+  cp "$prefix"/draft_gatis_specification/specification_jsons/*.json "$spec/specification/"
+  cp "$prefix"/draft_gatis_specification/json_schemas/*.json "$spec/json-schemas/"
+  cp -R "$prefix"/gatis_explorer/data/. "$spec/explorer/"
+  cp "$prefix"/gatis_explorer/pages/specification_introduction.html "$spec/introduction.html"
 
   echo "==> writing MANIFEST.json"
-  write_manifest "$spec" "$n"
+  write_manifest "$spec" "$commit"
 
-  echo "done: $n workbook tabs + document.md"
-}
-
-# A tab as rectangular CSV. values.get returns ragged rows (trailing empty cells are
-# dropped), so pad every row out to the widest one.
-tab_csv() {
-  # Build params with jq: tab titles contain quotes, asterisks and trailing spaces,
-  # so hand-interpolating them into a JSON string breaks. A1 notation escapes a
-  # literal single quote inside a quoted sheet name by doubling it.
-  local params
-  params=$(jq -nc --arg id "$SHEET_ID" --arg tab "${1//\'/\'\'}" \
-    '{spreadsheetId: $id, range: ("'"'"'" + $tab + "'"'"'")}')
-  gws_json sheets spreadsheets values get "$params" \
-    | jq -r '
-        (.values // []) as $rows
-        | ([$rows[] | length] + [0] | max) as $w
-        | $rows[]
-        | . + [range(0; $w - length) | ""]
-        | @csv
-      '
-}
-
-# Inline base64 image data URIs are stripped: they are ~97% of the export, are not
-# spec content, and churn on every Docs re-render, which would leave the snapshot
-# diff useless. Everything else is verbatim.
-export_document() {
-  # gws --output refuses any path outside the current directory, so stage the raw
-  # export inside the repo rather than in $TMPDIR.
-  local raw="$1/.document.raw.md"
-  ( cd "$1" && gws drive files export \
-      --params "{\"fileId\":\"$DOC_ID\",\"mimeType\":\"text/markdown\"}" \
-      --output .document.raw.md </dev/null >/dev/null \
-      2> >(grep -v '^Using keyring backend:' >&2) )
-  # Docs emits reference-style image definitions: `[image1]: <data:image/png;base64,...>`
-  sed -E 's|^(\[image[0-9]+\]: )<data:image/[^>]*>|\1<data:image stripped>|' "$raw"
-  rm -f "$raw"
-}
-
-
-# gws prints a keyring banner to stderr on every call. Drop that one line and let
-# every other diagnostic through, so a real API failure is visible rather than
-# arriving as a bare non-zero exit. </dev/null keeps gws from eating a caller's
-# `while read` loop input.
-# Usage: gws_json <command path...> <params-json>
-gws_json() {
-  local params=${@: -1}
-  gws "${@:1:$#-1}" --params "$params" </dev/null \
-    2> >(grep -v '^Using keyring backend:' >&2)
-}
-
-slugify() {
-  printf '%s' "$1" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
-}
-
-drive_meta() {
-  gws drive files get \
-    --params "{\"fileId\":\"$1\",\"fields\":\"id,name,mimeType,version,modifiedTime\"}" \
-    </dev/null 2> >(grep -v '^Using keyring backend:' >&2)
+  echo "done: $(find "$spec" -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \) \
+    -not -name MANIFEST.json | wc -l | tr -d ' ') files from $REPO@${sha:0:8}"
 }
 
 write_manifest() {
-  local spec=$1 tab_count=$2
+  local spec=$1 commit=$2
   jq -n \
-    --argjson sheet "$(drive_meta "$SHEET_ID")" \
-    --argjson doc "$(drive_meta "$DOC_ID")" \
+    --argjson commit "$commit" \
+    --arg repo "$REPO" \
     --arg fetched "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    --argjson tabs "$tab_count" \
     --argjson files "$(checksums "$spec")" \
     '{
        fetched_at: $fetched,
-       sources: {
-         workbook: ($sheet | {id, name, drive_version: .version, modified_time: .modifiedTime, tab_count: $tabs}),
-         document: ($doc   | {id, name, drive_version: .version, modified_time: .modifiedTime})
+       source: {
+         repo: $repo,
+         url: ("https://github.com/" + $repo),
+         commit: $commit.sha,
+         commit_date: $commit.commit.author.date,
+         commit_subject: ($commit.commit.message | split("\n")[0])
        },
        files: $files
      }' > "$spec/MANIFEST.json"
 }
 
 checksums() {
-  ( cd "$1" && find . -type f \( -name '*.csv' -o -name '*.md' \) \
+  ( cd "$1" && find . -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \) \
+      -not -name MANIFEST.json \
       | sed 's|^\./||' | sort \
       | while IFS= read -r f; do
           jq -n --arg p "$f" \

@@ -1,5 +1,0 @@
-"Point Type","Tier","Required","Recommended"
-"object","Tier 1","--","--"
-"","Tier 2","--","--"
-"","Tier 3","point_id, point_type","object_type"
-"","Tier 4","point_id, point_type","object_type"

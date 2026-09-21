@@ -1,5 +1,0 @@
-"Name","Description","Tier"
-"object","A physical object that is likely to be of interest to travelers. Depending on the traveler, an object may be an amenity or an obstruction. Objects are represented as points and are not connected to the graph network. A buffer may be drawn around objects relevant to routing to create a node in the network at their location.","3"
-"sign","A sign that conveys information about travel or infrastructure to bicyclists or pedestrians. The point shows the precise location of the sign.","4"
-"transit_stop","A node indicating the location of a transit stop of any kind.",""
-"issue","A point indicating a particular spot that has an issue relevant to routing for some travelers. Issue points primarily mark points along edges that may be of concern, although they may be used in other locations. Note that nodes (such as curb ramp nodes) have the same impediment, surface_issue and other_issue attributes that can be used on issue points, so indicating these issues on the node itself is likely preferable to creating a separate issue point.",""
