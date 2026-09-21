@@ -163,7 +163,10 @@ converting GATIS to any other schema must parse English to know whether 60 is
 inches or feet. The `node.width` / `edge.width` type disagreement above is what
 prose-only units produce. Overture is working the same gap from the other side
 (schema issue bd-uzbn) and has the easier case, since its fixed units are
-uniformly metres.
+uniformly metres. CurbLR shows the cheap version: `unitHeightLength` and
+`unitWeight` sit in the feed manifest, each required only when a rule using it
+is present. Feed-level is coarser than per-field, and it is machine-readable,
+which English is not.
 
 **The tier model is conformance, and it has been folded into the schema.**
 Tiers are a maturity roadmap — a claim about a *dataset's* completeness — but
@@ -205,7 +208,9 @@ worth reading before the second draft settles the shape.
 ## Artifacts of assuming GeoJSON
 
 GeoJSON is the delivery format, and in several places its limits have been
-written down as though they were decisions.
+written down as though they were decisions. Two of the entries below turn out
+not to be limits at all: CurbLR ships curb regulations as GeoJSON and avoids
+both, which makes those GATIS choices rather than constraints.
 
 **Open extensibility is what the container already does.** Section 6.1 grants
 that *"anyone can add any attribute they want to a dataset"* and that the
@@ -240,26 +245,71 @@ self-intersecting LineString or two coincident edges both pass — and it rules
 out legitimate multipart geometry for a zone with a hole. State the topological
 requirement and let the geometry type follow.
 
-**No linear referencing, so segmentation became a mandate.** Section 2.2.2
+**Segmentation is a mandate because geometry is identity.** Section 2.2.2
 requires splitting an edge whenever any attribute changes, because *"edges can
-only support one set of attributes along their entire length."* The constraint
-comes from the flat properties bag. Overture moved away
-from exactly this rule to scoped properties with `between: [start, end]`
-subranges, because splitting explodes feature counts, destroys identifier
-stability across releases — the same identifiers the spec has not yet defined —
-and forces every attribute change to be a topology change. A spec that already
-requires segmentation at every intersection is asking publishers to re-split
-their network each time a width measurement improves.
+only support one set of attributes along their entire length."* Splitting
+explodes feature counts, destroys identifier stability across releases — the
+same identifiers the spec has not yet defined — and turns every attribute
+change into a topology change. A spec that already requires segmentation at
+every intersection is asking publishers to re-split their network each time a
+width measurement improves.
+
+GeoJSON is not what forces this, and CurbLR is the proof: it is a GeoJSON spec,
+it describes things that vary along a street, and it does not split. A CurbLR
+feature is one located span carrying an *array* of regulations, and the spec
+says why plainly — it "prevents the need to repeat geometry and location data
+multiple times for the same street segment." Where two rules overlap in time
+and space, a `priorityCategory` on each and an ordered `priorityHierarchy` in
+the manifest decide which wins. No geometry is cut. Overture arrived at the
+same place from the other direction, with scoped properties and `between:
+[start, end]` subranges.
+
+What GATIS has done is make geometry the identity of the attribute set. Once a
+feature can carry only one set of values, the only way to express variation is
+to make more features. Both alternatives keep one feature and move the
+variation into its properties.
+
+**Everything offset from a centerline is flattened onto it.** `buffer_width`,
+`street_parking`, `street_parking_buffer`, `separation_elements`,
+`shoulder_width` and `curb_height` all describe something beside the roadway,
+and all are scalars on the road edge, because section 2.3 offers two places to
+put a thing and neither fits: a separate geometry, which duplicates the
+centerline and, by the spec's own admission, loses the relation to it; or an
+attribute on the road, which discards the offset. So a buffer has a width and
+no extent. It cannot start, stop, or change partway along.
+
+CurbLR takes a third option. A CurbLR feature has its own record and its own
+attributes but no independent geometry to maintain: it is located by
+`shstRefId` plus `shstLocationStart` and `shstLocationEnd`, offsets in metres
+along a referenced street, plus `sideOfStreet`. `derivedFrom` holds the ids of
+the physical assets the span came from, so the signs and meters stay in the
+source data and the feature points back at them rather than replacing them. The
+distinction the spec leads with is the useful one: a parking sign is a physical
+geometry, the rule it conveys is a *regulatory* geometry, and the two are not
+the same shape.
+
+GATIS has no equivalent, and the field that would be the hook is a boolean.
+`road_associated` records *that* an edge runs alongside a road; nothing records
+*which* road. `street_name` is free text, and `reference_ids` points at
+external datasets rather than at another GATIS edge. Section 2.3.1 names the
+loss — *"the relation to the parallel road segment is lost, unless the parallel
+road segment ID is included as an attribute"* — and the schema does not define
+that attribute. Section 9.1 lists the Curb Data Specification among related
+standards; CurbLR, which solves the representation problem rather than the
+policy one, is absent.
 
 **Left/right/both is encoded in field names.** Section 2.2.1 shows
 `sidewalk:left:presence=yes` — OSM colon-namespacing, adopted because a GeoJSON
 properties object is a flat string-to-value map with no nested scope. Two
 consequences. Field names become a grammar a validator must parse rather than a
-set it can check. And none of these colon-namespaced fields appear anywhere in
-section 3.0 or the workbook, which means **roadway-centerline representation —
-blessed in section 2.3, and what every Tier 1 publisher will use — is
-unspecified**. This package can only model parallel-feature representation,
-because the source specifies nothing else. It is the largest gap in the draft.
+set it can check, where CurbLR makes `sideOfStreet` an ordinary enum and spends
+its prose on the part that is actually subtle: left and right are relative to
+the direction of digitization, so a two-way street carries two references. And
+none of these colon-namespaced fields appear anywhere in section 3.0 or the
+workbook, which means **roadway-centerline representation — blessed in section
+2.3, and what every Tier 1 publisher will use — is unspecified**. This package
+can only model parallel-feature representation, because the source specifies
+nothing else.
 
 **Provenance is dataset-wide because a feature has nowhere to put it.** GeoJSON
 gives a feature no metadata slot, so everything provenance-related lives in
@@ -295,7 +345,12 @@ Ordered by what it unblocks, not by effort.
    section 2.3. Tier 1 publishers have nothing to implement.
 4. **Regenerate the document from the workbook, and stop hand-pasting.** The
    published artifact currently describes a schema that does not exist.
-5. **Tokenise enum values** before the first dataset ships.
-6. **Give the eighteen dimensioned fields a structural unit.**
-7. **Separate the tier model from the field tables.** Presence becomes
+5. **Give an edge a way to reference another edge, with an extent.** A
+   reference plus start and end offsets plus a side would retire
+   `road_associated`, carry the buffers and parking that are currently scalars
+   with no extent, and remove most of the reason to split an edge at all. CurbLR
+   is the worked example, in GeoJSON.
+6. **Tokenise enum values** before the first dataset ships.
+7. **Give the eighteen dimensioned fields a structural unit.**
+8. **Separate the tier model from the field tables.** Presence becomes
    two-dimensional and the schema starts meaning one thing.
