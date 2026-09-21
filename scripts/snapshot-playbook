@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Pull a versioned snapshot of the GATIS Playbook into spec/playbook.md.
+#
+# The Playbook is the spec's companion prose. `spec/introduction.html` links it as
+# one of the three published artifacts, alongside the Explorer and the Validator,
+# so it is part of the specification's surface rather than commentary on it -- but
+# it lives in Google Docs with no commit to pin, so this script records the file's
+# `modifiedTime` and a checksum instead. It is CC0 1.0, like the specification.
+#
+# Two transformations, both deliberate:
+#   - the two illustrations are dropped. Docs exports them as trailing
+#     `[imageN]: <data:image/png;base64,...>` definitions, ~290 KB that churns on
+#     every re-export. The inline `![][imageN]` references stay, so the snapshot
+#     still says where a figure belongs.
+#   - nothing else. The export escapes underscores as `\_`, so `width\_in` is how
+#     a field name appears; grep through `sed 's/\\_/_/g'` or the hit count is 0.
+#
+# Pass a Drive file ID to move the pin; defaults to the pinned Playbook.
+# Requires `gws` (authenticated) and `jq`.
+set -euo pipefail
+
+DEFAULT_ID=1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE
+
+main() {
+  local root spec id stage meta out
+  root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+  spec="$root/spec"
+  id=${1:-$DEFAULT_ID}
+
+  command -v gws >/dev/null || { echo "gws not on PATH" >&2; exit 1; }
+  command -v jq  >/dev/null || { echo "jq not on PATH"  >&2; exit 1; }
+
+  stage=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$stage'" EXIT
+
+  echo "==> resolving $id"
+  meta=$(gws drive files get \
+    --params "$(jq -nc --arg f "$id" \
+      '{fileId: $f, fields: "id,name,mimeType,modifiedTime,version"}')")
+
+  # gws refuses an --output path outside the working directory, so export from
+  # inside the staging dir rather than naming it.
+  echo "==> exporting as markdown"
+  ( cd "$stage" && gws drive files export \
+      --params "$(jq -nc --arg f "$id" '{fileId: $f, mimeType: "text/markdown"}')" \
+      --output raw.md >/dev/null )
+
+  out="$spec/playbook.md"
+  grep -v '^\[image[0-9]*\]: <data:' "$stage/raw.md" > "$out"
+
+  echo "==> writing PLAYBOOK-MANIFEST.json"
+  jq -n \
+    --argjson meta "$meta" \
+    --arg fetched "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg sha "$(shasum -a 256 "$out" | cut -d' ' -f1)" \
+    --argjson bytes "$(wc -c < "$out" | tr -d ' ')" \
+    '{
+       fetched_at: $fetched,
+       source: {
+         name: $meta.name,
+         file_id: $meta.id,
+         url: ("https://docs.google.com/document/d/" + $meta.id + "/edit"),
+         modified_time: $meta.modifiedTime,
+         drive_version: $meta.version
+       },
+       images_stripped: true,
+       file: {path: "playbook.md", sha256: $sha, bytes: $bytes}
+     }' > "$spec/PLAYBOOK-MANIFEST.json"
+
+  echo "done: $(wc -l < "$out" | tr -d ' ') lines, $(wc -w < "$out" | tr -d ' ') words"
+}
+
+main "$@"; exit $?

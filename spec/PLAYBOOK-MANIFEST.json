@@ -1,0 +1,16 @@
+{
+  "fetched_at": "2026-09-21T18:30:57Z",
+  "source": {
+    "name": "GATIS Playbook v1.0",
+    "file_id": "1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE",
+    "url": "https://docs.google.com/document/d/1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE/edit",
+    "modified_time": "2026-09-15T15:48:16.779Z",
+    "drive_version": "269"
+  },
+  "images_stripped": true,
+  "file": {
+    "path": "playbook.md",
+    "sha256": "922b7bd616e983724a3d9da897af9702531c1df387a5a17836f3041306b0ab26",
+    "bytes": 112761
+  }
+}

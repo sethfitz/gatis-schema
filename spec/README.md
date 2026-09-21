@@ -4,12 +4,22 @@ A pinned copy of the published GATIS v1.0 specification, taken from
 [`dotbts/BPA`](https://github.com/dotbts/BPA). Refresh with `scripts/snapshot-spec`;
 `MANIFEST.json` records the commit and a SHA-256 of every file.
 
+`playbook.md` comes from Google Docs rather than the repository, so it has its own
+script and its own manifest -- `scripts/snapshot-playbook` and
+`PLAYBOOK-MANIFEST.json`, pinned by Drive `modifiedTime` and version rather than by
+commit. The export escapes underscores, so `width\_in` is how a field name appears;
+grep it through `sed 's/\\_/_/g'` or the hit count is 0. The two illustrations are
+dropped on the way in -- Docs inlines them as ~290 KB of base64 that churns on every
+re-export -- and the `![][imageN]` references are left in place to say where a figure
+belongs. Both artifacts are CC0 1.0.
+
 | Path | Source |
 | --- | --- |
 | `specification/*.json` | `draft_gatis_specification/specification_jsons/` -- types, attributes and the full presence matrix. The generation source. |
 | `json-schemas/*.json` | `draft_gatis_specification/json_schemas/` -- upstream's own validator. Not read by the reader; compared against ours by `scripts/compare-json-schema`. |
 | `explorer/**` | `gatis_explorer/data/` -- the same content as CSV, rendered at [the GATIS Explorer](https://dotbts.github.io/BPA/). A cross-check, not a source. |
 | `introduction.html` | `gatis_explorer/pages/specification_introduction.html` -- the narrative sections the attribute tables assume. |
+| `playbook.md` | The [GATIS Playbook](https://docs.google.com/document/d/1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE/edit), which `introduction.html` links as one of the three published artifacts. Not in the repository, so it has its own pin. |
 
 ## Why a repository and not a Google Sheet
 
@@ -55,12 +65,14 @@ rather than going unnoticed.
 - **Three edge types forbid a field that does not exist.** `sidewalk`, `bikeway`
   and `multi_use_path` list `road_associated` in
   `forbidden_field_if_allowed_on_road`; v1.0 removed the attribute.
-- **Nine field names carry a different vocabulary depending on the file.**
-  `status` has three (`edges` adds "proposed and funded", `nodes` "planned",
-  `zones` "other"); `impediment`, `surface_issue`, `other_issue`, `presence`,
-  `allowed_uses`, `prohibited_uses`, `surface_material` and `ada_compliant_with`
-  all differ too. Five of them also change *declared type* between files --
-  `surface_issue` is `Text` on edges and `Array<Enum>` on nodes and points.
+- **Eleven field names mean something different depending on the file.** Of the
+  27 names that appear in more than one of the four, eleven disagree: ten in
+  vocabulary, seven in declared type, six in both. `status` has three vocabularies
+  (`edges` adds "proposed and funded", `nodes` "planned", `zones` "other"); the
+  rest are `presence`, `impediment`, `surface_issue`, `other_issue`,
+  `allowed_uses`, `prohibited_uses`, `surface_material`, `ada_compliant_with`,
+  `incline` and `width_in`. `surface_issue` is `Text` on edges and `Array<Enum>` on
+  nodes and points; `width_in` is `Integer` on edges and `Float` on nodes.
 - **Six `listed_values` arrays do not survive publication.** v1.0 splits a
   spreadsheet cell on newlines, so a hard-wrapped definition fragments
   (`separation_permeable_car` becomes six entries including `"curbs)"` and two
