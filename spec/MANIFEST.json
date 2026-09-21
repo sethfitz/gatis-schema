@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-09-21T16:48:00Z",
+  "fetched_at": "2026-09-21T19:16:37Z",
   "source": {
     "repo": "dotbts/BPA",
     "url": "https://github.com/dotbts/BPA",
@@ -89,6 +89,16 @@
       "bytes": 159
     },
     {
+      "path": "extensions.pdf",
+      "sha256": "eb53d9fe2b83f215c82be53dfaf995bd7a369972fc59ad832ceecfba8ce038eb",
+      "bytes": 179533
+    },
+    {
+      "path": "extensions.txt",
+      "sha256": "2bc13dde611d4bb1b6cfc6f8268bab00d1be8f7a955ba530d87a0930880cf38b",
+      "bytes": 13956
+    },
+    {
       "path": "introduction.html",
       "sha256": "e8bb9372d96344b6a44c363c2d80422f134132d3391b31fd7dc8dd5a9a97a934",
       "bytes": 27417
@@ -117,6 +127,11 @@
       "path": "json-schemas/zones_schema.json",
       "sha256": "1e9cf35e7bd729151a36d14b6b15f24d88cf3f64692b984bcc677eb337f61c45",
       "bytes": 9095
+    },
+    {
+      "path": "repairs.json",
+      "sha256": "40d00926db692e4167e6975eee8d7eb3ad1c946a3f67622ac89bb64664c006fb",
+      "bytes": 3190
     },
     {
       "path": "specification/edges.json",

@@ -19,6 +19,7 @@ belongs. Both artifacts are CC0 1.0.
 | `json-schemas/*.json` | `draft_gatis_specification/json_schemas/` -- upstream's own validator. Not read by the reader; compared against ours by `scripts/compare-json-schema`. |
 | `explorer/**` | `gatis_explorer/data/` -- the same content as CSV, rendered at [the GATIS Explorer](https://dotbts.github.io/BPA/). A cross-check, not a source. |
 | `introduction.html` | `gatis_explorer/pages/specification_introduction.html` -- the narrative sections the attribute tables assume. |
+| `extensions.pdf` | `documents/drafts/GATIS Extensions and Tables.pdf` -- the only definition of the `lrs.json`, `events.json` and `relations.json` files section 2.1 declares. `extensions.txt` beside it is a `pdftotext -layout` extraction, derived rather than upstream, so the field tables can be grepped and diffed. |
 | `playbook.md` | The [GATIS Playbook](https://docs.google.com/document/d/1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE/edit), which `introduction.html` links as one of the three published artifacts. Not in the repository, so it has its own pin. |
 
 ## Why a repository and not a Google Sheet

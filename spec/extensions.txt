@@ -1,0 +1,266 @@
+                                     GATIS Extensions and Tables
+
+LRS Extension
+
+Optional extension; JSON format
+
+Name                  Description                      Type        Required Listed Values
+
+gatis_id              The identiﬁcation number         Text        Required
+                      within GATIS for this piece of
+                      infrastructure.
+
+geometry_type         The type of geospatial feature   Enum        Optional edge, node, point, zone
+                      within GATIS of the
+                      infrastructure.
+
+Type                  The type of infrastructure. Valid Enum       Optional sidewalk, footway,
+                      values are any edge, node, point                      crossing, ramp, traﬃc
+                      or zone types within GATIS.                           island, steps, elevator,
+                                                                            escalator, bikeway,
+                                                                            multi_use_path, trail,
+                                                                            virtual_link, generic,
+                                                                            curb_ramp, object, sign,
+                                                                            transit_stop, issue,
+                                                                            counter, bike_parking,
+                                                                            open, traﬃc_calming
+
+reference_ids         The identiﬁcation number or       Text       Optional
+                      other identiﬁer of the related
+                      road segment within the linear
+                      referencing system. Can be the
+                      identiﬁcation number within a
+                      government, commercial or
+                      third-party LRS. If multiple LRS
+                      segments align with a piece of
+                      infrastructure mapped in GATIS,
+                      provide all IDs within a properly
+                      formatted list.
+
+lrs_source_url        The URL where the linear         Fully    Optional
+                      referencing system referenced    qualiﬁed
+                      in reference_ids can be found.   URL
+
+lrs_starting_milepoint The milepoint on the LRS        Text        Optional
+                       segment at which this speciﬁc
+                       infrastructure begins.
+lrs_ending_milepoint The milepoint on the LRS        Text   Optional
+                     segment at which this speciﬁc
+                     infrastructure ends.
+
+lrs_side             The side of the LRS segment     Enum   Optional left, right, both
+                     where this infrastructure
+                     appears. This tagging should
+                     align with the direction of the
+                     LRS segment, with the segment
+                     start point appearing at
+                     milepoint 0. It may contradict
+                     the directionality of the GATIS
+                     segment, which is assigned
+                     based on the order in which the
+                     geometry of the GATIS segment
+                     was drawn.
+Events Table
+
+Optional extension; JSON format
+
+Name                 Description                           Type     Required   Listed Values
+
+event_id             The unique identiﬁer for the       Text        Required
+                     event. If the event already has an
+                     ID assigned within another
+                     dataset, such as an agency asset
+                     management dataset, use that ID
+                     here as well.
+
+event_datetime       The date on which the event           Datetime Optional
+                     occurred. Include time if
+                     available; if not, ﬁll in time with
+                     zeroes.
+
+event_type           The type of event that occurred. Text          Optional   maintenance
+                     If multiple events occurred on the                        inspection, ADA
+                     same day, break each out into a                           assessment,
+                     separate row.                                             other
+                                                                               assessment, data
+                                                                               update,
+                                                                               complaint,
+                                                                               repair, other
+                                                                               maintenance
+                                                                               work,
+                                                                               construction,
+                                                                               redesign,
+                                                                               removal, other
+
+gatis_id             The GATIS identiﬁcation number        Text     Optional
+                     for the piece of infrastructure,
+                     used in the edge, node, point or
+                     zone tables.
+
+type                 The type of infrastructure. Valid     Enum     Optional   sidewalk,
+                     values are any edge, node, point                          footway,
+                     or zone types wtihin GATIS.                               crossing, ramp,
+                                                                               traﬃc island,
+                                                                               steps, elevator,
+                                                                               escalator,
+                                                                               bikeway,
+                                                                               multi_use_path,
+                                                                            trail, virtual_link,
+                                                                            virtual_node,
+                                                                            curb_ramp,
+                                                                            object, sign,
+                                                                            transit_stop,
+                                                                            issue, counter,
+                                                                            bike_parking,
+                                                                            open_movement
+
+geometry_type        The type of geospatial feature     Enum     Optional   edge, node,
+                     within GATIS of the                                    point, zone
+                     infrastructure.
+
+event_location       Geospatial point or edge location Geometry Optional
+                     where the event occurred. If        (Point)
+                     inspection of a sidewalk, include
+                     the full sidewalk edge
+                     coordinates. If repair, include the
+                     point location where the repair
+                     was carried out.
+
+location_description Text description of the location   Text     Optional
+                     where the event occurred.
+
+lrs_segment_id       If the event occurred along a      Text     Optional
+                     segment represented in the
+                     infrastructure owner’s linear
+                     referencing system, the
+                     identiﬁcation number or other
+                     identiﬁer of the LRS segment.
+
+lrs_milepoint        If the event occurred along a     Decimal   Optional
+                     segment represented in the
+                     infrastructure owner’s linear
+                     referencing system, the milepoint
+                     at which the event occurred.
+
+work_order_id        The identiﬁcation number of the Text        Optional
+                     work order or other identiﬁer
+                     within the managing jurisdiction’s
+                     data systems.
+
+owner                The entity that owns this piece of Text     Optional
+                     infrastructure. If a department,
+                     oﬃce or subagency is responsible
+                   for the infrastructure, list that
+                   department, oﬃce or subagency.
+
+maintainer         The entity that is responsible for Text        Optional
+                   maintaining this piece of
+                   infrastructure. It may or may not
+                   be the same as owner. If a
+                   department, oﬃce or subagency
+                   is responsible for the
+                   infrastructure, list that
+                   department, oﬃce or subagency.
+
+executor_of_work   The entity that carried out any       Text     Optional
+                   work associated with this event.
+                   If multiple, list all in list format.
+                   The executor may be a
+                   contractor, or it may be the entity
+                   listed as owner or maintainer for
+                   the infrastructure.
+
+inspector          If an inspection, the name or           Text   Optional
+                   names of the party or parties
+                   carrying out the inspection. This
+                   may be the name of an
+                   individual, a contractor or some
+                   other party. If multiple, list all in
+                   list format.
+
+inspection_method The method used for inspecting           Text   Optional   visual inspection,
+                  the infrastructure.                                        survey/audit,
+                                                                             satellite, lidar,
+                                                                             other imagery,
+                                                                             other
+
+description        A description of the event, to      Text       Optional
+                   convey further detail of what was
+                   done. This may include listing
+                   construction or repair work
+                   activities and describing materials
+                   used, providing the speciﬁc ADA
+                   standard under which an
+                   assessment was carried out and
+                   conveying results or planned next
+                   steps, or providing information
+                 on redesign- or planning-related
+                 activities.
+
+comments         Any additional remarks or notes    Text     Optional
+                 provided within the
+                 infrastructure owner’s asset
+                 management dataset related to
+                 the event.
+
+costs            The total amount spent on         Integer   Optional
+                 carrying out any work or
+                 inspections that were part of the
+                 event, rounded to the nearest
+                 whole number.
+
+downtime         The total amount of time related Text       Optional
+                 to the event during which the
+                 infrastructure was closed or
+                 inaccessible in whole or in part.
+                 Provide a value plus units – ex. “2
+                 weeks”, “3.5 days”, “12 hours”.
+
+related_issue    The GATIS ID for an issue point    ID       Optional
+                 related to this event.
+
+funding_source   The source of funds for the        Text     Optional
+                 construction, repair or other
+                 action taken as a part of the
+                 event.
+Relations Table
+
+Optional extension; JSON format
+
+Name               Description                          Type   Valid      Listed Values
+
+
+relation_id        The identiﬁcation number for the     ID     Required
+                   relation described in this row.
+
+from_id            For a relation that is a movement,   ID     Optional
+                   the GATIS ID for the piece of
+                   infrastructure at which the
+                   movement begins.
+
+to_id              For a relation that is a movement,   ID     Optional
+                   the GATIS ID for the piece of
+                   infrastructure at which the
+                   movement completes.
+
+signal_id          For a signal relation, the GATIS ID ID      Optional
+                   for the signal point. If multiple (ex.
+                   at the west and east ends of a
+                   crossing), provide all IDs in a list.
+
+crossing_id        For a signal relation, the GATIS ID ID      Optional
+                   for the crossing edge that is
+                   aﬀected when the signal point
+                   under signal_id is interacted with
+                   by a traveler. If multiple, provide all
+                   IDs in a list.
+
+turning_treatment For a relation that is a turning      Text   Optional   bike box, two-
+                  movement, any treatments at the                         stage turn box,
+                  intersection that are meant to                          protected
+                  facilitate the turn for travelers.                      intersection,
+                                                                          bike signal, bike
+                                                                          leading interval,
+                                                                          mixing zone,
+                                                                          scramble
+

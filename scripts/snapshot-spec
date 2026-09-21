@@ -2,14 +2,21 @@
 # Pull a versioned snapshot of the upstream GATIS spec into spec/.
 #
 # Source: the dotbts/BPA repository, pinned by commit SHA in spec/MANIFEST.json.
-# GATIS v1.0 was voted through on 2026-02-27 and is published from that repo; the
-# Google Sheets drafts this script used to export are superseded (upstream's README
-# labels the sheet we pinned "Draft #2"). See spec/README.md.
+# GATIS v1.0 was voted through on 2026-02-27 and is published from that repo. The
+# Google Sheets drafts are superseded -- upstream's README labels one of them
+# "Draft #2" -- so do not read either to answer a question about current GATIS.
+# See spec/README.md.
 #
 #   specification_jsons/*.json -> spec/specification/    the generation source
 #   json_schemas/*.json        -> spec/json-schemas/     upstream's own validator
 #   gatis_explorer/data/**     -> spec/explorer/         CSV mirror, a cross-check
 #   pages/specification_introduction.html -> spec/introduction.html   the prose
+#   documents/drafts/GATIS Extensions and Tables.pdf -> spec/extensions.pdf
+#       The only definition of lrs.json, events.json and relations.json, which
+#       section 2.1 declares alongside the five core files. A PDF in a drafts
+#       folder, with no structured JSON, JSON Schema or Explorer page -- so
+#       spec/extensions.txt is a pdftotext -layout extraction beside it, derived
+#       rather than upstream, to make the field tables greppable and diffable.
 #
 # Pass a commit SHA, tag or branch to move the pin; defaults to the pinned commit.
 # Requires `gh` (authenticated) and `jq`.
@@ -51,11 +58,18 @@ main() {
   cp "$prefix"/draft_gatis_specification/json_schemas/*.json "$spec/json-schemas/"
   cp -R "$prefix"/gatis_explorer/data/. "$spec/explorer/"
   cp "$prefix"/gatis_explorer/pages/specification_introduction.html "$spec/introduction.html"
+  cp "$prefix/documents/drafts/GATIS Extensions and Tables.pdf" "$spec/extensions.pdf"
+  if command -v pdftotext >/dev/null; then
+    pdftotext -layout "$spec/extensions.pdf" "$spec/extensions.txt"
+  else
+    echo "pdftotext not on PATH; spec/extensions.txt not refreshed" >&2
+  fi
 
   echo "==> writing MANIFEST.json"
   write_manifest "$spec" "$commit"
 
-  echo "done: $(find "$spec" -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \) \
+  echo "done: $(find "$spec" -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \
+    -o -name '*.pdf' -o -name 'extensions.txt' \) \
     -not -name MANIFEST.json | wc -l | tr -d ' ') files from $REPO@${sha:0:8}"
 }
 
@@ -80,8 +94,9 @@ write_manifest() {
 }
 
 checksums() {
-  ( cd "$1" && find . -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \) \
-      -not -name MANIFEST.json \
+  ( cd "$1" && find . -type f \( -name '*.json' -o -name '*.csv' -o -name '*.html' \
+        -o -name '*.pdf' -o -name 'extensions.txt' \) \
+      -not -name MANIFEST.json -not -name PLAYBOOK-MANIFEST.json -not -name playbook.md \
       | sed 's|^\./||' | sort \
       | while IFS= read -r f; do
           jq -n --arg p "$f" \

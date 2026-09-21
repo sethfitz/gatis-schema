@@ -91,17 +91,28 @@ acknowledgement named. The Playbook restates the gap without the remedies: "ther
 is not a perfect guarantee within GATIS data that a geospatial feature missing all
 of these markers is not roadway associated."
 
-**The three extension files are named and defined nowhere.** Section 2.1 declares
-`events.json`, `lrs.json` and `relations.json` alongside the five core files, each
-with a filename and the word JSON. Upstream publishes no structured JSON, no JSON
-Schema and no Explorer table for any of the three: `specification_jsons/`,
-`json_schemas/` and `gatis_explorer/data/` each hold exactly the five core files.
-The Playbook's prose is the only field-level definition that exists — `signal_id`
-and `crossing_id`, `from_id`, `to_id` and `turning_treatment` for relations;
-`gatis_id`, `reference_ids`, an LRS source URL, start and end milepoints and a side
-for the LRS crosswalk. This matters beyond documentation: the LRS extension is the
-only place in GATIS where an attribute can carry an extent and a side, which is the
-primitive item 5 asks for.
+**The three extension files are defined in a PDF, in a drafts folder.** Section
+2.1 declares `events.json`, `lrs.json` and `relations.json` alongside the five core
+files. Their field tables — name, description, type, required, listed values, the
+same shape as a core file's — are in
+[`documents/drafts/GATIS Extensions and Tables.pdf`](../spec/extensions.pdf),
+snapshotted here with a `pdftotext -layout` extraction beside it. Nothing else
+carries them: `specification_jsons/`, `json_schemas/` and `gatis_explorer/data/`
+each hold exactly the five core files, so the extensions are the only part of GATIS
+with no machine-readable form and no Explorer page — and the Explorer is what
+`introduction.html` calls the authoritative version.
+
+**Both extension `type` enums predate v1.0.** Each of the three tables keys to a
+feature by `gatis_id` plus a `type`, and the two that publish a vocabulary for it
+publish a stale one. The LRS table's 22 values include `virtual_link`, the edge
+type v1.0 removed, and spell traffic island as `traffic island` while spelling
+`traffic_calming` with an underscore two lines later; they omit eight v1.0 types
+including `road`, `pushbutton`, `detector` and all three members of the curb-ramp
+system. The Events table's 21 values include `virtual_link`, `virtual_node` and
+`open_movement` — three draft-2 names v1.0 renamed or removed — and omit eleven,
+including `road`, `generic`, `open` and `traffic_calming`. So an extension row
+cannot name a road, a pushbutton or a curb ramp run slope, and can name three
+things that no longer exist.
 
 **The colon-namespaced on-road fields exist in exactly one artifact, and a second
 colon grammar exists in none.** `edges_schema.json` enumerates 292 of the first
@@ -564,15 +575,17 @@ v1.0 touched them.
    publisher will see them. `forbidden` and the 292 three-part on-road fields
    exist in the data and in neither document; the two-part `<side>:<field>` form
    the Playbook demonstrates exists in no artifact at all.
-5. **Define the relation table, and give it an extent and a side.** This is the
-   narrower form of "give an edge an optional reference to another edge": GATIS
-   already names `relations.json` in section 2.1 and publishes no definition of
-   it, and the LRS extension already carries start and end milepoints and a side
-   against an external referencing system. Both are undefined, and neither can
-   express *this buffer runs from here to here along this road edge*. Defining
-   them costs Tier 1 publishers nothing — the files are optional — and lets the
-   rest replace the `road_associated` that v1.0 deleted, give buffers and parking
-   an extent instead of a scalar, and stop splitting an edge every time a
+5. **Let a relation carry an extent, and anchor it to a GATIS edge.** This is the
+   narrower form of "give an edge an optional reference to another edge", and the
+   pieces are nearly there. The relations table has `from_id` and `to_id` and no
+   extent and no side. The LRS table has `lrs_starting_milepoint`,
+   `lrs_ending_milepoint` and `lrs_side` — the only extent anywhere in GATIS — and
+   it can only anchor them to a segment in an external linear referencing system,
+   via `reference_ids` and `lrs_source_url`. Neither can express *this buffer runs
+   from here to here along this road edge*, which is what a publisher without an
+   LRS needs. Additive and optional, so it costs a Tier 1 publisher nothing, and
+   it lets the rest replace the `road_associated` v1.0 deleted, give buffers and
+   parking an extent instead of a scalar, and stop splitting an edge every time a
    measurement improves. Draft #2 named a relation table as one of the two
    remedies for exactly this loss; v1.0 deleted the other one. CDS is the model to
    copy rather than CurbLR: geometry stays authoritative, and `location_references`
@@ -844,14 +857,15 @@ below the rule is the proposed issue text.
 
 ---
 
-### Seven places the Playbook and the machine-readable specification disagree
+### Six places the Playbook and the machine-readable specification disagree, and one thing that turned up on the way
 
 The Playbook and `draft_gatis_specification/specification_jsons/` were written
 from the same intent by different hands, so reading one against the other finds
-places where they have drifted. Seven below. Three are cases where a publisher
-who follows the Playbook produces data the specification rejects; three are
-pointers and prose that have come loose; the last is a part of the specification
-the Playbook is the only definition of. Each notes which side we think should
+places where they have drifted. Six below. Three are cases where a publisher who
+follows the Playbook produces data the specification rejects; three are pointers
+and prose that have come loose. Item 7 is not a disagreement — it is what reading
+the Playbook's account of the extensions sent us to check, and it stands on its
+own. Each notes which side we think should
 move, but that call is yours.
 
 #### 1. Following the Playbook on `status` produces an invalid node
@@ -927,9 +941,12 @@ fixes both.
 Only the third is representable. `edges_schema.json` enumerates 292
 colon-namespaced properties and every one is three-part,
 `{sidewalk|bikeway|multi_use_path}:{left|right}:{field}`; `nodes_schema.json`,
-`points_schema.json` and `zones_schema.json` have none. No schema admits `both` as
-a side, no schema defines a two-part `<side>:<field>` name, and the four published
-sample files contain zero two-part properties.
+`points_schema.json` and `zones_schema.json` have none. None of the four admits
+`both` as a side, none defines a two-part `<side>:<field>` name, and the four
+published sample files contain zero two-part properties. `both` is a legal side
+elsewhere in GATIS — `lrs_side` in the LRS extension is `left, right, both` — which
+makes its absence from the on-road modifiers look like an omission rather than a
+rule.
 
 The two fields the examples demonstrate cannot reach the three-part form either.
 `shoulder_width_in` and `curb_height_in` are `forbidden` on `sidewalk`, `bikeway`
@@ -995,34 +1012,44 @@ $ jq -r '[.attributes[], (.types|to_entries[]|.value)]
    | sort -u
 ```
 
-#### 7. The Playbook is the only definition of three files the spec declares
+#### 7. The extension tables are a PDF, and their type vocabularies predate v1.0
 
-Section 2.1 lists `events.json`, `lrs.json` and `relations.json` as extension
-files. `specification_jsons/`, `json_schemas/` and `gatis_explorer/data/` each
-hold exactly the five core files and nothing for these three, so a publisher has a
-filename, the word JSON, and the Playbook's prose:
+Section 2.1 declares `events.json`, `lrs.json` and `relations.json` alongside the
+five core files. Their definitions are in
+`documents/drafts/GATIS Extensions and Tables.pdf` — full field tables, the same
+shape a core file gets, so this is a publication-channel problem rather than a
+missing-definition one. `specification_jsons/`, `json_schemas/` and
+`gatis_explorer/data/` each hold exactly the five core files, so the extensions
+are the only part of GATIS with no machine-readable form and no Explorer page,
+and the Explorer is what `specification_introduction.html` calls the authoritative
+version. A publisher who starts from the Explorer will not find them.
 
-- relations — `signal_id` and `crossing_id` for pushbutton-to-crossing, `from_id`,
-  `to_id` and `turning_treatment` for turning movements.
-- LRS crosswalk — `gatis_id`, `reference_ids`, an LRS source URL, start and end
-  milepoints, and a side.
-- events — one row per event, linked to a feature, with `event_type` freely
-  extensible.
+Both `type` enums in that PDF are also out of date, which is the kind of drift a
+separate publication channel produces:
 
-The LRS list is the one to look at twice. Start and end milepoints plus a side is
-the only place in GATIS where an attribute can carry an *extent*, and it is
-reachable only against an external linear referencing system. Everything offset
-from a centerline — `buffer_width_ft`, `street_parking`, `street_parking_buffer_ft`,
-`separation_elements`, `shoulder_width_in`, `curb_height_in` — is a scalar on the
-road edge, so a buffer has a width and no way to start, stop or change partway
-along. v1.0 also removed `road_associated`, and with it the Draft #2 sentence that
-named the loss and its two remedies: the relation "is lost, unless the parallel
-road segment ID is included as an attribute of the parallel feature or the
-features are related through a relation table." One remedy was deleted and the
-other has no definition.
+| | values | not v1.0 types | v1.0 types omitted |
+| --- | --- | --- | --- |
+| LRS `type` | 22 | `virtual_link`, `traffic island` | 8, incl. `road`, `pushbutton`, `detector`, all three curb-ramp-system members |
+| Events `type` | 21 | `virtual_link`, `virtual_node`, `open_movement` | 11, incl. `road`, `generic`, `open`, `traffic_calming` |
 
-Defining relations.json, with an extent and a side, would close that. It is
-additive and optional, so it costs a Tier 1 publisher nothing.
+`traffic island` is spelled with a space while `traffic_calming` two lines later
+takes an underscore; v1.0 uses `traffic_island`. So an extension row cannot name a
+road, a pushbutton or a curb ramp run slope, and can name three things v1.0
+renamed or removed.
+
+**One gap the tables make visible.** The relations table has `from_id` and `to_id`
+and no extent and no side. The LRS table has `lrs_starting_milepoint`,
+`lrs_ending_milepoint` and `lrs_side` — the only extent anywhere in GATIS — and
+anchors them only to a segment in an external linear referencing system. So there
+is no way to say *this buffer runs from here to here along this road edge*, and
+everything offset from a centerline — `buffer_width_ft`, `street_parking`,
+`street_parking_buffer_ft`, `separation_elements`, `shoulder_width_in`,
+`curb_height_in` — stays a scalar with a width and no way to start or stop. v1.0
+removed `road_associated` and with it the Draft #2 sentence naming the loss and
+its two remedies: the relation "is lost, unless the parallel road segment ID is
+included as an attribute of the parallel feature or the features are related
+through a relation table." One remedy was deleted; the other cannot carry an
+extent.
 
 #### And one description gap worth closing
 
