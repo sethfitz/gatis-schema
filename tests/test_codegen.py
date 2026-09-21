@@ -102,10 +102,13 @@ def test_generated_source_fits_the_line_budget() -> None:
 
 
 def test_the_on_road_modifier_fields_match_upstreams_schema_exactly() -> None:
-    # The set is derived here and enumerated there, independently, so agreement is
-    # a real cross-check rather than a restatement: every non-forbidden field of
-    # each `allowed_on_road` type, on each side, minus that type's
-    # `forbidden_field_if_allowed_on_road` list.
+    # The set is derived here -- every non-forbidden field of each
+    # `allowed_on_road` type, on each side, minus that type's
+    # `forbidden_field_if_allowed_on_road` list -- and enumerated there. What the
+    # match establishes is coverage: the models carry the same names upstream's
+    # schema does. It is NOT independent confirmation that the derivation rule is
+    # right, because both sides read `forbidden_field_if_allowed_on_road` the same
+    # way; a wrong reading would be wrong in both and still agree.
     import json
     from pathlib import Path
 
