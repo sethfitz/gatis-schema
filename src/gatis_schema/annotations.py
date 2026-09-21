@@ -58,6 +58,14 @@ class Tier:
             tuple(sorted((t, Presence(p)) for t, p in (upgrades or {}).items())),
         )
 
+    def __str__(self) -> str:
+        """A one-line rendering, used by the Overture markdown generator."""
+        if not self.upgrades:
+            return f"{self.base.value} at every tier"
+        parts = [f"{self.base.value} from tier 1"]
+        parts += [f"{p.value} from tier {t}" for t, p in self.upgrades]
+        return "; ".join(parts)
+
     @property
     def rule(self) -> PresenceRule:
         return PresenceRule(base=self.base, upgrades=dict(self.upgrades))

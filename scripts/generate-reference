@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Regenerate docs/reference/ from the models using Overture's markdown generator.
+#
+# `--exclude overture` drops the transportation theme's own pages; that package is
+# a dev dependency for one reason, explained in pyproject.toml.
+set -euo pipefail
+
+main() {
+  local root out
+  root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+  out="$root/docs/reference"
+
+  rm -rf "$out"
+  ( cd "$root" && uv run overture-codegen generate \
+      --format markdown \
+      --tag feature \
+      --exclude overture \
+      --output-dir docs/reference )
+  echo "wrote $(find "$out" -type f | wc -l | tr -d ' ') files under docs/reference"
+}
+
+main "$@"; exit $?
