@@ -1,0 +1,3 @@
+"Applies to these zone types","Applies to zone if this user is allowed","Name","Type","Maturity Level","Presence","Description","Example Value","Rating for keeping (1 -5) (1 = throw out, 5 = keep)","Notes"
+"pedestrian","","surface_material","enum","","","Specifies the surface type. Can pick from the following values: asphalt; concrete; gravel; grass; dirt; paved; unpaved; grass_paver; paving_stones. Select only one. where the surface material changes, begin a new zone.","","",""
+"pedestrian","","facility_name","list of strings","","Optional","Common or formal name for zone. Example: Market Square, 21st St Promenade, Echo Park - west side","","",""

@@ -1,0 +1,8 @@
+"Note","Name","Description"
+"OpenSidewalks","curb",""
+"NC-BPAID","ramp","Indicates a location where a pedestrian must make a decision about which direction to travel, most commonly in locations where a curb ramp does or should exist."
+"NC-BPAID","transit_stop (point)","A node indicating the location of a transit stop of any kind."
+"NC-BPAID","issue","A marker indicating a particular spot that has an issue relevant to routing for some users."
+"NC-BPAID","object","A physical object that may be an amenity or an obstruction for some users. Objects are represented as points and are not connected to the graph network. A buffer may be drawn around objects relevant to routing to create a node in the network at their location."
+"NC-BPAID","signal","Used for adding detail on how a traffic signal controls ped/bike movements?"
+"NC-BPAID","elevator","Elevators, funiculars or other car- or enclosure-based constructions meant to carry a pedestrian from one level of physical infrastructure to another. NC-BPAID maps outdoor infrastructure; switch to GTFS Pathways or IMDF conventions for indoor infrastructure."

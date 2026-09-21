@@ -1,0 +1,104 @@
+"Applies to Node Types","","","","","","","","","""Valid"" - Must put one of these values
+""Recommened"" - Recommend this value but any value is accepted
+""NA"" - not applicable because there isn't a contrained set of valid or recommened values (numbers, names, etc.)","List the Allowed/Recommended Values
+(if applicable)
+Use ""-"" + ""definition text"" and next line for adding a definition for a value","","","","",""
+"virtual","curb_ramp","elevator","transit_stop","issue","traffic_calming","Name","Description","Type","Valid Values","Listed Values","Example","Provenance","OSM Mapping","Notes","Proposal for Change"
+"required","required","required","required","required","required","node_id","A unique identifier for the node. 
+
+[NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.] ","ID","NA","","","","","",""
+"required","required","required","required","required","required","node_type","Indicates the type of node.","Enum","Valid","(Same as Node Types)","","","","Bicycle parking can be helpful when modeling for travel behavior where travelers can be cyclists
+
+Seems like bad practice to use one attribute, type, for multiple features when some values apply only to certain features. Curb interface types should include:
+- Raised crossing
+- Flush 
+- Direct ramp
+- Apex ramp
+- Longitudinal ramp
+",""
+"forbidden","optional","optional","forbidden","forbidden","optional","presence","Indicates whether the piece of infrastructure exists or is present. When other attributes are provided, the existence of the infrastructure can be assumed. This attribute is useful for identifying where a curb ramp or other infrastructure might be missing or where its presence is unknown. Conditionally required if no other identifying attributes provided.","Enum","Valid","yes
+no | missing
+unknown","","","","",""
+"optional","optional","optional","optional","optional","optional","reference_ids","Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.","Array<Object>","NA","","[ 
+{ ""source"": ""OpenStreetMap"", ""id"": ""w1234"" }, 
+{ ""source"": ""TIGER"", ""id"": ""110739476769"" } 
+{ ""source"": ""ARNOLD"", ""id"": ""140"", ""begin_mi"": 2.3, ""end_mi"": 4.5}
+] ","Overture's Source Field","","",""
+"forbidden","optional
+T2:recommended","optional
+T3:recommended","forbidden","forbidden","optional
+T3:recommended","date_built","When the facility was officially opened for use. If the facility has had a major remodeling where the structure, shape or another fundamental aspect was changed, the date of remodeling can be placed here. 
+
+Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.","Date","NA","","2025-03
+2014","","","","Move to an array of JSON objects that include date and event type--e.g:
+
+[ 
+{ ""date"": ""2025-10-24"", ""event"": ""opened"" }, 
+{ ""date"": ""2025-10-27"", ""event"": ""ADA inspected"" } 
+{ ""date"": ""2025-10-30"", ""event"": ""closed"" }
+] 
+
+Event types to include:
+opened, closed, inspected dates (with results)
+"
+"forbidden","optional
+T2:recommended","optional
+T3:recommended","forbidden","optional
+T3:recommended","optional
+T3:recommended","check_date","The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.","Date","NA","","2025-03
+2014","","","","See ""date_built"""
+"optional
+T3:recommended","forbidden","forbidden","forbidden","forbidden","forbidden","curb_type","The type of curb that is present, if there is not a curb ramp.  ","Enum","Valid","raised
+rolled
+flush
+generic
+driveway
+other","","","","",""
+"forbidden","conditionally_required","conditionally_required","forbidden","forbidden","forbidden","ada_compliance_date","Indicates the date when ADA compliance was assessed. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available. This field is conditionally required if ""ada_compliant_with"" is filled out.","Date","NA","","2025-03
+2014","","","",""
+"forbidden","conditionally_required","conditionally_required","forbidden","forbidden","forbidden","ada_compliant_with","If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment. Also fill out ""ada_compliance_date."" If no ADA assessment is being reported, leave blank.","Enum","Valid","2010
+PROWAG
+other","","","","",""
+"forbidden","optional
+T3:required","forbidden","forbidden","forbidden","forbidden","incline","Indicates the incline or running slope of the ramp, following the possible directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision.","Float","NA","","3.25%","","","Is this still relevant to curb_interface?",""
+"forbidden","optional
+T3:required","forbidden","forbidden","forbidden","forbidden","cross_slope","Indicates the cross slope of the ramp, which runs perpendicular to the incline / directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision. Cannot be negative.","Float","NA","","3.25%","","","Is this still relevant to curb_interface?",""
+"forbidden","optional
+T3:required","forbidden","forbidden","forbidden","forbidden","width","Indicates the minimum width of the ramp, measured between the handrails if handrails are provided. Reported as a whole number rounded to the nearest inch.
+
+Note that it is assumed that 80"" of height clearance is available for the full width given in this field.","Float","NA","","","","","Is this still relevant to curb_interface?",""
+"forbidden","optional
+T3:recommended","forbidden","forbidden","forbidden","forbidden","ramp_type","Indicates the orientation of the ramp in relation to the pedestrian direction of travel at the location. Where a double curb ramp exists, map each ramp as a separate curb_ramp node.","Text","Recommended","diagonal
+parallel
+perpendicular
+unknown","","","","Is this still relevant to curb_interface?",""
+"forbidden","optional
+T3:required","forbidden","forbidden","forbidden","forbidden","detectable_warning","Describes whether tactile paving is present, and whether or not it has a constrasting color (which should meet ADA guidelines for the amount of contrast). ","Enum","Valid","tactile and contrasted
+tactile and not contrasted
+not tactile and contrasted
+no","","","","",""
+"forbidden","optional
+T3:recommended
+T4:required","forbidden","forbidden","optional
+T3:recommended
+T4:required","forbidden","impediment","Identifies the presence of an object that may pose a challenge for travelers passing through this node. Mark a node with this attribute only if the impediment is close enough to the footpath/pedestrian way or bike path to potentially pose a challenge. If left blank, the assumed value for this attribute is “unknown.”","Array<Enum>","Valid","yes, no, low overgrowth (lower than 27""), high overgrowth (27"" or higher), sign, low protrusion (lower than 27""), high protrusion (27"" or higher), utility cover, stormwater grate, metal plate, metal decking (ex. on bridges), other surface impediment, other impediment ","","","","","Move to the issue point type? - No; this exists to mark issues with curb ramps (nodes). Issue point is for a single point along an edge. - Jay"
+"optional
+T3:recommended","forbidden","forbidden","forbidden","forbidden","forbidden","rail_crossing","Describes the pedestrian traffic warnings and controls in the approach to the rail crossing. The nodes mark the location of the controls on each side of the tracks. Mark the crossing itself as a virtual link (edge).","Array<Enum>","Valid","Gates and flashing lights, flashing lights only, crossbucks or stop sign only, tactile markings, other","","","","How does this relate to rail/rail_crossing edge? Yep, they conflict. rail_crossing attribute on edges says to use virtual nodes to connect a crossing (with rail_crossing = ""yes"") to sidewalk/other edges. I think the rail_crossing node got split out to capture details that might be different on different sides of the crossing (ex. there are tactile markings approaching from the east but not from the west). Maybe the best reconciliation is to keep this and the rail_crossing edge and drop the use of virtual nodes/edges, so we keep all the details people want. In that case, it might make more sense to have it be a node type rather than a node attribute. - Jay",""
+"forbidden","optional
+T3:recommended
+T4:required","forbidden","forbidden","optional
+T3:recommended
+T4:required","forbidden","surface_issue","Description of surface quality issues that may pose a challenge for travelers passing through this node.","Array<Enum>","Valid","yes, no, cracking, scaling, spalling, uneven, frequent water pooling, heaving, missing bricks/stones, potholes/holes, slickness, detectable warning surface damage, longitudinal cracks and seams, metal plates, other","","","","","Move to the issue point type? Nope - this is for noting issues with curb ramps and other nodes. - Jay "
+"forbidden","forbidden","forbidden","optional
+T3:recommended","forbidden","forbidden","gtfs_id","An array of objects containing keys for GTFS agency_id and stop_id from an existing GTFS dataset for this transit stop. Represent as string with the format ""{agency_id},{stop_id}"". These IDs can be crosswalked with GTFS and TIDES data to obtain additional stop attributes and connect to the broader transit network. See GTFS documentation for more information.","Array<Object>","NA","","[{""agency_id"": ""1234"", ""stop_id"":""5678""}]","","","","Move to the transit_stop point type?"
+"forbidden","forbidden","forbidden","forbidden","forbidden","optional
+T3:recommended
+T4:required","traffic_calming_type","Used to identify traffic calming features on a road or crossing. Used when it makes more sense to model the traffic calming feature as a node instead of an edge. Recommended values are from https://www.ite.org/pub/?id=2a60c136-b1c0-b231-0522-ccbd075cac84  and https://wiki.openstreetmap.org/wiki/Key:traffic_calming","Enum","Valid","[JG1]Grabbed from NACTO Bike design guide","","","","Punt until draft #3",""
+"forbidden","optional
+T2:recommended
+T3:required","optional
+T3:recommended
+T4:required","forbidden","forbidden","optional","status","Most recent operating status of the node. Whether the infrastructure is open and available for use.
+
+Default is ""open""","Enum","Valid","open, closed, under construction, planned, unknown","","","","","See ""date_built"""
+"","","","","","","other_issue","Identifies whether this node has another type of issue that may pose a challenge for travelers, besides impediments and surface damage. Includes design, construction and other issue types.","Enum","","yes, no, detectable warning not aligned with crossing, push button not working, markings worn, markings missing, turning space missing, other","","","","",""

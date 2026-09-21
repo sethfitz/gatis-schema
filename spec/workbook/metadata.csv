@@ -1,0 +1,59 @@
+"","","","","""Valid"" - Must put one of these values
+""Recommened"" - Recommend this value but any value is accepted
+""NA"" - not applicable because there isn't a contrained set of valid or recommened values (numbers, names, etc.)","List the Allowed/Recommended Values
+(if applicable)
+Use ""-"" + ""definition text"" and next line for adding a definition for a value","Example
+(optional but include if helpful)"
+"presence","Name","Description","Type","Valid","Listed Values","Example"
+"required","title","The title of the dataset","Text","NA","",""
+"optional
+T2:required","version","Version number for the current dataset using semantic versioning.
+Format: MAJOR.MINOR.PATCH","Text","NA","",""
+"required","description","A brief (1-2 sentence or similar) description of what’s in the dataset","Text","NA","",""
+"required","publisher","Organization responsible for collecting and maintaining the data","Text","NA","",""
+"required","schema_version","The version of the NC-BPAID schema in use. Use current version here as default value.","Text","NA","",""
+"required","date_created","The date when this dataset was initially created","Datetime","NA","",""
+"optional","contact_name","The name of a person who can be contacted with questions or for further information about the data","Text","NA","",""
+"required","contact_info","The email address or phone number to reach someone who can answer questions or provide further information about the data","Text","NA","",""
+"required","license","The license under which the data is published for use. URL linking to the license agreement; default value https://creativecommons.org/publicdomain/zero/1.0/.","URL","NA","",""
+"optional
+T3:recommended","geo_bounding_box","Geospatial data describing the upper and lower latitudes and longitudes within which the data falls. Provide in format [min_longitude, min_latitude, max_longitude, max_latitude].","Array<Float>","NA","",""
+"required","keywords","A set of single words or short phrases that describe the content of the data
+For sidewalk network data: ""Sidewalks, sidewalk network, pedestrian infrastructure, accessibility, pedestrian.""
+For bike network data: ""Bicycle lanes, bicycle network, biking, bike infrastructure.""","Text","NA","",""
+"optional
+T2:recommended","attribution","Line of text that a data user can copy to properly cite the dataset. TASL format (Title, Author, Source, License) or academic format (ALA, Chicago) recommended.","Text","NA","",""
+"optional
+T3:recommended","data_download_url","Direct URL to begin downloading the data; should not require additional clicks or steps besides visiting the URL to begin download","URL","NA","",""
+"optional
+T3:recommended","data_docs_url","URL to access a data documentation booklet or site covering methodologies and other technical aspects of the data","URL","NA","",""
+"optional
+T3:recommended","data_dictionary_url","URL to access the data dictionary for the dataset, in PDF, HTML or JSON format","URL","NA","",""
+"optional
+T3:recommended","data_service_endpoint_url","URL to access the data via a data service, such as Data.gov (catalog.data.gov/dataset/…), ArcGIS Online (ex. Feature service or feature layer link) or Socrata","URL","NA","",""
+"optional","rights_usage_limits_restricts","Text or a URL providing greater detail on how the data can and should be used, what rights are reserved, the scope of the data and any other useful information. Populate with either a text statement or with a URL linking to a text statement or policy","Text","NA","",""
+"optional","quality_validation","Statement describing the methods used to ensure quality and to validate the data, providing quantitative results where possible; can be a link to a web page or tool containing more information.","Text","NA","",""
+"required","date_modified","The date when this dataset was last updated","Datetime","NA","",""
+"optional
+T3:recommended","checksum","An MD5 sum associated with the dataset in its current state, used to check if the data has changed since last accessed; new checksums should be generated each time the data is updated.","Text","NA","",""
+"optional
+T3:recommended","freq_cadence","How often the full data is updated – for example, when new lidar is collected or a new field study is conducted; do not use for minor updates (ex. Correcting a few rows). Use values from the Dublin Core frequency specification.","Enum","NA","",""
+"optional","modification_notes","Text statement describing recent updates or modifications that regular users might want to know about.","Text","NA","",""
+"optional
+T3:recommended","collection_period_start","Beginning date of the period during which data was collected; approximation is acceptable. Include at least the month and the year if possible.
+If frequency / cadence = ‘continuous,’ leave blank","Date","NA","",""
+"optional
+T3:recommended","collection_period_end","Ending date of the period during which data was collected; approximation is acceptable. Include at least the month and the year if possible.
+If frequency / cadence = ‘continuous,’ leave blank","Date","NA","",""
+"optional
+T3:recommended","collection_method","List of the methods used to collect and extract the data.","Array<Enum>","Valid","Satellite / aerial; LIDAR; field survey / manual; GPS survey; hand traced or tagged; AI interpretation; transformation from another format / database",""
+"optional","collection_notes","Text statement providing additional detail about data collection methods and approach, including selection, tools and data processing.","Text","NA","",""
+"optional","conforms_to","List of the URLs of other specifications to which attributes within the data also conform.","Array<URL>","NA","",""
+"optional
+T3:recommended","source_dataset","Either a link or a citation (title, publisher and publication date) to the primary dataset used to create the data; in many cases, this data will be satellite or LIDAR data used for extracting transportation elements.","Text","NA","",""
+"optional","source_dataset_type","The type of dataset listed under Primary Source Dataset URL or Citation.","Enum","Valid","aerial / satellite, LIDAR, GPS, field / manual, other",""
+"optional","addl_sources","List of URLs or citations for additional data sources used besides the primary data source – ie for blending, for extracting additional features, etc.","Text","NA","",""
+"optional","source_notes","Text note describing any additional information about data sources, including how they were collected, any known issues and cleaning and processing.","Text","NA","",""
+"optional","contributor_consulted","Text statement acknowledging people or organizations who contributed or who were consulted in creation of the dataset.","Text","NA","",""
+"optional","used_by","Text statement describing related datasets or projects – for example, if another organization takes this data and layers on additional features. Include URLs where possible.","Text","NA","",""
+"optional","funding_organization","Name of the organization(s) who provided funding to enable any part of the effort to produce the dataset.","Text","NA","",""

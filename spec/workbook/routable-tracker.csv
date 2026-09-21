@@ -1,0 +1,77 @@
+"What does it mean to be ""routable"" exactly? -- THIS IS DRAFT, NOT YET INTERNALLY CONSISTENT","","","","","","",""
+"","","","","","","",""
+"","In General","Segment Geometry is...","","Maturity Scale","","",""
+"","","Identical to Road","Diverges from Road","0","1","2","3"
+"General Routing Readiness","","","","Completely unroutable
+
+Maybe: No routing specification followed during the development of the dataset or entry of geometries
+
+Example, a roadway centerline which has no topology or intersection connectivity","Routable but needs to be combined with other datasets to be useful for routing
+
+Maybe: logically reflective of world, but geometry of path or facility attributes doesn't necessarily reflect real-world or produce meaningful results
+
+Centerline that is routeable","Routable but routing is not aware of real world disconnected/barriers that apply to pedestrian or bicycle use-cases
+
+Maybe: ""routable but doesn't follow NC-BPAID specifications :D""
+
+aware of uncertainty in data","Completely routable, follows NC-BPAID, no other network featues or attributes needed for routing from point A to point B.
+
+'Negative Completeness' - 
+
+Supports nuanced, inter-modal routing decisions across all network features ('street', 'sidewalk', ''bike lane', etc) that can accurately represent street and sidewalk conditions and provide intuitive insight into the network from an 'all-ages all-abilities' perspective"
+"Cohesion / ease of conflation with other network datasets / interoperability?","","","","Attributes joined to other (typically road-centerline) network graphs via simple overlap and require post-processing to remove false positives/negatives.
+
+Example: Bicycle facilities represented as simple lines that only generally follow where the bicycle facilities are. Line nodes are not strategically placed at intersections.","","","Network is completely referenced to a larger network graph? Requires minimal effort to conflate with referenced network graph but may require more effort to conflate with other sources.
+
+Example: Spec data developed alongside OSM and features are referenced/connected with OSM features. Would be relatively straightforward to join back to OSM but might be dififcult to join to a new municipal/licensed network dataset."
+"Bike Network","""Islands"" of routable infrastructure that may or may not be distinct from the road network geometrically (see ""segment geometry""). 
+
+These ""islands"" are connected by other networks, e.g. transit, trails, roads.
+
+Attributes are ideally in their own record so as to facilitate the easy addition of a distinct geometry in the future, even if the geometry matches the road
+
+
+
+
+Need to think about how segmentation of the geometry and the attributes align or don't here?
+
+Or rather than thinking about the road geometry as the best way to permit conflation, should we be exploring e.g. TMC IDs? Or other identifiers? ","Geometry of segment links to road segment which it follows. 
+
+How TBD, e.g. OpenLR? OSM id? Something else?
+
+","Geometry of segment is included in the dataset. Only allowed on dedicated bike facilities? e.g. you must use the road geometry for things shared with the road?
+
+","May be attribute on a road centerline, may not reflect actual geometry of infrastructure
+
+May not include a value for each direction of travel  (eg, to/ from or right/left)
+
+Decisions to switch, e.g. from sidewalk to road, left to user applications
+
+Resolution of segmentation may not accurately reflect changing attributes of facilities","May be attribute on a road centerline, may not reflect actual geometry of infrastructure
+
+Zone-based policies on when it is permitted/encouraged to switch from one network to another","Mostly spatially accurate, e.g. geometry diverges from road if infrastructure does (shared-use pathway, relevant separated bike lanes / sidepaths represented as seperate features)","Spatially accurate, e.g. geometry diverges from road if infrastructure does
+
+""Access policy"" available for when shared use paths can be used for biking (for example)
+
+Should we encourage separate storage of bike/ped network attributes, even when geometry isn't separate--e.g. like the diagram to the right?"
+"Ped Network","","Geometry of segment links to road segment which it follows. 
+
+How TBD, e.g. OpenLR? OSM id? Something else?
+
+","Geometry of segment is included in the dataset ","May be attribute on a road centerline, may not reflect actual geometry of infrastructure
+
+Or sidewalk represented as seperate geometry features, but they have no topology
+
+Decisions to switch, e.g. from sidewalk to road, left to user applications","May be attribute on a road centerline, may not reflect actual geometry of infrastructure
+
+Or sidewalks represented as separate geometry features, but lack reliable topology to eachother or the road
+
+Zone-based policies on when it is permitted/encouraged to switch from one network to another
+
+LOS measures are sufficient to make ""reasonable person"" decisions on when to switch to other networks, e.g. road from sidewalk when sidewalk ends","Mostly spatially accurate, e.g. geometry diverges from road if infrastructure does
+
+Sidewalks represented as seperate geometry features and some level of topology and routing ability exists","Spatially accurate, e.g. geometry diverges from road if infrastructure does
+
+LOS measures are sufficient to make ""reasonable person"" decisions on when to switch to other networks, e.g. road from sidewalk when sidewalk ends
+
+Should we encourage separate storage of bike/ped network attributes, even when geometry isn't separate--e.g. like the diagram to the right?"

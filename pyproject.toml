@@ -1,0 +1,65 @@
+[project]
+name = "gatis-schema"
+dynamic = ["version"]
+description = "Pydantic models for the General Active Transportation Infrastructure Specification (GATIS), generated from the upstream spec workbook"
+readme = "README.md"
+authors = [
+    { name = "Seth Fitzsimmons", email = "seth@mojodna.net" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.11",
+]
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gatis_schema"]
+
+[tool.hatch.build]
+include = [
+    "src/gatis_schema/py.typed",  # Include type marker in distribution
+]
+
+[tool.hatch.version]
+path = "src/gatis_schema/__init__.py"  # Hatch reads __version__ from here
+
+
+# Per-package mypy configuration
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+files = ["src", "tests"]
+python_version = "3.12"
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+warn_return_any = false
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-q",
+    "-ra",  # show summary of all test outcomes
+]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+]

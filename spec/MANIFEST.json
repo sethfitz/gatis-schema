@@ -1,0 +1,150 @@
+{
+  "fetched_at": "2026-09-21T04:48:01Z",
+  "sources": {
+    "workbook": {
+      "id": "1qs0x58V-Gcikm70AKxsXxKH7D4TL6z8FlBgf4P4kqJQ",
+      "name": "Draft_GATIS_Specification",
+      "drive_version": "3542",
+      "modified_time": "2026-01-30T20:57:17.293Z",
+      "tab_count": 25
+    },
+    "document": {
+      "id": "13sJdh-GmfxNb_tfUXKkpZgofuBU60ag6HpqbGVUlsZE",
+      "name": "General Active Transportation Infrastructure Specification (GATIS) v2 DRAFT_For_Public_Comment",
+      "drive_version": "5909",
+      "modified_time": "2025-11-12T16:29:50.016Z"
+    }
+  },
+  "files": [
+    {
+      "path": "document.md",
+      "sha256": "5852576923cfbe9a6d0a79544ef592fe606c06cb8d331b8b83c1ebc4b3393abd",
+      "bytes": 93914
+    },
+    {
+      "path": "workbook/data-types.csv",
+      "sha256": "be6bef24fe21a3a76530f3a04eca19a9663466a39aa2466a3659ccae34812ea4",
+      "bytes": 2026
+    },
+    {
+      "path": "workbook/edge-presence.csv",
+      "sha256": "52e0996221d32faa4957a69fee7cebbd10aa17d176235f8f64a65d7b3f136fe1",
+      "bytes": 7496
+    },
+    {
+      "path": "workbook/edges-fields.csv",
+      "sha256": "67d89972041ac91bf91764a01cbdbc362c0cd90f3bb354108bdd131e2d7e3efe",
+      "bytes": 38492
+    },
+    {
+      "path": "workbook/edges-types.csv",
+      "sha256": "0961bfce2453f9e5462dcfba7fd1e46d074ea3bb8f4fa9b532e1138edf10d7b8",
+      "bytes": 4256
+    },
+    {
+      "path": "workbook/intersection-examples.csv",
+      "sha256": "4580caa1ecac962566337f4a31485cd073b94884fac1def17bbfc5bc386a4104",
+      "bytes": 3443
+    },
+    {
+      "path": "workbook/maturity-tracker.csv",
+      "sha256": "22d9d0134ff69ec09caaf03e28eae9032bd6d4749b467e9bb8bd5f4e849cbccc",
+      "bytes": 12681
+    },
+    {
+      "path": "workbook/metadata.csv",
+      "sha256": "bd7fe9510ebf3654c6766e389060ab6d0aa0daa720c57cb07f468dd3962d194c",
+      "bytes": 7109
+    },
+    {
+      "path": "workbook/node-presence.csv",
+      "sha256": "a428f77d4c22c67798db65bb7b992f7a431402b46afb673d98e1f2893d4a1ea9",
+      "bytes": 1836
+    },
+    {
+      "path": "workbook/nodes-fields.csv",
+      "sha256": "0a23d47ef1ad9ad1b9009b05432a5f947f56d3913135b3a65b863edaee3241ac",
+      "bytes": 11348
+    },
+    {
+      "path": "workbook/nodes-types.csv",
+      "sha256": "379a2a3ea5f319f9a73ef10f3db3bc3ce18cdd28577f8f640e41116d1dd04e83",
+      "bytes": 4443
+    },
+    {
+      "path": "workbook/point-presence.csv",
+      "sha256": "86546de6bcbe0a33d2bf7fe29e87fc8d632564905488822d81145f596f4c85bb",
+      "bytes": 193
+    },
+    {
+      "path": "workbook/points-fields.csv",
+      "sha256": "3fbd87a9096cf9bfd33acff1bc3d7250000faec3d4350a373c817f04718bb0ba",
+      "bytes": 8742
+    },
+    {
+      "path": "workbook/points-types.csv",
+      "sha256": "fd575aac277fc20eeee6b17490e3530dfd793d0caaeca21c7d1eea445cc27ef9",
+      "bytes": 1077
+    },
+    {
+      "path": "workbook/presence-tables.csv",
+      "sha256": "e5138aae08a60c238f871407825d6aef056f4e9af938474d8d95c926c7312ce1",
+      "bytes": 7646
+    },
+    {
+      "path": "workbook/readme.csv",
+      "sha256": "fb9b64b54dcf6ad8d9a347e5ee8f0609125dc8cd0a0e66f57ee5465205cab4f5",
+      "bytes": 244
+    },
+    {
+      "path": "workbook/routable-tracker.csv",
+      "sha256": "63f976978418545407af12e44039ec58fa2550d977445428f260d1980d463b99",
+      "bytes": 5631
+    },
+    {
+      "path": "workbook/zone-presence.csv",
+      "sha256": "e91c2ed4ab01497bc46d409f942af2c87d308348b9dd476ba04746c1eb4fb748",
+      "bytes": 232
+    },
+    {
+      "path": "workbook/zones-fields.csv",
+      "sha256": "3ee55af03d1a5cddbc419f507f6d6fd7b1249077ac4e672412ad54858465c06c",
+      "bytes": 2694
+    },
+    {
+      "path": "workbook/zones-types.csv",
+      "sha256": "a507efb26fde1cc48196afa402ef84d390cef59cc2a5ba9f4b49f61a9a19ade1",
+      "bytes": 612
+    },
+    {
+      "path": "workbook/zzz-edge-field-brainstorming-transfer.csv",
+      "sha256": "1b38edfa2d696e7aac9f2bb68cbf233ccca038d1f52fa8b4e1a262c25bf2a4aa",
+      "bytes": 15146
+    },
+    {
+      "path": "workbook/zzz-edge-field-brainstorming.csv",
+      "sha256": "0826c14ac6a8133447dedd308de1f744de26e34020dbb974803f59f41bca7c82",
+      "bytes": 23712
+    },
+    {
+      "path": "workbook/zzz-node-field-brainstorming.csv",
+      "sha256": "397abc18754d541508a923385e10844349e56d364c076cc8b12cbab133f32eb6",
+      "bytes": 5899
+    },
+    {
+      "path": "workbook/zzz-node-type-brainstorming.csv",
+      "sha256": "c8b34b1fe01ca20744f72a17ea250c915991b7982bba8938f3e2d0c222bdbb2e",
+      "bytes": 1111
+    },
+    {
+      "path": "workbook/zzz-relations-brainstorming.csv",
+      "sha256": "0c603c1fb8a298ae5362da2bfad59bcae8bdf95b6b1c290e492a75ed8cc9c2c5",
+      "bytes": 408
+    },
+    {
+      "path": "workbook/zzz-zone-field-brainstorming.csv",
+      "sha256": "b8c6eb907d10e7efacfe8bf50d130fba7dcb1009904e902576a410134fd8c302",
+      "bytes": 656
+    }
+  ]
+}

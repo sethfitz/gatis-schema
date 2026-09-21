@@ -1,0 +1,5 @@
+"Zone Type","Tier","Required","Recommended"
+"pedestrian","Tier 1","--","--"
+"","Tier 2","--","--"
+"","Tier 3","zone_id, zone_type","surface_material, facility_name"
+"","Tier 4","zone_id, zone_type","surface_material, facility_name"

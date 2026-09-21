@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# Pull a versioned snapshot of the upstream GATIS spec sources into spec/.
+#
+# Sources (both Google-hosted, both pinned by Drive revision in spec/MANIFEST.json):
+#   - Draft_GATIS_Specification workbook -> spec/workbook/<tab>.csv
+#   - GATIS v2 DRAFT document            -> spec/document.md
+#
+# Requires `gws` (Google Workspace CLI) authenticated as someone with read access.
+set -euo pipefail
+
+SHEET_ID=1qs0x58V-Gcikm70AKxsXxKH7D4TL6z8FlBgf4P4kqJQ
+DOC_ID=13sJdh-GmfxNb_tfUXKkpZgofuBU60ag6HpqbGVUlsZE
+
+main() {
+  local root spec
+  root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+  spec="$root/spec"
+
+  command -v gws >/dev/null || { echo "gws not on PATH" >&2; exit 1; }
+  command -v jq  >/dev/null || { echo "jq not on PATH" >&2; exit 1; }
+
+  rm -rf "$spec/workbook"
+  mkdir -p "$spec/workbook"
+
+  echo "==> reading workbook metadata"
+  local tabs
+  tabs=$(gws_json sheets spreadsheets get \
+    "{\"spreadsheetId\":\"$SHEET_ID\",\"fields\":\"sheets.properties\"}" \
+    | jq -r '.sheets[].properties.title')
+
+  local tab slug n=0
+  while IFS= read -r tab; do
+    [ -n "$tab" ] || continue
+    slug=$(slugify "$tab")
+    echo "    $tab -> workbook/$slug.csv"
+    tab_csv "$tab" > "$spec/workbook/$slug.csv"
+    n=$((n + 1))
+  done <<< "$tabs"
+
+  echo "==> exporting document"
+  export_document "$spec" > "$spec/document.md"
+
+  echo "==> writing MANIFEST.json"
+  write_manifest "$spec" "$n"
+
+  echo "done: $n workbook tabs + document.md"
+}
+
+# A tab as rectangular CSV. values.get returns ragged rows (trailing empty cells are
+# dropped), so pad every row out to the widest one.
+tab_csv() {
+  # Build params with jq: tab titles contain quotes, asterisks and trailing spaces,
+  # so hand-interpolating them into a JSON string breaks. A1 notation escapes a
+  # literal single quote inside a quoted sheet name by doubling it.
+  local params
+  params=$(jq -nc --arg id "$SHEET_ID" --arg tab "${1//\'/\'\'}" \
+    '{spreadsheetId: $id, range: ("'"'"'" + $tab + "'"'"'")}')
+  gws_json sheets spreadsheets values get "$params" \
+    | jq -r '
+        (.values // []) as $rows
+        | ([$rows[] | length] + [0] | max) as $w
+        | $rows[]
+        | . + [range(0; $w - length) | ""]
+        | @csv
+      '
+}
+
+# Inline base64 image data URIs are stripped: they are ~97% of the export, are not
+# spec content, and churn on every Docs re-render, which would leave the snapshot
+# diff useless. Everything else is verbatim.
+export_document() {
+  # gws --output refuses any path outside the current directory, so stage the raw
+  # export inside the repo rather than in $TMPDIR.
+  local raw="$1/.document.raw.md"
+  ( cd "$1" && gws drive files export \
+      --params "{\"fileId\":\"$DOC_ID\",\"mimeType\":\"text/markdown\"}" \
+      --output .document.raw.md </dev/null >/dev/null \
+      2> >(grep -v '^Using keyring backend:' >&2) )
+  # Docs emits reference-style image definitions: `[image1]: <data:image/png;base64,...>`
+  sed -E 's|^(\[image[0-9]+\]: )<data:image/[^>]*>|\1<data:image stripped>|' "$raw"
+  rm -f "$raw"
+}
+
+
+# gws prints a keyring banner to stderr on every call. Drop that one line and let
+# every other diagnostic through, so a real API failure is visible rather than
+# arriving as a bare non-zero exit. </dev/null keeps gws from eating a caller's
+# `while read` loop input.
+# Usage: gws_json <command path...> <params-json>
+gws_json() {
+  local params=${@: -1}
+  gws "${@:1:$#-1}" --params "$params" </dev/null \
+    2> >(grep -v '^Using keyring backend:' >&2)
+}
+
+slugify() {
+  printf '%s' "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
+
+drive_meta() {
+  gws drive files get \
+    --params "{\"fileId\":\"$1\",\"fields\":\"id,name,mimeType,version,modifiedTime\"}" \
+    </dev/null 2> >(grep -v '^Using keyring backend:' >&2)
+}
+
+write_manifest() {
+  local spec=$1 tab_count=$2
+  jq -n \
+    --argjson sheet "$(drive_meta "$SHEET_ID")" \
+    --argjson doc "$(drive_meta "$DOC_ID")" \
+    --arg fetched "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --argjson tabs "$tab_count" \
+    --argjson files "$(checksums "$spec")" \
+    '{
+       fetched_at: $fetched,
+       sources: {
+         workbook: ($sheet | {id, name, drive_version: .version, modified_time: .modifiedTime, tab_count: $tabs}),
+         document: ($doc   | {id, name, drive_version: .version, modified_time: .modifiedTime})
+       },
+       files: $files
+     }' > "$spec/MANIFEST.json"
+}
+
+checksums() {
+  ( cd "$1" && find . -type f \( -name '*.csv' -o -name '*.md' \) \
+      | sed 's|^\./||' | sort \
+      | while IFS= read -r f; do
+          jq -n --arg p "$f" \
+                --arg s "$(shasum -a 256 "$f" | cut -d' ' -f1)" \
+                --argjson b "$(wc -c < "$f" | tr -d ' ')" \
+            '{path: $p, sha256: $s, bytes: $b}'
+        done | jq -s '.' )
+}
+
+main "$@"; exit $?
