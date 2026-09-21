@@ -33,10 +33,15 @@ below validate a bare list, which is the only shape anyone has described, and
 `Dataset.load` accepts either that or a single-key object wrapping it. Reported
 in `docs/spec-review.md`.
 
-**Two fields are typed against their own descriptions**, and the descriptions
+**Some fields are typed against their own descriptions**, and the descriptions
 win, on the `shared.ReferenceId` precedent: a model that rejects what the
 specification tells a publisher to write is a wish rather than a model. See
-`Event.event_location` and the `Relation` identifier fields.
+`Event.event_location`, and `TextOrList` / `IdOrList` for the seven columns
+declared as one value and documented as possibly several.
+
+All three are registered under `overture.models` in `pyproject.toml` and tagged
+`gatis:extension` by `gatis_schema.tag_providers`, so `scripts/generate-reference`
+renders them alongside the four core classes.
 """
 
 from __future__ import annotations
@@ -50,8 +55,17 @@ from overture.schema.system.optionality import Omitable
 from overture.schema.system.ref import Id
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, TypeAdapter
 
-from gatis_schema.constraints import SuggestedValues
+from gatis_schema.constraints import ScalarOrListConstraint, SuggestedValues
 from gatis_schema.scalars import GatisDatetime
+
+# Seven columns across the three tables are declared as one value and documented
+# as possibly several. See `ScalarOrListConstraint` for why this is a constraint
+# rather than a `str | list[str]` union.
+TextOrList = Annotated[list[str], ScalarOrListConstraint()]
+"""A `Text` column that may carry several values."""
+
+IdOrList = Annotated[list[Id], ScalarOrListConstraint()]
+"""An `ID` column that may carry several identifiers."""
 
 # --------------------------------------------------------------------------
 # Vocabularies
@@ -209,7 +223,7 @@ class LrsCrosswalk(ExtensionRow):
     # meaning this field name carries. Its own description asks for "all IDs
     # within a properly formatted list", so a list is accepted alongside the
     # declared scalar rather than rejected.
-    reference_ids: Omitable[str | list[str]] = Field(
+    reference_ids: Omitable[TextOrList] = Field(
         description="The identification number or other identifier of the related "
         "road segment within the linear referencing system. Can be the "
         "identification number within a government, commercial or third-party "
@@ -353,14 +367,14 @@ class Event(ExtensionRow):
     )
 
     # "If multiple, list all in list format" against a declared `Text`.
-    executor_of_work: Omitable[str | list[str]] = Field(
+    executor_of_work: Omitable[TextOrList] = Field(
         description="The entity that carried out any work associated with this "
         "event. If multiple, list all in list format. The executor may be a "
         "contractor, or it may be the entity listed as owner or maintainer for "
         "the infrastructure."
     )
 
-    inspector: Omitable[str | list[str]] = Field(
+    inspector: Omitable[TextOrList] = Field(
         description="If an inspection, the name or names of the party or parties "
         "carrying out the inspection. This may be the name of an individual, a "
         "contractor or some other party. If multiple, list all in list format."
@@ -422,13 +436,6 @@ class Event(ExtensionRow):
     )
 
 
-# Every identifier column on the relations table is declared `ID` and four of the
-# five tell the publisher to write a list when there is more than one. A bare `Id`
-# would reject the spec's own worked example -- a crossing with a pushbutton at
-# each end -- so both forms are accepted.
-RelationRef = Id | list[Id]
-
-
 class Relation(ExtensionRow):
     """One row of `relations.json`: a link between two pieces of infrastructure.
 
@@ -447,23 +454,23 @@ class Relation(ExtensionRow):
         description="The identification number for the relation described in this row."
     )
 
-    from_id: Omitable[RelationRef] = Field(
+    from_id: Omitable[IdOrList] = Field(
         description="For a relation that is a movement, the GATIS ID for the "
         "piece of infrastructure at which the movement begins."
     )
 
-    to_id: Omitable[RelationRef] = Field(
+    to_id: Omitable[IdOrList] = Field(
         description="For a relation that is a movement, the GATIS ID for the "
         "piece of infrastructure at which the movement completes."
     )
 
-    signal_id: Omitable[RelationRef] = Field(
+    signal_id: Omitable[IdOrList] = Field(
         description="For a signal relation, the GATIS ID for the signal point. If "
         "multiple (ex. at the west and east ends of a crossing), provide all IDs "
         "in a list."
     )
 
-    crossing_id: Omitable[RelationRef] = Field(
+    crossing_id: Omitable[IdOrList] = Field(
         description="For a signal relation, the GATIS ID for the crossing edge "
         "that is affected when the signal point under signal_id is interacted "
         "with by a traveler. If multiple, provide all IDs in a list."

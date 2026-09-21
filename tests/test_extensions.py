@@ -350,3 +350,141 @@ def test_an_absent_extension_is_none_and_an_empty_one_is_a_list(
     assert dataset.relations == []
     assert dataset.events is None
     assert dataset.lrs is None
+
+
+# --------------------------------------------------------------------------
+# Discovery and reference generation
+# --------------------------------------------------------------------------
+
+
+def test_every_extension_row_is_registered_and_tagged() -> None:
+    """Registration is silent when it breaks.
+
+    A typo in `pyproject.toml`, a rename, or a tree installed without
+    `uv sync` all leave discovery returning fewer models and
+    `scripts/generate-reference` quietly emitting fewer pages.
+    """
+    from overture.schema.system.discovery import discover_models
+
+    from gatis_schema.tag_providers import EXTENSION_TAG
+
+    discovered = {key.name: key.tags for key in discover_models()}
+    expected = {
+        "gatis_lrs_crosswalk": "lrs",
+        "gatis_event": "events",
+        "gatis_relation": "relations",
+    }
+    for name, table in expected.items():
+        assert name in discovered, name
+        assert EXTENSION_TAG in discovered[name]
+        assert f"gatis:table={table}" in discovered[name]
+
+    # The did-differ half: the four core classes are discovered too, and they
+    # carry `feature` and not ours, so the provider is selecting rather than
+    # tagging everything it is handed.
+    for name in ("gatis_edge", "gatis_node", "gatis_point", "gatis_zone"):
+        assert discovered[name] == frozenset({"feature"}), name
+
+
+def test_the_reference_generator_renders_all_seven_models(tmp_path: Path) -> None:
+    """The regression that wiped `docs/reference/`.
+
+    One field typed `str | list[str]` raises `UnsupportedUnionError` in the
+    codegen's union handling and the run dies after `generate-reference` has
+    already removed the output directory, so the failure presents as a missing
+    reference rather than as a bad annotation. Running the real generator over
+    the real models is the only check that catches it.
+    """
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from overture.schema.codegen.cli import main; main()",
+            "generate",
+            "--format",
+            "markdown",
+            "--tag",
+            "feature",
+            "--tag",
+            "gatis:extension",
+            "--exclude",
+            "overture",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+    models = tmp_path / "gatis_schema" / "models"
+    rendered = {path.stem for path in models.glob("*.md")}
+    assert {"lrs_crosswalk", "event", "relation"} <= rendered
+    assert {"edge", "node", "point", "zone"} <= rendered
+
+
+def test_the_generated_reference_is_byte_identical_across_runs(
+    tmp_path: Path,
+) -> None:
+    """A bare `BeforeValidator` renders as a `repr` carrying a memory address.
+
+    That makes `docs/reference/` differ on every run, which shows up as noise in
+    every diff rather than as an error. `ScalarOrListConstraint` exists partly
+    to avoid it; this asserts the property rather than the workaround.
+    """
+    import subprocess
+    import sys
+
+    def render(target: Path) -> dict[str, str]:
+        subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from overture.schema.codegen.cli import main; main()",
+                "generate",
+                "--format",
+                "markdown",
+                "--tag",
+                "gatis:extension",
+                "--output-dir",
+                str(target),
+            ],
+            capture_output=True,
+            check=True,
+        )
+        return {
+            str(path.relative_to(target)): path.read_text()
+            for path in sorted(target.rglob("*.md"))
+        }
+
+    first = render(tmp_path / "one")
+    second = render(tmp_path / "two")
+    assert first == second
+    assert first, "no pages rendered, so identity is vacuous"
+
+
+def test_a_scalar_or_list_column_round_trips_both_forms() -> None:
+    relation = Relation.model_validate({"relation_id": "r1", "signal_id": "s1"})
+    assert relation.model_dump()["signal_id"] == ["s1"]
+    assert relation.model_dump(mode="json")["signal_id"] == "s1"
+
+    several = Relation.model_validate({"relation_id": "r1", "signal_id": ["s1", "s2"]})
+    assert several.model_dump(mode="json")["signal_id"] == ["s1", "s2"]
+
+
+def test_a_one_item_list_comes_back_as_a_scalar() -> None:
+    """The documented lossy case, asserted so it is a decision and not a bug."""
+    relation = Relation.model_validate({"relation_id": "r1", "signal_id": ["only"]})
+    assert relation.model_dump(mode="json")["signal_id"] == "only"
+
+
+def test_both_wire_forms_reach_the_json_schema() -> None:
+    """The reason this is a constraint: the rule has to leave Python."""
+    emitted = Relation.model_json_schema()["properties"]["signal_id"]
+    branches = emitted["oneOf"]
+    assert [branch.get("type") for branch in branches] == ["string", "array"]
+    assert branches[1]["items"]["type"] == "string"

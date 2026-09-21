@@ -86,6 +86,71 @@ class YesNoConstraint(FieldConstraint):
         return emitted
 
 
+def _as_list(value: Any) -> Any:
+    """A bare scalar is a one-item list."""
+    return [value] if isinstance(value, str) else value
+
+
+def _unwrap_single(value: Any) -> Any:
+    """A one-item list goes back out as the scalar it probably arrived as."""
+    if isinstance(value, list) and len(value) == 1:
+        return value[0]
+    return value
+
+
+class ScalarOrListConstraint(FieldConstraint):
+    """A column declared as one value and documented as possibly several.
+
+    Seven columns across the three extension tables are typed `ID` or `Text`
+    and then told to hold a list -- "If multiple (ex. at the west and east ends
+    of a crossing), provide all IDs in a list". Both forms are conformant, so
+    both have to validate.
+
+    **Why not `str | list[str]`**, which is the obvious encoding: the Overture
+    codegen cannot render it. `_peel_union` accepts a multi-arm union only when
+    every arm is a `BaseModel`, so a scalar/list union raises
+    `UnsupportedUnionError` and the model gets no page at all. Holding a list
+    and unwrapping a single item on the way out gives one declared type and
+    round-trips a conformant scalar unchanged.
+
+    **Why not a bare `BeforeValidator` plus `PlainSerializer`**, for the reason
+    `YesNoConstraint` gives: those are anonymous plumbing, invisible to the
+    emitted schema and rendered into the reference docs as a function `repr`
+    carrying a memory address, which makes the generated markdown differ on
+    every run.
+
+    One lossy case, and it is deliberate: a publisher who writes a one-item
+    list gets a scalar back. GATIS assigns no meaning to the difference, the
+    same argument that licenses collapsing an explicit null onto absent.
+    """
+
+    def __get_pydantic_core_schema__(
+        self, source: type[Any], handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(
+            _as_list,
+            handler(source),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                _unwrap_single,
+                # JSON only. In Python the value is a list and `model_dump`
+                # should say so; the scalar form belongs on the wire.
+                when_used="json",
+            ),
+        )
+
+    def __get_pydantic_json_schema__(
+        self, schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> dict[str, Any]:
+        """Declare both wire forms, since both are conformant."""
+        emitted = handler(schema)
+        items = emitted.get("items")
+        if items is None:
+            return emitted
+        return {
+            key: value for key, value in emitted.items() if key not in {"type", "items"}
+        } | {"oneOf": [items, {"type": "array", "items": items}]}
+
+
 class SuggestedValues(StringConstraint):
     """A vocabulary v1.0 publishes for a field whose type it leaves open.
 

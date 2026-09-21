@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Regenerate docs/reference/ from the models using Overture's markdown generator.
 #
+# Two tags, because GATIS has two kinds of model. `feature` is the system's own,
+# added to anything deriving from `Feature`, and covers the four core classes.
+# `gatis:extension` is ours, from `gatis_schema.tag_providers`, and covers the
+# three extension tables -- rows of a plain JSON file, so no `Feature` and no
+# `feature` tag. Without the second, `--tag feature` silently drops them.
+#
 # `--exclude overture` drops the transportation theme's own pages; that package is
 # a dev dependency for one reason, explained in pyproject.toml.
 set -euo pipefail
@@ -14,6 +20,7 @@ main() {
   ( cd "$root" && uv run overture-codegen generate \
       --format markdown \
       --tag feature \
+      --tag gatis:extension \
       --exclude overture \
       --output-dir docs/reference )
   echo "wrote $(find "$out" -type f | wc -l | tr -d ' ') files under docs/reference"

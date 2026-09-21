@@ -117,9 +117,22 @@ LRS one, and the PDF gives one Required/Optional flag per field rather than the
 four-slot presence rule a core field gets.
 
 They are not Overture `Feature`s -- the three files are plain JSON, not GeoJSON
--- which also means `scripts/generate-reference` does not cover them. That
-generator discovers feature types; a `BaseModel` is invisible to it whatever tag
-it is given. The module docstring is the reference for these three.
+-- so the system's own tag provider does not tag them `feature` and a
+`--tag feature` run drops them. `gatis_schema.tag_providers` supplies
+`gatis:extension` and `gatis:table=<name>` instead, the three rows are
+registered under `overture.models` in `pyproject.toml`, and
+`scripts/generate-reference` asks for both tags. **Registering a new model means
+editing three places**: the entry point, the tag provider if it needs a tag the
+system will not infer, and the script's tag list.
+
+One constraint exists because of that pipeline. A field typed `str | list[str]`
+raises `UnsupportedUnionError` in the codegen -- a multi-arm union renders only
+when every arm is a `BaseModel` -- and the whole model then gets no page, so the
+seven scalar-or-list columns use `ScalarOrListConstraint` instead. Reach for a
+constraint rather than a bare `BeforeValidator`/`PlainSerializer` pair here for a
+second reason as well as the usual one: the markdown renderer prints unknown
+annotation metadata as its `repr`, so a bare validator stamps a memory address
+into `docs/reference/` and the generated output differs on every run.
 
 ## Express a rule as a declaration, not as a validator
 

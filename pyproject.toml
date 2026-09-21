@@ -12,14 +12,25 @@ dependencies = [
     "pydantic>=2.9",
 ]
 
-# Registers the four feature classes for Overture's discovery system, which is how
+# Registers the models for Overture's discovery system, which is how
 # `overture-codegen` finds them. A discriminated-union alias is resolved to every
-# arm, so these four cover all twenty-one feature types.
+# arm, so the first four cover all twenty-one feature types.
+#
+# The three extension tables are rows of a plain JSON file rather than GeoJSON
+# features, so the system's own tag provider does not tag them `feature` and a
+# `--tag feature` run drops them. `gatis_schema.tag_providers` gives them
+# `gatis:extension` instead; `scripts/generate-reference` asks for both tags.
 [project.entry-points."overture.models"]
 gatis_node = "gatis_schema.models:Node"
 gatis_edge = "gatis_schema.models:Edge"
 gatis_point = "gatis_schema.models:Point"
 gatis_zone = "gatis_schema.models:Zone"
+gatis_lrs_crosswalk = "gatis_schema.models:LrsCrosswalk"
+gatis_event = "gatis_schema.models:Event"
+gatis_relation = "gatis_schema.models:Relation"
+
+[project.entry-points."overture.tag_providers"]
+gatis = "gatis_schema.tag_providers:gatis_provider"
 
 [build-system]
 requires = ["hatchling"]
