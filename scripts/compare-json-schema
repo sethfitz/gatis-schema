@@ -1,0 +1,189 @@
+#!/usr/bin/env -S uv run python
+"""Compare our generated JSON Schema against the one upstream ships.
+
+Two independent renderings of the same spec: ours via Pydantic from
+`spec/specification/*.json`, theirs hand-maintained in `spec/json-schemas/`. Where
+they disagree, one of them is wrong -- which makes this a check on both.
+
+Their schema is per-FILE: one flat property bag per feature class, no
+discrimination on `*_type`. Ours is per-TYPE, a discriminated union. So property
+sets are compared as the union across our arms, and anything their flat schema
+cannot express is reported rather than counted as a difference.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = ROOT / "spec" / "json-schemas"
+CLASSES = {"edge": "edges", "node": "nodes", "point": "points", "zone": "zones"}
+
+
+def ours(feature_class: str) -> dict[str, Any]:
+    out = subprocess.run(
+        ["overture-schema", "json-schema", "--type", f"gatis_{feature_class}"],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    document: dict[str, Any] = json.loads(out.stdout)
+    return document
+
+
+def theirs(plural: str) -> dict[str, Any]:
+    with (SPEC / f"{plural}_schema.json").open() as handle:
+        document: dict[str, Any] = json.load(handle)
+    return document
+
+
+def their_properties(schema: dict[str, Any]) -> dict[str, Any]:
+    items = schema["properties"]["features"]["items"]["properties"]
+    props: dict[str, Any] = items["properties"]["properties"]
+    return props
+
+
+def our_arms(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Each feature-type class in our union, by its `*_type` literal.
+
+    Both schemas nest the GATIS fields one level down, inside the GeoJSON Feature's
+    `properties`; this returns that inner object, so the two are comparable.
+    """
+    arms = {}
+    for definition in schema.get("$defs", {}).values():
+        bag = definition.get("properties", {}).get("properties")
+        if not isinstance(bag, dict):
+            continue
+        props = bag.get("properties", {})
+        discriminator = next(
+            (
+                v
+                for k, v in props.items()
+                if k.endswith("_type") and v.get("const") is not None
+            ),
+            None,
+        )
+        if discriminator is not None:
+            arms[str(discriminator["const"])] = bag
+    return arms
+
+
+def enum_of(node: Any) -> list[str] | None:
+    """The enum a property resolves to, looking through $ref, arrays and unions."""
+    if not isinstance(node, dict):
+        return None
+    if "enum" in node:
+        return [str(v) for v in node["enum"]]
+    for key in ("items", "anyOf", "oneOf", "allOf"):
+        child = node.get(key)
+        if isinstance(child, dict):
+            found = enum_of(child)
+            if found:
+                return found
+        if isinstance(child, list):
+            for item in child:
+                found = enum_of(item)
+                if found:
+                    return found
+    return None
+
+
+def resolve(node: Any, defs: dict[str, Any], depth: int = 0) -> Any:
+    """Inline `$ref`s so an enum behind a reference is comparable."""
+    if depth > 6 or not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/$defs/"):
+        return resolve(defs.get(ref.rsplit("/", 1)[-1], {}), defs, depth + 1)
+    return {
+        k: (
+            [resolve(i, defs, depth + 1) for i in v]
+            if isinstance(v, list)
+            else resolve(v, defs, depth + 1)
+            if isinstance(v, dict)
+            else v
+        )
+        for k, v in node.items()
+    }
+
+
+def main() -> int:
+    findings = 0
+    for feature_class, plural in CLASSES.items():
+        our_schema = ours(feature_class)
+        their_schema = theirs(plural)
+        defs = our_schema.get("$defs", {})
+        arms = our_arms(our_schema)
+
+        our_props: dict[str, Any] = {}
+        our_required: dict[str, set[str]] = {}
+        for tag, arm in arms.items():
+            our_required[tag] = set(arm.get("required", []))
+            for name, node in arm.get("properties", {}).items():
+                our_props.setdefault(name, resolve(node, defs))
+        them = their_properties(their_schema)
+
+        print(
+            f"\n{'=' * 72}\n{plural}: {len(arms)} types here, "
+            f"{len(our_props)} properties across them; {len(them)} upstream"
+        )
+
+        only_ours = sorted(set(our_props) - set(them) - {"bbox", "geometry", "type"})
+        # Compare the base vocabulary; the colon-namespaced on-road fields are
+        # reported separately rather than as 292 missing properties.
+        only_theirs = sorted(n for n in set(them) - set(our_props) if ":" not in n)
+        if only_ours:
+            findings += len(only_ours)
+            print(f"  only in ours   ({len(only_ours)}): {only_ours}")
+        if only_theirs:
+            findings += len(only_theirs)
+            print(f"  only upstream  ({len(only_theirs)}): {only_theirs}")
+
+        for name in sorted(set(our_props) & set(them)):
+            ours_enum, theirs_enum = enum_of(our_props[name]), enum_of(them[name])
+            if ours_enum and theirs_enum and ours_enum != theirs_enum:
+                findings += 1
+                print(f"  enum differs: {name}")
+                print(f"     ours    : {ours_enum}")
+                print(f"     upstream: {theirs_enum}")
+            elif ours_enum and not theirs_enum:
+                print(f"  enum only ours: {name} ({len(ours_enum)} values)")
+
+        nullable = sum(
+            1
+            for node in them.values()
+            if any(
+                isinstance(x, dict) and x.get("type") == "null"
+                for x in node.get("oneOf", []) + node.get("anyOf", [])
+            )
+        )
+        print(f"  upstream permits explicit null on {nullable}/{len(them)} properties")
+        bag = their_schema["properties"]["features"]["items"]["properties"][
+            "properties"
+        ]
+        their_required = sorted(bag.get("required", []))
+        print(f"  upstream required: {their_required or 'NONE -- presence unchecked'}")
+        print(f"  upstream additionalProperties: {bag.get('additionalProperties')}")
+        tier1 = sorted({f for names in our_required.values() for f in names})
+        print(f"  ours required at tier 1, across types ({len(tier1)}): {tier1}")
+
+        # The colon-namespaced on-road representation: fields the flat upstream
+        # schema carries that name a type plus a side.
+        namespaced = sorted({n.split(":")[0] for n in them if ":" in n})
+        if namespaced:
+            count = sum(1 for n in them if ":" in n)
+            print(
+                f"  upstream on-road (colon-namespaced) fields: {count}, "
+                f"for {namespaced}"
+            )
+
+    print(f"\n{'=' * 72}\n{findings} differences")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
