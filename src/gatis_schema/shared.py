@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from overture.schema.system.optionality import Omitable
 from pydantic import BaseModel, ConfigDict, Field
+
+from gatis_schema.constraints import SuggestedValues
 
 
 class ReferenceId(BaseModel):
@@ -45,9 +49,38 @@ class GtfsReference(BaseModel):
 
 
 class SeasonalCondition(BaseModel):
-    """A recurring seasonal issue affecting an edge."""
+    """A recurring seasonal issue affecting an edge.
 
-    season: Omitable[str] = Field(description="spring, summer, fall or winter")
-    issue: Omitable[str] = Field(
-        description="flooding, ice, snow, heavy rain, heat, low visibility, fog, wind"
+    The two vocabularies are hand-split from one mangled cell. `seasonal`'s
+    `listed_values` runs both together and marks the boundary with a label
+    carried inside a value -- `"season: spring", "summer", ..., "seasonal
+    issues: flooding", "ice", ...` -- so no exporter fix recovers them and
+    `spec/repairs.json` does not try: codegen routes this field to this class
+    instead. `test_seasonal_condition_still_matches_the_mangled_cell` pins them
+    to the snapshot.
+
+    Open on purpose, like every other `Text` vocabulary in v1.0.
+    """
+
+    season: Omitable[
+        Annotated[str, SuggestedValues("spring", "summer", "fall", "winter")]
+    ] = Field(description="Recommended values: spring; summer; fall; winter.")
+
+    issue: Omitable[
+        Annotated[
+            str,
+            SuggestedValues(
+                "flooding",
+                "ice",
+                "snow",
+                "heavy rain",
+                "heat / lack of shade",
+                "low visibility",
+                "fog",
+                "wind",
+            ),
+        ]
+    ] = Field(
+        description="Recommended values: flooding; ice; snow; heavy rain; "
+        "heat / lack of shade; low visibility; fog; wind."
     )

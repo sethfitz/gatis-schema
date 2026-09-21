@@ -300,3 +300,40 @@ class TestPresenceRule:
         rule = PresenceRule.parse(["optional", None, None, None])
         with pytest.raises(ValueError, match="tier must be one of"):
             rule.at(5)
+
+
+def test_seasonal_condition_still_matches_the_mangled_cell() -> None:
+    # `SeasonalCondition` hand-splits one cell into two vocabularies, because
+    # `seasonal`'s `listed_values` carries its own section labels inside values
+    # ("season: spring", ..., "seasonal issues: flooding", ...). No exporter fix
+    # recovers that, so the split is a judgement this package makes and nothing
+    # else re-checks. Pin it: if upstream repairs or re-mangles the cell, this
+    # fails rather than leaving the hand-written values quietly wrong.
+    from gatis_schema.annotations import field_vocabularies
+    from gatis_schema.shared import SeasonalCondition
+
+    published = next(
+        field
+        for field in SpecReader().load().feature_classes["edge"].fields
+        if field.name == "seasonal"
+    )
+    assert published.listed_values == [
+        "season: spring",
+        "summer",
+        "fall",
+        "winter",
+        "seasonal issues: flooding",
+        "ice",
+        "snow",
+        "heavy rain",
+        "heat / lack of shade",
+        "low visibility",
+        "fog",
+        "wind",
+    ]
+
+    declared = field_vocabularies(SeasonalCondition)
+    # Every published value reaches one of the two fields, with the section
+    # label stripped from the two that carry one.
+    stripped = {value.split(": ")[-1] for value in published.listed_values}
+    assert stripped == set(declared["season"].values) | set(declared["issue"].values)
