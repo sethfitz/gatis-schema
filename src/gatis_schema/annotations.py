@@ -28,13 +28,19 @@ class Unit:
     which is what makes them machine-readable at all. The units are not uniform --
     widths are inches, buffers and lengths are feet, slopes are percent -- and the
     slopes and `traffic_volume` are still stated in prose only.
+
+    `__str__` spells the unit out because the Overture markdown generator renders
+    unrecognised field metadata by `str()`-ing it: with the bare symbol, the
+    reference showed a field annotated `` *`%`* `` with nothing saying what that
+    was. Read `.symbol` for the token -- it is what a label wants, and the two
+    audiences want different strings.
     """
 
     symbol: str
     name: str = ""
 
     def __str__(self) -> str:
-        return self.symbol
+        return f"{self.name} ({self.symbol})" if self.name else self.symbol
 
 
 @dataclass(frozen=True, slots=True)

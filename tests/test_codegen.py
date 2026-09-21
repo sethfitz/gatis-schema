@@ -73,9 +73,11 @@ def test_units_are_annotated_from_the_field_name() -> None:
     from gatis_schema.models.edges import RoadEdge, SidewalkEdge
 
     units = field_units(SidewalkEdge)
-    assert str(units["width_in"]) == "in"
-    assert str(units["buffer_width_ft"]) == "ft"
-    assert str(field_units(RoadEdge)["posted_speed_limit_mph"]) == "mph"
+    assert units["width_in"].symbol == "in"
+    # Spelled out for the reference docs, which render metadata by `str()`.
+    assert str(units["width_in"]) == "inches (in)"
+    assert units["buffer_width_ft"].symbol == "ft"
+    assert field_units(RoadEdge)["posted_speed_limit_mph"].symbol == "mph"
 
 
 def test_tier_presence_survives_into_the_models() -> None:
@@ -179,7 +181,7 @@ def test_an_on_road_modifier_is_typed_rather_than_an_extra() -> None:
     dumped = edge.model_dump(exclude_unset=True)
     assert dumped["bikeway:left:directionality"] is Directionality.BOTH
     assert dumped["bikeway:left:width_in"] == 72
-    assert str(field_units(RoadEdge)["bikeway_left_width_in"]) == "in"
+    assert field_units(RoadEdge)["bikeway_left_width_in"].symbol == "in"
 
     # And the GATIS spelling survives the round trip.
     properties = json.loads(edge.model_dump_json())["properties"]

@@ -10,8 +10,10 @@ list). Eight v1.0 types are missing, including `road`, `pushbutton`,
 name a road.
 
 Kept verbatim anyway. Correcting it here would fork the spec and hide the
-defect; `docs/spec-review.md` reports it and
-`test_extension_type_vocabularies_still_predate_v1_0` pins it.
+defect; `docs/spec-review.md` reports it, each bad value carries its own
+note through `DocumentedEnum` so a reader meets it at the value rather than
+here, and `test_exactly_the_unrecognised_members_carry_a_note` derives which
+members those are rather than trusting this list.
 
 ## Values
 
