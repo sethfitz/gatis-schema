@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Download the published GATIS sample datasets into sample-data/ (gitignored).
+#
+# There is no single place to get these. The GATIS Explorer's sample-datasets
+# page contains no data: it is a shell that fetches maps.json at runtime and
+# iframes ~30 MB Folium maps. Newark's GeoJSON is committed to dotbts/BPA;
+# Austin's is not in any repository, and lives as ArcGIS items whose ids appear
+# only inside HTML strings in maps.json.
+#
+# Austin's edges file is ~280 MB and is the full dataset, not the clipped
+# sample the map shows. Pass --skip-austin-edges to leave it.
+#
+# Neither file declares a spec version and both predate the commit spec/ pins,
+# so expect vocabulary GATIS v1.0 has since renamed. See
+# docs/sample-data-validation.md.
+set -euo pipefail
+
+REPO=dotbts/BPA
+REF=${GATIS_SAMPLE_REF:-main}
+ARCGIS=https://usdot.maps.arcgis.com/sharing/rest/content/items
+
+# ArcGIS item ids, read out of maps.json's description HTML on 2026-09-21.
+# Pinned rather than re-scraped: the ids are stable, the HTML around them is not.
+AUSTIN_EDGES=85009c8a1f62415a938f75f671172d70
+AUSTIN_NODES=9ef08fa4b51241e8b3b02549d83ea043
+
+main() {
+  local root out skip_big=0
+  [[ ${1:-} == --skip-austin-edges ]] && skip_big=1
+  root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+  out="$root/sample-data"
+  mkdir -p "$out"
+
+  fetch_github newark_edges \
+    "draft_gatis_specification/sample_data/newark_de/newarkDE_sample_edges.geojson"
+  fetch_github newark_nodes \
+    "draft_gatis_specification/sample_data/newark_de/newarkDE_sample_nodes.geojson"
+  fetch_arcgis austin_nodes "$AUSTIN_NODES"
+  if (( skip_big )); then
+    echo "skipped austin_edges (--skip-austin-edges)"
+  else
+    fetch_arcgis austin_edges "$AUSTIN_EDGES"
+  fi
+
+  echo
+  for f in "$out"/*.geojson; do
+    printf '%-28s %8s features  %s\n' \
+      "$(basename "$f")" \
+      "$(jq '.features | length' "$f")" \
+      "$(du -h "$f" | cut -f1)"
+  done
+  echo
+  echo "validate with: ./scripts/validate-sample sample-data/<file>.geojson"
+}
+
+# A GeoJSON that is not valid JSON means the transfer failed, not that the data
+# is bad: GitHub and ArcGIS both answer errors with 200 and an HTML or JSON body.
+check_json() {
+  local path=$1 name=$2
+  if ! jq -e 'has("features")' "$path" >/dev/null 2>&1; then
+    echo "error: $name did not download a FeatureCollection." >&2
+    echo "       first bytes: $(head -c 120 "$path")" >&2
+    rm -f "$path"
+    return 1
+  fi
+}
+
+fetch_github() {
+  local name=$1 path=$2 dest="$out/$1.geojson"
+  [[ -s $dest ]] && { echo "have    $name"; return; }
+  echo "fetch   $name  (raw.githubusercontent.com, $REF)"
+  curl -fsSL -o "$dest" \
+    "https://raw.githubusercontent.com/$REPO/$REF/$path"
+  check_json "$dest" "$name"
+}
+
+fetch_arcgis() {
+  local name=$1 item=$2 dest="$out/$1.geojson"
+  [[ -s $dest ]] && { echo "have    $name"; return; }
+  echo "fetch   $name  (ArcGIS item $item)"
+  curl -fsSL -o "$dest" "$ARCGIS/$item/data"
+  check_json "$dest" "$name"
+}
+
+out=""
+main "$@"

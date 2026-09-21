@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Sample datasets, fetched by scripts/fetch-sample-data (~300 MB)
+sample-data/

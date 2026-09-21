@@ -46,14 +46,15 @@ Two more faults matter if you ever repair it enough to run:
 - **It requires nothing.** The `properties` object carries no `required` list
   at all, so every `required` presence rule in 1.0 is absent from it. It cannot
   catch Austin's 9,929 roads missing `directionality`.
-- **`oneOf` plus an unasserted `format` inverts the date fields.** 21 edge
-  fields are `oneOf [{"type":"string","format":"date"}, <YYYY-MM pattern>,
-  <YYYY pattern>, null]`. `format` is annotation-only by default, so the first
-  branch matches *any* string: `"banana"` validates, and `"2007-01"` and
-  `"2007"` are **rejected** because they match two branches and `oneOf` demands
-  exactly one. The spec's own permitted truncations fail while junk passes.
-  Turning format assertion on fixes both, and it is off by default in every
-  major implementation.
+- **The date fields only work if you assert `format`.** 21 edge fields are
+  `oneOf [{"type":"string","format":"date"}, <YYYY-MM pattern>, <YYYY pattern>,
+  null]`. `format` is annotation-only by default in JSON Schema, and with it
+  off the first branch matches *any* string: `"banana"` validates, while
+  `"2007-01"` and `"2007"` are **rejected** for matching two branches when
+  `oneOf` demands one. Assert it and all four behave correctly. Upstream's own
+  `validator/draft_gatis_validator.ipynb` passes
+  `format_checker=Draft202012Validator.FORMAT_CHECKER`, so this is correct as
+  upstream uses it and a trap for everyone else. Pass a format checker.
 
 So: never take an enum, a required rule, or a date verdict from the JSON
 Schema, and never cite it as evidence about what the spec permits. Its scalar

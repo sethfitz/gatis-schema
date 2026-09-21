@@ -442,3 +442,209 @@ v1.0 touched them.
    `listed_values` cells are the first bill for storing tokens as display text.
 8. **Separate the tier model from the field tables.** Presence becomes
    two-dimensional and the schema starts meaning one thing.
+
+## Appendix: draft upstream issue
+
+Staged for submission to [`dotbts/BPA`](https://github.com/dotbts/BPA). Verified
+against `main` at `ecc45ff`, which is HEAD as of 2026-09-21. The tracker carries
+three issues and none covers this. Everything below the rule is the proposed
+issue text.
+
+---
+
+### Published sample datasets do not validate against the published JSON Schema
+
+Running the two sample datasets linked from the GATIS Explorer against
+`draft_gatis_specification/json_schemas/` validates **0 of 351,693 features**.
+The causes split three ways: two are bugs in whatever generates the
+machine-readable artifacts, several are defects in the sample data, and a few
+are places the specification has not yet decided something. They are separated
+below because they need different people to act.
+
+Counts are from `austin_edges` (334,007), `austin_nodes` (9,979),
+`newark_edges` (4,283) and `newark_nodes` (3,424).
+
+#### 1. The type discriminator's `listed_values` is a cross-reference, not a vocabulary
+
+`edge_type` carries `["(Same as Edge Types)"]` and `node_type` carries
+`["(Same as Node Types)"]`, in `specification_jsons` and in the JSON Schemas
+generated from it. A spreadsheet cell written for a human reader has been
+exported as data.
+
+```
+$ jq -c '.attributes[]|select(.name=="edge_type")|.listed_values' \
+    draft_gatis_specification/specification_jsons/edges.json
+["(Same as Edge Types)"]
+```
+
+The JSON Schema therefore permits exactly one value for `edge_type`, and it is
+not a type name: `edge_type: "road"` fails validation and
+`edge_type: "(Same as Edge Types)"` passes. This single defect accounts for
+every one of the 351,693 failures. The correct vocabulary is already in the
+same file, as the keys of `.types`.
+
+#### 2. Every `Array<Enum>` field is given the last one's vocabulary
+
+In the JSON Schemas only; `specification_jsons` has the right values, so this
+is isolated to the schema generator and looks like a loop variable leaking.
+
+```
+$ jq -c '.properties.features.items.properties.properties.properties
+         .prohibited_uses.items.enum[0:3]' json_schemas/edges_schema.json
+["scramble / all pedestrian interval","leading pedestrian interval",
+ "no right on red for motor vehicles"]
+```
+
+`prohibited_uses` offers pedestrian signal-timing values. Six fields are
+affected: `prohibited_uses`, `allowed_uses` and `cross_vehicle_traffic_control`
+in `edges_schema.json` all carry `ped_protection`'s list; `impediment` and
+`rail_crossing_control` in `nodes_schema.json` and `accessibility_features` in
+`points_schema.json` all carry `surface_issue`'s. `zones_schema.json` declares
+no `Array<Enum>` field, so it is unaffected rather than fixed.
+
+#### 3. Two `listed_values` splitting faults
+
+Both are in `specification_jsons`, so they reach every downstream artifact.
+
+**Split on newline, against a cell that wraps mid-sentence.**
+`separation_permeable_car` arrives as six fragments:
+
+```json
+["hard separator:  the separator cannot be easily bypassed by motor vehicles (jersey barriers",
+ "curbs)", "", "soft separator: the separator can be easily bypassed by motor vehicles (flex posts",
+ "k-rail)", "", "none: no separator is present (just paint separation)"]
+```
+
+Three values are intended. `separation_elements` has the same fault, ending
+`"trees  unknown"`.
+
+**Not split at all, where the separator is a pipe.** `presence` on nodes is
+`["yes", "no | missing", "unknown"]`; the same field on edges is
+`["yes", "no", "missing", "unknown"]`. We read the nodes form as an unsplit
+pair rather than a different vocabulary, on the strength of that asymmetry.
+Not confirmed against the source cell, which we cannot see.
+
+The general fix is to store enum values as tokens and render display text
+separately. Seven cells are affected today; the cost grows with every dataset
+published against them.
+
+#### 4. `additionalProperties: false` contradicts the specification's own text
+
+The JSON Schemas forbid unknown properties, which rejects all 4,283
+`newark_edges` features outright. The specification introduction says the
+opposite:
+
+> Data producers may add their own columns or create their own extensions to
+> fit their local needs.
+
+One of the two should move. An unknown property is a different diagnostic from
+an invalid one, and a validator that cannot say so pushes publishers away from
+the extension mechanism the spec offers them.
+
+#### 5. Defects in the published sample data
+
+These are in the datasets rather than in the spec, and they are worth fixing
+because the samples are what a publisher copies.
+
+| | Dataset | Count |
+| --- | --- | --- |
+| `node_type: "virtual"`, not a v1.0 node type | `newark_nodes` | 3,424 (all) |
+| `edge_id` / `from_node` / `to_node` as numbers, not `ID` strings; endpoints as floats such as `2000002.0` | `newark_edges`, `newark_nodes` | 12,757 + 3,424 |
+| `directionality` absent, though `required` for `road` from Tier 1 | `austin_edges` | 9,929 (all roads) |
+| `cross_vehicle_traffic_control` sent as a string where the type is `Array<Enum>` | both | 2,895 |
+| `separation_elements` sent as a string where the type is `Array<Text>` | `newark_edges` | 22 |
+| `date_built` as an RFC 3339 datetime where the type is `Date` | `austin_edges` | 73,482 |
+| `last_inspection_date: "1970-01-01"` — Unix epoch zero from an Esri export | `austin_nodes` | 8,815 of 9,979 |
+
+The last two are the ones a schema will not catch. `1970-01-01` matches every
+date rule the spec states; 88% of that column is a null that validates. The
+`date_built` values are all midnight at the same offset with 42 distinct values
+across 73,482 features, so the real precision is the year.
+
+Separately, all 33 `bikeway`, `crossing` and `traffic_island` edges in
+`newark_edges` carry null `from_node` and `to_node`, so that layer is
+topologically disconnected. Both fields are optional for those types, so the
+file conforms.
+
+#### 6. Four values publishers used that the vocabularies do not offer
+
+All on one separated bike lane on Delaware Avenue in `newark_edges`, so this is
+one design case rather than a distribution. Three name real devices:
+
+- `separation_permeable_car: "mountable"` (14). The vocabulary is a binary —
+  hard means a separator motor vehicles cannot bypass, soft means one they can.
+  A mountable concrete barrier is neither. The same publisher used
+  `hard separator` for a 6-inch concrete curb and `mountable` for a mountable
+  one, so the distinction is deliberate.
+- `bikeway_grade_separation: "intermediate"` (2). A bike lane raised above the
+  roadway but below the sidewalk is standard separated bike lane practice and
+  `at_grade | raised | sidewalk_level` cannot express it.
+- `vehicle_traffic_control: "bicycle traffic signal"` (7). A bicycle signal
+  face is a distinct MUTCD device. GATIS has `vehicle_traffic_control` and
+  `ped_traffic_control` and no bicycle equivalent, so a bikeway crossing under
+  one cannot be described. This is a gap in the field set rather than in a
+  vocabulary.
+
+`vehicle_traffic_control: "none"` (2) is a publisher synonym for
+`no vehicle control` and needs no spec change.
+
+#### 7. Two things the specification has not decided
+
+Neither is a bug, and both cost more the longer they stand.
+
+**`reference_ids` constrains nothing.** The type is `Array<Object>` with
+`listed_values: null`, and the description still reads *"Should be an array of
+JSONs with the source name and ID pair. Each JSON should contain an ID field
+and source field at minimum."* No field names are specified, so these four
+encodings from the sample data are equally conformant and none uses `id`:
+
+```json
+{"source": "austin", "sidewalks_id": "94639273"}
+{"source": "austin", "source_url": "", "CURB_RAMPS_ID": 15866993}
+{"source": "austin", "asmp_street_network_id": "330428"}
+{"source": "newark", "edge_id": 1070387}
+```
+
+This is the only join key GATIS offers to OSM, Overture, ARNOLD, TIGER or an
+LRS, and a consumer cannot find the identifier in one without per-source
+knowledge. Naming two keys would settle it.
+
+**Whether an absent value is omitted or written as `null` is unstated**, and the
+two sample datasets answer it oppositely. Austin omits: 6.95 properties per
+edge, no nulls anywhere. Newark writes every field on every feature and nulls
+what it lacks: 60 properties per edge, 34 of them null, 146,710 in total. Both
+readings are defensible and a consumer has to handle both. One sentence in the
+prose would fix it; the JSON Schemas already permit `null` on 159 of 370 edge
+fields, which suggests the intended answer.
+
+#### Note on the required-fields question
+
+The JSON Schemas carry no `required` list at all, so no presence rule reaches
+them and validation cannot catch item 5's missing `directionality`. We take
+this to be a deliberate limit rather than an oversight: presence in GATIS
+varies by feature type *and* tier, which JSON Schema can only express as nested
+`if`/`then`, and picking one tier to encode would be wrong for the other three.
+Saying so in the schema's `description` would stop implementers assuming
+validation covers presence.
+
+#### Reproducing
+
+```python
+import json
+from jsonschema import Draft202012Validator
+
+schema = json.load(open("draft_gatis_specification/json_schemas/edges_schema.json"))
+data = json.load(open("<austin edges>.geojson"))
+v = Draft202012Validator(schema["properties"]["features"]["items"])
+print(
+    sum(1 for f in data["features"] if not list(v.iter_errors(f))),
+    "/",
+    len(data["features"]),
+)
+```
+
+`validator/draft_gatis_validator.ipynb` does the same over the whole
+collection. It points at an absolute path on a machine we do not have and at
+`austin_sample_edges.geojson`, which is not in the repository, so it cannot run
+as committed — which may be why items 1 and 2 have gone unnoticed since the
+January regeneration.
