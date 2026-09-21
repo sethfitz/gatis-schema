@@ -87,8 +87,19 @@ class YesNoConstraint(FieldConstraint):
 
 
 def _as_list(value: Any) -> Any:
-    """A bare scalar is a one-item list."""
-    return [value] if isinstance(value, str) else value
+    """A bare scalar is a one-item list.
+
+    Keyed on "not already a list" rather than on `isinstance(value, str)`, so a
+    non-string scalar reaches the element type and is judged there. Newark
+    ships `edge_id` as an integer in the core files, so an integer identifier
+    in an extension row is not hypothetical -- and wrapping only strings left
+    it reported as `Input should be a valid list`, which names the wrong
+    problem. `None` passes through so an explicit null stays absent rather than
+    becoming `[None]`.
+    """
+    if value is None or isinstance(value, list):
+        return value
+    return [value]
 
 
 def _unwrap_single(value: Any) -> Any:

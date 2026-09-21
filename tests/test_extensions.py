@@ -488,3 +488,22 @@ def test_both_wire_forms_reach_the_json_schema() -> None:
     branches = emitted["oneOf"]
     assert [branch.get("type") for branch in branches] == ["string", "array"]
     assert branches[1]["items"]["type"] == "string"
+
+
+def test_a_non_string_identifier_is_judged_as_an_identifier(tmp_path: Path) -> None:
+    """Wrapping only strings named the wrong problem.
+
+    Newark ships `edge_id` as an integer in the core files, so an integer
+    identifier in an extension row is plausible. It is still refused -- `Id` is
+    a string -- but the error has to say so, not `Input should be a valid list`.
+    """
+    del tmp_path
+    with pytest.raises(ValidationError) as caught:
+        Relation.model_validate({"relation_id": "r1", "signal_id": 1070387})
+    assert caught.value.errors()[0]["msg"] == "Input should be a valid string"
+
+
+def test_an_explicit_null_reads_as_absent_on_an_extension_row() -> None:
+    """As it does on a core feature, and via the same helper."""
+    relation = Relation.model_validate({"relation_id": "r1", "signal_id": None})
+    assert relation.model_dump(mode="json") == {"relation_id": "r1"}

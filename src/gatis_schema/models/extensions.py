@@ -53,9 +53,13 @@ from overture.schema.system.geometric import Geometry
 from overture.schema.system.numeric import float64, int32
 from overture.schema.system.optionality import Omitable
 from overture.schema.system.ref import Id
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from gatis_schema.constraints import ScalarOrListConstraint, SuggestedValues
+from gatis_schema.constraints import (
+    ScalarOrListConstraint,
+    SuggestedValues,
+    drop_null_properties,
+)
 from gatis_schema.scalars import GatisDatetime
 
 # Seven columns across the three tables are declared as one value and documented
@@ -185,6 +189,14 @@ class ExtensionRow(BaseModel):
         populate_by_name=True,
         serialize_by_alias=True,
     )
+
+    # An explicit `null` reads as absent, as it does on a core feature. Same
+    # reasoning, same helper: Esri-derived exports write every unset field as a
+    # null, and nothing in GATIS distinguishes "known empty" from "not
+    # collected". Without this an extension row would be stricter than an edge
+    # about the same publisher's output. The `properties` branch of the helper
+    # is a no-op here -- a row is flat, with no GeoJSON envelope.
+    _drop_nulls = model_validator(mode="before")(staticmethod(drop_null_properties))
 
 
 class LrsCrosswalk(ExtensionRow):
