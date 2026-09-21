@@ -151,10 +151,12 @@ class MetadataField(BaseModel):
 class Repair(BaseModel):
     """One deliberate correction applied to a snapshot value on read.
 
-    v1.0 publishes `listed_values` by splitting a spreadsheet cell on newlines, and
-    six edge cells do not survive it: hard-wrapped definitions fragment, blank lines
-    become empty values, and run-together lines stay fused. Recorded here rather
-    than guessed inline, so every departure from the verbatim snapshot is visible.
+    v1.0 publishes `listed_values` by exporting a spreadsheet cell, and some cells
+    do not survive it: hard-wrapped definitions fragment on the newline split, blank
+    lines become empty values, run-together lines stay fused, a pipe is never
+    treated as a separator, and one cell holds a leaked comment anchor. Recorded
+    here rather than guessed inline, so every departure from the verbatim snapshot
+    is visible.
     """
 
     feature_class: str

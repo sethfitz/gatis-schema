@@ -89,6 +89,12 @@
         "unknown"
       ],
       "reason": "A third split mechanism, distinct from the newline cases above: nodes.json publishes the middle value as the single entry 'no | missing', a pipe-joined pair the exporter never treated as a separator. edges.json lists the same field as four values, so the intent is unambiguous. Austin sends 'no' on 426 curb-ramp nodes, which is valid on an edge and invalid on a node purely because of this."
+    },
+    {
+      "feature_class": "edge",
+      "field": "incline",
+      "values": [],
+      "reason": "A fourth mechanism, and the only instance of it in the snapshot: the sole entry is '[JG1]Grabbed from NACTO Bike design guide', a Google Docs comment anchor and its comment text, exported into the cell as if it were a value. incline is a Float reported as a percentage, so it has no vocabulary at all -- the repair is the empty list, not a corrected set of tokens. Inert in today's output because codegen reads listed_values only for Enum and Text fields, and live the moment that changes or anything reads the field vocabularies directly."
     }
   ]
 }

@@ -155,6 +155,7 @@ def test_the_snapshot_reads_clean_once_repairs_are_applied(
     assert snapshot.defects == []
     assert sorted((r.feature_class, r.field) for r in snapshot.repairs_applied) == [
         ("edge", "allowed_uses"),
+        ("edge", "incline"),
         ("edge", "markings"),
         ("edge", "prohibited_uses"),
         ("edge", "separation_elements"),
@@ -165,12 +166,12 @@ def test_the_snapshot_reads_clean_once_repairs_are_applied(
 
 
 def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
-    # Control, in both directions. Without repairs the seven cells load verbatim
-    # and are visibly broken -- empty strings and fragments; with them they are
-    # clean. A repair whose values already matched upstream would pass the
-    # assertion above while changing nothing, so assert the difference, not just
-    # the application -- and assert it for EVERY repair, driven off repairs.json
-    # rather than a hand-kept list, so a new entry cannot land uncovered.
+    # Control, in both directions. Without repairs the cells load verbatim and are
+    # visibly broken -- empty strings and fragments; with them they are clean. A
+    # repair whose values already matched upstream would pass the assertion above
+    # while changing nothing, so assert the difference, not just the application --
+    # and assert it for EVERY repair, driven off repairs.json rather than a
+    # hand-kept list, so a new entry cannot land uncovered.
     spec = SpecReader().spec_dir
     shutil.copytree(spec, tmp_path / "spec")
     (tmp_path / "spec" / "repairs.json").unlink()
