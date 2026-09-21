@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+import pydantic
 import pytest
 
 from gatis_schema.codegen import enum_names, parse_listed_values
@@ -341,3 +342,140 @@ def test_the_on_road_prohibition_reaches_the_json_schema() -> None:
 
     assert not accepts({**base, "bikeway:left:edge_id": "x"})
     assert not accepts({**base, "sidewalk:right:street_name": "x"})
+
+
+def test_an_open_vocabulary_is_declared_but_not_enforced() -> None:
+    # v1.0 publishes a vocabulary for `visual_markings` and types the field
+    # `Text`, so the set is open on purpose. Austin ships "continental" on 6,717
+    # crossings -- the US term for what GATIS calls "ladder". The models must
+    # keep accepting it; the point of declaring the vocabulary is that a
+    # transformation can ask, not that validation starts refusing.
+    import json
+
+    from gatis_schema.models import EdgeAdapter
+    from gatis_schema.models.edges import CrossingEdge
+
+    feature = {
+        "type": "Feature",
+        "geometry": {"type": "LineString", "coordinates": [[0, 0], [1, 1]]},
+        "properties": {
+            "edge_id": "c1",
+            "edge_type": "crossing",
+            "visual_markings": "continental",
+        },
+    }
+    edge = EdgeAdapter.validate_json(json.dumps(feature))
+    assert isinstance(edge, CrossingEdge)
+    # Through model_dump, as above: mypy cannot narrow the Omitable union past
+    # the MISSING sentinel.
+    assert edge.model_dump(exclude_unset=True)["visual_markings"] == "continental"
+
+
+def test_a_closed_vocabulary_is_still_enforced() -> None:
+    # The control for the test above. "Accepts anything" is the expected result
+    # for an open vocabulary, so it proves nothing unless a closed one still
+    # refuses -- otherwise a change that disabled enum validation outright would
+    # read as a pass.
+    import json
+
+    import pydantic
+
+    from gatis_schema.models import EdgeAdapter
+
+    feature = {
+        "type": "Feature",
+        "geometry": {"type": "LineString", "coordinates": [[0, 0], [1, 1]]},
+        "properties": {
+            "edge_id": "c1",
+            "edge_type": "crossing",
+            "surface_material": "continental",
+        },
+    }
+    with pytest.raises(pydantic.ValidationError):
+        EdgeAdapter.validate_json(json.dumps(feature))
+
+
+def test_an_open_vocabulary_is_introspectable(snapshot: SpecSnapshot) -> None:
+    # The half that serves a transformation author: reachable as data from the
+    # model, without reading the spec snapshot or parsing a description string.
+    from gatis_schema.annotations import field_vocabularies
+    from gatis_schema.models.edges import CrossingEdge
+
+    vocabularies = field_vocabularies(CrossingEdge)
+    published = next(
+        field
+        for field in snapshot.feature_classes["edge"].fields
+        if field.name == "visual_markings"
+    )
+    assert vocabularies["visual_markings"].values == tuple(published.listed_values)
+    assert "ladder" in vocabularies["visual_markings"].values
+
+
+def test_a_closed_vocabulary_is_not_declared_twice() -> None:
+    # An `Enum` field's values are already in the enum class. Annotating those
+    # too would put the same list in two places and leave neither canonical.
+    from gatis_schema.annotations import field_vocabularies
+    from gatis_schema.models.edges import CrossingEdge
+
+    assert "surface_material" not in field_vocabularies(CrossingEdge)
+
+
+def test_every_open_vocabulary_in_the_spec_reaches_a_model(
+    snapshot: SpecSnapshot,
+) -> None:
+    # The count that catches a codegen path firing for some fields and not
+    # others. Twelve edge fields publish a vocabulary on an open type; a partial
+    # rollout would still pass every single-field assertion above.
+    from gatis_schema.annotations import field_vocabularies
+    from gatis_schema.models import edges as edge_models
+
+    # `Text` specifically: a Boolean's values are carried by `YesNo`, and the
+    # one Float with `listed_values` has a stray Word comment in the cell.
+    expected = {
+        field.name
+        for field in snapshot.feature_classes["edge"].fields
+        if field.listed_values and "Text" in (field.type or "Text")
+    }
+    assert len(expected) == 12
+
+    declared: set[str] = set()
+    for obj in vars(edge_models).values():
+        if isinstance(obj, type) and issubclass(obj, pydantic.BaseModel):
+            declared |= {
+                # An on-road modifier carries the base field's vocabulary.
+                name.rsplit(":", 1)[-1]
+                for name in field_vocabularies(obj)
+            }
+    assert expected <= declared, expected - declared
+
+
+def test_an_open_vocabulary_reaches_the_json_schema() -> None:
+    # The reason this is a FieldConstraint and not a lookup table in this
+    # package: most consumers of GATIS will read the JSON Schema and never
+    # import Python. Asserted through the real generator, because
+    # `model_json_schema()` does not exercise the system's field classifier.
+    import json
+    import subprocess
+
+    emitted = json.loads(
+        subprocess.run(
+            ["overture-schema", "json-schema", "--type", "gatis_edge"],
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+    )
+    crossing = emitted["$defs"]["CrossingEdge"]["properties"]["properties"]
+
+    assert crossing["properties"]["visual_markings"]["examples"] == [
+        "marked - type unknown",
+        "unmarked",
+        "transverse",
+        "longitudinal bar",
+        "ladder",
+        "bar pair",
+        "high visibility",
+        "other",
+    ]
+    # A field with a closed vocabulary gets an enum, not examples.
+    assert "examples" not in crossing["properties"]["surface_material"]

@@ -205,6 +205,7 @@ class ClassWriter:
         self.enums: dict[str, list[EnumValue]] = {}
         self.uses_all_or_none = False
         self.uses_forbidden_on_road = False
+        self.uses_suggested_values = False
 
     # -- fields ---------------------------------------------------------------
 
@@ -254,6 +255,14 @@ class ClassWriter:
                 extra.append("Field(gt=0)")
         else:
             base = "str"
+            # A `Text` field with listed values: v1.0 publishes the vocabulary
+            # and leaves the type open. Declaring it lets a transformation read
+            # the values; the description keeps them for people.
+            suggested = _open_vocabulary(field)
+            if suggested:
+                self.uses_suggested_values = True
+                rendered = ", ".join(_literal(value.value) for value in suggested)
+                base = f"Annotated[str, SuggestedValues({rendered})]"
 
         reference = REFERENCES.get((self.name, field.name))
         if reference is not None:
@@ -276,18 +285,19 @@ class ClassWriter:
         annotation = f"Annotated[{inner}, {', '.join(metadata)}]"
 
         description = " ".join(field.description.split())
-        # A `Text` field with listed values is advisory in v1.0 -- the vocabulary is
-        # published but the type is open, so the values belong in the description
-        # rather than in a closed enum.
-        if field.listed_values and not _is_enum(field):
-            suggested = parse_listed_values(field.listed_values)
-            if suggested:
-                values = "; ".join(v.value for v in suggested)
-                description = (
-                    f"{description} Recommended values: {values}."
-                    if description
-                    else f"Recommended values: {values}."
-                )
+        # Also in prose: `examples` serves machines, and the markdown target
+        # renders only a constraint's class docstring, so without this the
+        # reference docs would say a vocabulary exists without naming it. Both
+        # copies are generated from `listed_values` in this pass, so neither
+        # can drift from the other.
+        suggested = _open_vocabulary(field)
+        if suggested:
+            values = "; ".join(value.value for value in suggested)
+            description = (
+                f"{description} Recommended values: {values}."
+                if description
+                else f"Recommended values: {values}."
+            )
         assignment = (
             f" = Field(description={_literal(description)})" if description else ""
         )
@@ -573,6 +583,8 @@ class ClassWriter:
             helpers.append("all_or_none")
         if self.uses_forbidden_on_road:
             helpers.append("forbidden_on_road")
+        if self.uses_suggested_values:
+            helpers.append("SuggestedValues")
         lines.append(
             "from gatis_schema.constraints import (\n"
             + "".join(f"    {helper},\n" for helper in sorted(helpers))
@@ -605,6 +617,20 @@ class ClassWriter:
 
 
 _ON_ROAD_DOC = "The %s on the %s side of this road: see the %s field on that type."
+
+
+def _open_vocabulary(field: FieldSpec) -> list[EnumValue]:
+    """The values a `Text` field publishes without closing the set.
+
+    Empty for an `Enum` (its class carries them), for a `Boolean` (`YesNo`
+    does), and for the one `Float` whose cell holds a stray Word comment
+    rather than a vocabulary.
+    """
+    declared = field.type or "Text"
+    inner = declared[declared.index("<") + 1 : -1] if "<" in declared else declared
+    if inner != "Text":
+        return []
+    return parse_listed_values(field.listed_values)
 
 
 def _is_enum(field: FieldSpec) -> bool:

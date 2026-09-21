@@ -98,6 +98,13 @@ equivalent is `PatternConstraint` and friends from
 `overture.schema.system.field_constraint`, which is why `GatisDate` is an
 annotated `str` rather than a validator that parses dates.
 
+**A declaration need not be a rule.** Where the spec names values but leaves
+the type open -- `listed_values` on a `Text` field -- use `SuggestedValues`,
+not a sentence in the description. It rejects nothing (`FieldConstraint.validate`
+defaults to a no-op) and still reaches both sides: `field_vocabularies()` from
+Python, `examples` from the JSON Schema. A vocabulary in prose is one no
+transformation can act on.
+
 **The measurement that settles it**, and the reason this section exists:
 `forbidden_on_road` was first written as a `@model_validator(mode="before")`
 that raised. It worked, it had tests, it passed review. Generating the JSON
@@ -116,7 +123,10 @@ unknown field to warn rather than fail.
 **Two limits, so nobody discovers them the hard way.** The JSON Schema hook works
 for a third-party constraint; the PySpark codegen target does not -- it
 dispatches over a closed set of the system's own constraint types and raises
-`TypeError` on ours, with no registry to opt into (upstream `bd-ic2h`). And
+`TypeError` on ours, with no registry to opt into (upstream `bd-ic2h`). That
+target is unusable for these models regardless: it raises on `Tier` before
+reaching any constraint, so do not read a PySpark failure as a verdict on
+whichever constraint you just added. And
 `ModelConstraint`'s docstring advertises portability across codegen targets,
 which is true of constraints defined in the system package and not of ours. The
 schema hook is the portability actually on offer today.

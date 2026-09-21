@@ -36,6 +36,7 @@ from gatis_schema.annotations import (
     Tier,
 )
 from gatis_schema.constraints import (
+    SuggestedValues,
     all_or_none,
     drop_null_properties,
 )
@@ -92,7 +93,28 @@ class ObjectPoint(PointBase):
         description="Indicates the type of point."
     )
 
-    object_type: Annotated[str, Tier("required")] = Field(
+    object_type: Annotated[
+        Annotated[
+            str,
+            SuggestedValues(
+                "bench",
+                "lighting",
+                "wastebasket",
+                "restroom",
+                "water fountain",
+                "parklet / kiosk",
+                "pet station",
+                "transit stop bench",
+                "transit stop shelter",
+                "bicycle shop / repair",
+                "permanent bollards",
+                "removable bollards",
+                "gate",
+                "fencing",
+            ),
+        ],
+        Tier("required"),
+    ] = Field(
         description="Used to indicate objects that appear near the sidewalk or "
         "street space that, depending on the traveler, may be an amenity or an "
         "obstruction. Buffers around these points can be used to factor them into "
@@ -120,7 +142,30 @@ class ObjectPoint(PointBase):
         "transit stops, etc."
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "horizontal overgrowth",
+                        "vertical overgrowth",
+                        "fixed vertical obstruction",
+                        "solid fixed object",
+                        "flexible fixed object",
+                        "protrusion",
+                        "turning space missing or issue",
+                        "detectable warning not aligned with crossing",
+                        "push button not working",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the type of object that may pose a challenge for "
         "travelers passing through the area. Mark an issue with a node only if it "
         "is close enough to the footway or pedestrian way to potentially pose a "
@@ -253,7 +298,30 @@ class TransitStopPoint(PointBase):
         )
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "horizontal overgrowth",
+                        "vertical overgrowth",
+                        "fixed vertical obstruction",
+                        "solid fixed object",
+                        "flexible fixed object",
+                        "protrusion",
+                        "turning space missing or issue",
+                        "detectable warning not aligned with crossing",
+                        "push button not working",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the type of object that may pose a challenge for "
         "travelers passing through the area. Mark an issue with a node only if it "
         "is close enough to the footway or pedestrian way to potentially pose a "
@@ -323,7 +391,30 @@ class IssuePoint(PointBase):
         )
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "horizontal overgrowth",
+                        "vertical overgrowth",
+                        "fixed vertical obstruction",
+                        "solid fixed object",
+                        "flexible fixed object",
+                        "protrusion",
+                        "turning space missing or issue",
+                        "detectable warning not aligned with crossing",
+                        "push button not working",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the type of object that may pose a challenge for "
         "travelers passing through the area. Mark an issue with a node only if it "
         "is close enough to the footway or pedestrian way to potentially pose a "
@@ -434,7 +525,30 @@ class BikeParkingPoint(PointBase):
         )
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "horizontal overgrowth",
+                        "vertical overgrowth",
+                        "fixed vertical obstruction",
+                        "solid fixed object",
+                        "flexible fixed object",
+                        "protrusion",
+                        "turning space missing or issue",
+                        "detectable warning not aligned with crossing",
+                        "push button not working",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the type of object that may pose a challenge for "
         "travelers passing through the area. Mark an issue with a node only if it "
         "is close enough to the footway or pedestrian way to potentially pose a "
@@ -615,20 +729,56 @@ class PushbuttonPoint(PointBase):
         "push button, measured from the ground to the bottom of the button."
     )
 
-    tactile_message: Annotated[Omitable[str], Tier("optional")] = Field(
+    tactile_message: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues("arrow", "vibration walk signal", "minimap", "other"),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="What types of tactile information are available at the signal "
         "location to help pedestrians cross. Recommended values: arrow; vibration "
         "walk signal; minimap; other."
     )
 
-    auditory_message: Annotated[Omitable[str], Tier("optional")] = Field(
+    auditory_message: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "auditory walk signal",
+                    "information message",
+                    "button locator tone",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="What auditory messages are available at the signal location. "
         "“Information message” means any message that names the street being "
         "crossed or provides other geographical details. Recommended values: "
         "auditory walk signal; information message; button locator tone; other."
     )
 
-    actuation_type: Annotated[Omitable[str], Tier("recommended")] = Field(
+    actuation_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "Pedestrian actuated",
+                    "pedestrian auto-detected",
+                    "bike actuated",
+                    "bike auto-detected",
+                    "recall (no actuation or detection)",
+                    "unknown",
+                ),
+            ]
+        ],
+        Tier("recommended"),
+    ] = Field(
         description="What type of mechanism, if any, helps to identify that a "
         "pedestrian is at the crossing and wishes to cross. “Pedestrian actuated” "
         "indicates that a push button can or must be pushed to call the signal. "
@@ -704,7 +854,22 @@ class DetectorPoint(PointBase):
         "leave blank."
     )
 
-    actuation_type: Annotated[Omitable[str], Tier("recommended")] = Field(
+    actuation_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "Pedestrian actuated",
+                    "pedestrian auto-detected",
+                    "bike actuated",
+                    "bike auto-detected",
+                    "recall (no actuation or detection)",
+                    "unknown",
+                ),
+            ]
+        ],
+        Tier("recommended"),
+    ] = Field(
         description="What type of mechanism, if any, helps to identify that a "
         "pedestrian is at the crossing and wishes to cross. “Pedestrian actuated” "
         "indicates that a push button can or must be pushed to call the signal. "

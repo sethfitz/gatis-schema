@@ -1,4 +1,4 @@
-"""Model-level constraints GATIS needs that the Overture system does not yet have."""
+"""Constraints GATIS needs that the Overture system does not yet have."""
 
 from __future__ import annotations
 
@@ -11,12 +11,55 @@ from overture.schema.system._json_schema import (
     put_not,
     required_non_null,
 )
+from overture.schema.system.field_constraint import StringConstraint
 from overture.schema.system.model_constraint import (
     ModelConstraint,
     OptionalFieldGroupConstraint,
     apply_alias,
 )
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, GetJsonSchemaHandler
+from pydantic_core import core_schema
+
+
+class SuggestedValues(StringConstraint):
+    """A vocabulary v1.0 publishes for a field whose type it leaves open.
+
+    Twenty-three fields across the four feature classes carry `listed_values`
+    on a declared type of `Text` rather than `Enum`. The openness is upstream's
+    choice and this constraint does not second-guess it: `validate` is the
+    inherited no-op, so any string still passes. What it adds is that the
+    vocabulary stops being prose.
+
+    That matters for transformation rather than for validation. An author
+    mapping a local dataset onto GATIS wants to ask "did my mapping produce a
+    listed value?" -- and the three fields where that question bites hardest
+    (`bikeway_type`, `ramp_type`, `visual_markings`) are all in this bucket.
+    Austin's published conversion answers "no" on 6,717 crossings, and neither
+    the models nor a reader of the JSON Schema could previously tell.
+
+    Reaching both audiences is the reason this is a constraint and not a lookup
+    table in this package: `field_vocabularies` reads it from Python, and
+    `examples` carries it to everyone who only ever reads the schema.
+    """
+
+    def __init__(self, *values: str) -> None:
+        self.values = tuple(values)
+
+    # `validate` is inherited and does nothing. Declaring the rule is the whole
+    # job; enforcing it would contradict the spec.
+
+    def __get_pydantic_json_schema__(
+        self, schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> dict[str, Any]:
+        """Publish the vocabulary as `examples`, which is annotation-only.
+
+        JSON Schema has no keyword for a non-binding vocabulary. `examples` is
+        the one annotation the Overture field classifier already allows through
+        (`feature.py`), and it cannot change whether a document validates.
+        """
+        emitted = handler(schema)
+        emitted["examples"] = list(self.values)
+        return emitted
 
 
 class AllOrNoneConstraint(OptionalFieldGroupConstraint):

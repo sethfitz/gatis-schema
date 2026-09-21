@@ -44,6 +44,7 @@ from gatis_schema.annotations import (
     Tier,
 )
 from gatis_schema.constraints import (
+    SuggestedValues,
     all_or_none,
     drop_null_properties,
     forbidden_on_road,
@@ -235,18 +236,17 @@ class RoadEdge(EdgeBase):
     ] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -300,7 +300,23 @@ class RoadEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    bikeway_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "Bike Lane",
+                    "Buffered Bike Lane",
+                    "Separated Bike Lane",
+                    "Counter-Flow Bike Lane",
+                    "Bicycle Boulevard",
+                    "Paved Shoulder",
+                    "Shared Lane",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Common name used for the bicycle facility type. Should align "
         "with the National Bikeway Network, NACTO, or AASHTO facility types. "
         "Recommended values: Bike Lane; Buffered Bike Lane; Separated Bike Lane; "
@@ -356,23 +372,37 @@ class RoadEdge(EdgeBase):
         "and Left/Right/Both Tags in the GATIS Playbook for further explanation."
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional", {4: "recommended"})] = (
-        Field(
-            description="Markings that delineate or mark the area of the road or other "
-            "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
-            "of bike and pedestrian infrastructure or space. Left/right/both tagging "
-            "may be used. See the Playbook for more information on this tagging. "
-            "Recommended values: green_paint; sharrows; edge_lines; centerline; "
-            "ped_lane; bike_lane."
-        )
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {4: "recommended"}),
+    ] = Field(
+        description="Markings that delineate or mark the area of the road or other "
+        "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
+        "of bike and pedestrian infrastructure or space. Left/right/both tagging "
+        "may be used. See the Playbook for more information on this tagging. "
+        "Recommended values: green_paint; sharrows; edge_lines; centerline; "
+        "ped_lane; bike_lane."
     )
 
     roadway_centerline: Annotated[
         Omitable[YesNo], Tier("optional", {4: "recommended"})
     ] = Field(
         description="Indicates if there is a painted road centerline. This "
-        "attribute is sometimes used to help identify low-stress streets. "
-        "Recommended values: yes; no."
+        "attribute is sometimes used to help identify low-stress streets."
     )
 
     prohibited_uses: Annotated[Omitable[list[ProhibitedUses]], Tier("optional")] = (
@@ -390,7 +420,22 @@ class RoadEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -398,7 +443,17 @@ class RoadEdge(EdgeBase):
     )
 
     traffic_calming: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "narrowed road", "closure", "lateral shift", "raised crossing"
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="Used to identify features along a road or crossing meant to "
         "slow the speed of motor vehicle traffic when that feature is present "
@@ -418,16 +473,38 @@ class RoadEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[Omitable[SurfaceMaterial], Tier("optional")] = Field(
         description="Specifies the material used for the surface of the segment."
     )
 
-    surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
         "no; cracking; scaling; spalling; uneven; frequent water pooling; heaving; "
@@ -458,7 +535,31 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
         "attribute only if the impediment is close enough to the "
@@ -483,7 +584,31 @@ class RoadEdge(EdgeBase):
         "curb_ramp_runslope and curb_ramp_toplanding edges in Tiers 3 and 4."
     )
 
-    other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
         "damage. Includes design, construction and other issue types. Note that "
@@ -509,14 +634,42 @@ class RoadEdge(EdgeBase):
         "to LRS, with its specific milepoints."
     )
 
-    last_inspection_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
         "Recommended values: routine maintenance check; ADA; safety audit; "
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The lifecycle stage of this piece of infrastructure, as of "
         "the last_inspection_date. Recommended values: new; operational; nearing "
         "replacement; replacement planned or in planning."
@@ -686,7 +839,22 @@ class RoadEdge(EdgeBase):
     )
 
     sidewalk_left_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="sidewalk:left:separation_elements",
         description="The sidewalk on the left side of this road: see the "
@@ -725,7 +893,24 @@ class RoadEdge(EdgeBase):
         "street_parking_buffer_ft field on that type.",
     )
 
-    sidewalk_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    sidewalk_left_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:left:markings",
         description="The sidewalk on the left side of this road: see the markings "
         "field on that type.",
@@ -748,7 +933,20 @@ class RoadEdge(EdgeBase):
     )
 
     sidewalk_left_restricted_access: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="sidewalk:left:restricted_access",
         description="The sidewalk on the left side of this road: see the "
@@ -771,7 +969,31 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    sidewalk_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_left_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:left:surface_issue",
         description="The sidewalk on the left side of this road: see the "
         "surface_issue field on that type.",
@@ -821,7 +1043,31 @@ class RoadEdge(EdgeBase):
         "ada_compliant_with field on that type.",
     )
 
-    sidewalk_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    sidewalk_left_impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:left:impediment",
         description="The sidewalk on the left side of this road: see the "
         "impediment field on that type.",
@@ -835,7 +1081,31 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    sidewalk_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_left_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:left:other_issue",
         description="The sidewalk on the left side of this road: see the "
         "other_issue field on that type.",
@@ -849,15 +1119,41 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    sidewalk_left_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="sidewalk:left:last_inspection_type",
-            description="The sidewalk on the left side of this road: see the "
-            "last_inspection_type field on that type.",
-        )
+    sidewalk_left_last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="sidewalk:left:last_inspection_type",
+        description="The sidewalk on the left side of this road: see the "
+        "last_inspection_type field on that type.",
     )
 
-    sidewalk_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_left_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:left:lifecycle_stage",
         description="The sidewalk on the left side of this road: see the "
         "lifecycle_stage field on that type.",
@@ -1040,7 +1336,22 @@ class RoadEdge(EdgeBase):
     )
 
     sidewalk_right_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="sidewalk:right:separation_elements",
         description="The sidewalk on the right side of this road: see the "
@@ -1079,7 +1390,24 @@ class RoadEdge(EdgeBase):
         "street_parking_buffer_ft field on that type.",
     )
 
-    sidewalk_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    sidewalk_right_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:right:markings",
         description="The sidewalk on the right side of this road: see the markings "
         "field on that type.",
@@ -1102,7 +1430,20 @@ class RoadEdge(EdgeBase):
     )
 
     sidewalk_right_restricted_access: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="sidewalk:right:restricted_access",
         description="The sidewalk on the right side of this road: see the "
@@ -1125,7 +1466,31 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    sidewalk_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_right_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:right:surface_issue",
         description="The sidewalk on the right side of this road: see the "
         "surface_issue field on that type.",
@@ -1175,7 +1540,31 @@ class RoadEdge(EdgeBase):
         "ada_compliant_with field on that type.",
     )
 
-    sidewalk_right_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    sidewalk_right_impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:right:impediment",
         description="The sidewalk on the right side of this road: see the "
         "impediment field on that type.",
@@ -1189,7 +1578,31 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    sidewalk_right_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_right_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:right:other_issue",
         description="The sidewalk on the right side of this road: see the "
         "other_issue field on that type.",
@@ -1203,15 +1616,41 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    sidewalk_right_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="sidewalk:right:last_inspection_type",
-            description="The sidewalk on the right side of this road: see the "
-            "last_inspection_type field on that type.",
-        )
+    sidewalk_right_last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="sidewalk:right:last_inspection_type",
+        description="The sidewalk on the right side of this road: see the "
+        "last_inspection_type field on that type.",
     )
 
-    sidewalk_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    sidewalk_right_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="sidewalk:right:lifecycle_stage",
         description="The sidewalk on the right side of this road: see the "
         "lifecycle_stage field on that type.",
@@ -1381,7 +1820,23 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    bikeway_left_bikeway_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_left_bikeway_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "Bike Lane",
+                    "Buffered Bike Lane",
+                    "Separated Bike Lane",
+                    "Counter-Flow Bike Lane",
+                    "Bicycle Boulevard",
+                    "Paved Shoulder",
+                    "Shared Lane",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:bikeway_type",
         description="The bikeway on the left side of this road: see the "
         "bikeway_type field on that type.",
@@ -1396,7 +1851,22 @@ class RoadEdge(EdgeBase):
     )
 
     bikeway_left_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="bikeway:left:separation_elements",
         description="The bikeway on the left side of this road: see the "
@@ -1443,7 +1913,24 @@ class RoadEdge(EdgeBase):
         "posted_speed_limit_mph field on that type.",
     )
 
-    bikeway_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    bikeway_left_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:markings",
         description="The bikeway on the left side of this road: see the markings "
         "field on that type.",
@@ -1465,12 +1952,25 @@ class RoadEdge(EdgeBase):
         "allowed_uses field on that type.",
     )
 
-    bikeway_left_restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = (
-        Field(
-            alias="bikeway:left:restricted_access",
-            description="The bikeway on the left side of this road: see the "
-            "restricted_access field on that type.",
-        )
+    bikeway_left_restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="bikeway:left:restricted_access",
+        description="The bikeway on the left side of this road: see the "
+        "restricted_access field on that type.",
     )
 
     bikeway_left_seasonal: Annotated[
@@ -1489,7 +1989,31 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    bikeway_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_left_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:surface_issue",
         description="The bikeway on the left side of this road: see the "
         "surface_issue field on that type.",
@@ -1533,7 +2057,31 @@ class RoadEdge(EdgeBase):
         "ada_compliant_with field on that type.",
     )
 
-    bikeway_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    bikeway_left_impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:impediment",
         description="The bikeway on the left side of this road: see the impediment "
         "field on that type.",
@@ -1547,7 +2095,31 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    bikeway_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_left_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:other_issue",
         description="The bikeway on the left side of this road: see the "
         "other_issue field on that type.",
@@ -1561,15 +2133,41 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    bikeway_left_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="bikeway:left:last_inspection_type",
-            description="The bikeway on the left side of this road: see the "
-            "last_inspection_type field on that type.",
-        )
+    bikeway_left_last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="bikeway:left:last_inspection_type",
+        description="The bikeway on the left side of this road: see the "
+        "last_inspection_type field on that type.",
     )
 
-    bikeway_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_left_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:left:lifecycle_stage",
         description="The bikeway on the left side of this road: see the "
         "lifecycle_stage field on that type.",
@@ -1743,7 +2341,23 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    bikeway_right_bikeway_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_right_bikeway_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "Bike Lane",
+                    "Buffered Bike Lane",
+                    "Separated Bike Lane",
+                    "Counter-Flow Bike Lane",
+                    "Bicycle Boulevard",
+                    "Paved Shoulder",
+                    "Shared Lane",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:bikeway_type",
         description="The bikeway on the right side of this road: see the "
         "bikeway_type field on that type.",
@@ -1758,7 +2372,22 @@ class RoadEdge(EdgeBase):
     )
 
     bikeway_right_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="bikeway:right:separation_elements",
         description="The bikeway on the right side of this road: see the "
@@ -1805,7 +2434,24 @@ class RoadEdge(EdgeBase):
         "posted_speed_limit_mph field on that type.",
     )
 
-    bikeway_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    bikeway_right_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:markings",
         description="The bikeway on the right side of this road: see the markings "
         "field on that type.",
@@ -1828,7 +2474,20 @@ class RoadEdge(EdgeBase):
     )
 
     bikeway_right_restricted_access: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="bikeway:right:restricted_access",
         description="The bikeway on the right side of this road: see the "
@@ -1851,7 +2510,31 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    bikeway_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_right_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:surface_issue",
         description="The bikeway on the right side of this road: see the "
         "surface_issue field on that type.",
@@ -1895,7 +2578,31 @@ class RoadEdge(EdgeBase):
         "ada_compliant_with field on that type.",
     )
 
-    bikeway_right_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    bikeway_right_impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:impediment",
         description="The bikeway on the right side of this road: see the "
         "impediment field on that type.",
@@ -1909,7 +2616,31 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    bikeway_right_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_right_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:other_issue",
         description="The bikeway on the right side of this road: see the "
         "other_issue field on that type.",
@@ -1923,15 +2654,41 @@ class RoadEdge(EdgeBase):
         )
     )
 
-    bikeway_right_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="bikeway:right:last_inspection_type",
-            description="The bikeway on the right side of this road: see the "
-            "last_inspection_type field on that type.",
-        )
+    bikeway_right_last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="bikeway:right:last_inspection_type",
+        description="The bikeway on the right side of this road: see the "
+        "last_inspection_type field on that type.",
     )
 
-    bikeway_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    bikeway_right_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="bikeway:right:lifecycle_stage",
         description="The bikeway on the right side of this road: see the "
         "lifecycle_stage field on that type.",
@@ -2122,7 +2879,22 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_left_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:left:separation_elements",
         description="The multi_use_path on the left side of this road: see the "
@@ -2169,12 +2941,27 @@ class RoadEdge(EdgeBase):
         "posted_speed_limit_mph field on that type.",
     )
 
-    multi_use_path_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:left:markings",
-            description="The multi_use_path on the left side of this road: see the "
-            "markings field on that type.",
-        )
+    multi_use_path_left_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:left:markings",
+        description="The multi_use_path on the left side of this road: see the "
+        "markings field on that type.",
     )
 
     multi_use_path_left_mup_modal_delineation: Annotated[
@@ -2202,7 +2989,20 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_left_restricted_access: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:left:restricted_access",
         description="The multi_use_path on the left side of this road: see the "
@@ -2225,12 +3025,34 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    multi_use_path_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:left:surface_issue",
-            description="The multi_use_path on the left side of this road: see the "
-            "surface_issue field on that type.",
-        )
+    multi_use_path_left_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:left:surface_issue",
+        description="The multi_use_path on the left side of this road: see the "
+        "surface_issue field on that type.",
     )
 
     multi_use_path_left_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
@@ -2271,12 +3093,34 @@ class RoadEdge(EdgeBase):
         "ada_compliant_with field on that type.",
     )
 
-    multi_use_path_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:left:impediment",
-            description="The multi_use_path on the left side of this road: see the "
-            "impediment field on that type.",
-        )
+    multi_use_path_left_impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:left:impediment",
+        description="The multi_use_path on the left side of this road: see the "
+        "impediment field on that type.",
     )
 
     multi_use_path_left_tactile_marking: Annotated[
@@ -2287,7 +3131,31 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    multi_use_path_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    multi_use_path_left_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         alias="multi_use_path:left:other_issue",
         description="The multi_use_path on the left side of this road: see the "
         "other_issue field on that type.",
@@ -2302,19 +3170,43 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_left_last_inspection_type: Annotated[
-        Omitable[str], Tier("optional")
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:left:last_inspection_type",
         description="The multi_use_path on the left side of this road: see the "
         "last_inspection_type field on that type.",
     )
 
-    multi_use_path_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:left:lifecycle_stage",
-            description="The multi_use_path on the left side of this road: see the "
-            "lifecycle_stage field on that type.",
-        )
+    multi_use_path_left_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:left:lifecycle_stage",
+        description="The multi_use_path on the left side of this road: see the "
+        "lifecycle_stage field on that type.",
     )
 
     multi_use_path_left_maintenance_schedule: Annotated[
@@ -2504,7 +3396,22 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_right_separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:right:separation_elements",
         description="The multi_use_path on the right side of this road: see the "
@@ -2551,12 +3458,27 @@ class RoadEdge(EdgeBase):
         "posted_speed_limit_mph field on that type.",
     )
 
-    multi_use_path_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:right:markings",
-            description="The multi_use_path on the right side of this road: see the "
-            "markings field on that type.",
-        )
+    multi_use_path_right_markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:right:markings",
+        description="The multi_use_path on the right side of this road: see the "
+        "markings field on that type.",
     )
 
     multi_use_path_right_mup_modal_delineation: Annotated[
@@ -2584,7 +3506,20 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_right_restricted_access: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:right:restricted_access",
         description="The multi_use_path on the right side of this road: see the "
@@ -2607,12 +3542,34 @@ class RoadEdge(EdgeBase):
         "surface_material field on that type.",
     )
 
-    multi_use_path_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:right:surface_issue",
-            description="The multi_use_path on the right side of this road: see the "
-            "surface_issue field on that type.",
-        )
+    multi_use_path_right_surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:right:surface_issue",
+        description="The multi_use_path on the right side of this road: see the "
+        "surface_issue field on that type.",
     )
 
     multi_use_path_right_incline: Annotated[Omitable[float64], Tier("optional")] = (
@@ -2656,7 +3613,29 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_right_impediment: Annotated[
-        Omitable[list[str]], Tier("optional")
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:right:impediment",
         description="The multi_use_path on the right side of this road: see the "
@@ -2671,12 +3650,34 @@ class RoadEdge(EdgeBase):
         "tactile_marking field on that type.",
     )
 
-    multi_use_path_right_other_issue: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:right:other_issue",
-            description="The multi_use_path on the right side of this road: see the "
-            "other_issue field on that type.",
-        )
+    multi_use_path_right_other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:right:other_issue",
+        description="The multi_use_path on the right side of this road: see the "
+        "other_issue field on that type.",
     )
 
     multi_use_path_right_lrs_references: Annotated[
@@ -2688,19 +3689,43 @@ class RoadEdge(EdgeBase):
     )
 
     multi_use_path_right_last_inspection_type: Annotated[
-        Omitable[str], Tier("optional")
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
     ] = Field(
         alias="multi_use_path:right:last_inspection_type",
         description="The multi_use_path on the right side of this road: see the "
         "last_inspection_type field on that type.",
     )
 
-    multi_use_path_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = (
-        Field(
-            alias="multi_use_path:right:lifecycle_stage",
-            description="The multi_use_path on the right side of this road: see the "
-            "lifecycle_stage field on that type.",
-        )
+    multi_use_path_right_lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
+        alias="multi_use_path:right:lifecycle_stage",
+        description="The multi_use_path on the right side of this road: see the "
+        "lifecycle_stage field on that type.",
     )
 
     multi_use_path_right_maintenance_schedule: Annotated[
@@ -2858,18 +3883,17 @@ class SidewalkEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional", {3: "recommended"})] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -2931,7 +3955,22 @@ class SidewalkEdge(EdgeBase):
     )
 
     separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
@@ -2968,7 +4007,24 @@ class SidewalkEdge(EdgeBase):
         "negative."
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Markings that delineate or mark the area of the road or other "
         "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
         "of bike and pedestrian infrastructure or space. Left/right/both tagging "
@@ -2992,7 +4048,22 @@ class SidewalkEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -3003,9 +4074,7 @@ class SidewalkEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -3013,7 +4082,29 @@ class SidewalkEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -3074,7 +4165,29 @@ class SidewalkEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -3103,7 +4216,29 @@ class SidewalkEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -3131,7 +4266,20 @@ class SidewalkEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -3139,12 +4287,23 @@ class SidewalkEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -3286,18 +4445,17 @@ class CurbRampToplandingEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -3358,7 +4516,24 @@ class CurbRampToplandingEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -3379,7 +4554,22 @@ class CurbRampToplandingEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -3390,9 +4580,7 @@ class CurbRampToplandingEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -3400,7 +4588,29 @@ class CurbRampToplandingEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -3449,7 +4659,29 @@ class CurbRampToplandingEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -3465,10 +4697,7 @@ class CurbRampToplandingEdge(EdgeBase):
 
     handrail: Annotated[
         Omitable[YesNo], Tier("optional", {3: "recommended", 4: "required"})
-    ] = Field(
-        description="Whether a handrail is available on this set of stairs. "
-        "Recommended values: yes; no."
-    )
+    ] = Field(description="Whether a handrail is available on this set of stairs.")
 
     tactile_marking: Annotated[
         Omitable[TactileMarking], Tier("optional", {3: "recommended", 4: "required"})
@@ -3485,7 +4714,29 @@ class CurbRampToplandingEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -3513,7 +4764,20 @@ class CurbRampToplandingEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -3521,12 +4785,23 @@ class CurbRampToplandingEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -3664,18 +4939,17 @@ class CurbRampRunslopeEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -3736,7 +5010,24 @@ class CurbRampRunslopeEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -3757,7 +5048,22 @@ class CurbRampRunslopeEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -3768,9 +5074,7 @@ class CurbRampRunslopeEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -3778,7 +5082,29 @@ class CurbRampRunslopeEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -3827,7 +5153,29 @@ class CurbRampRunslopeEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -3843,10 +5191,7 @@ class CurbRampRunslopeEdge(EdgeBase):
 
     handrail: Annotated[
         Omitable[YesNo], Tier("optional", {3: "recommended", 4: "required"})
-    ] = Field(
-        description="Whether a handrail is available on this set of stairs. "
-        "Recommended values: yes; no."
-    )
+    ] = Field(description="Whether a handrail is available on this set of stairs.")
 
     tactile_marking: Annotated[
         Omitable[TactileMarking], Tier("optional", {3: "recommended", 4: "required"})
@@ -3863,7 +5208,29 @@ class CurbRampRunslopeEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -3891,7 +5258,20 @@ class CurbRampRunslopeEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -3899,12 +5279,23 @@ class CurbRampRunslopeEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -3949,7 +5340,25 @@ class CurbRampRunslopeEdge(EdgeBase):
         "amount of contrast)."
     )
 
-    ramp_type: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(
+    ramp_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "diagonal",
+                    "directional",
+                    "parallel",
+                    "perpendicular",
+                    "built-up",
+                    "combination",
+                    "transition",
+                    "cut-through (median/island ramp)",
+                    "unknown",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
         description="Indicates the orientation of the ramp in relation to the "
         "pedestrian direction of travel at the location. Where a double curb ramp "
         "exists, map each ramp as a separate curb_ramp_runslope. Recommended "
@@ -4068,18 +5477,17 @@ class FootwayEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional", {3: "recommended"})] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -4152,7 +5560,22 @@ class FootwayEdge(EdgeBase):
     )
 
     separation_elements: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
@@ -4189,7 +5612,24 @@ class FootwayEdge(EdgeBase):
         "negative."
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Markings that delineate or mark the area of the road or other "
         "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
         "of bike and pedestrian infrastructure or space. Left/right/both tagging "
@@ -4213,7 +5653,22 @@ class FootwayEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -4224,9 +5679,7 @@ class FootwayEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -4234,7 +5687,29 @@ class FootwayEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -4287,7 +5762,29 @@ class FootwayEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -4316,7 +5813,29 @@ class FootwayEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -4343,14 +5862,42 @@ class FootwayEdge(EdgeBase):
         "to LRS, with its specific milepoints."
     )
 
-    last_inspection_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    last_inspection_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
         "Recommended values: routine maintenance check; ADA; safety audit; "
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The lifecycle stage of this piece of infrastructure, as of "
         "the last_inspection_date. Recommended values: new; operational; nearing "
         "replacement; replacement planned or in planning."
@@ -4509,18 +6056,17 @@ class CrossingEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -4581,7 +6127,24 @@ class CrossingEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -4630,7 +6193,22 @@ class CrossingEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -4676,7 +6254,17 @@ class CrossingEdge(EdgeBase):
     )
 
     traffic_calming: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "narrowed road", "closure", "lateral shift", "raised crossing"
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="Used to identify features along a road or crossing meant to "
         "slow the speed of motor vehicle traffic when that feature is present "
@@ -4696,9 +6284,7 @@ class CrossingEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -4706,7 +6292,29 @@ class CrossingEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -4759,7 +6367,29 @@ class CrossingEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -4782,12 +6412,27 @@ class CrossingEdge(EdgeBase):
             "crossings that people walking, rolling or biking will need to cross, and "
             "that have active rail traffic. The 'rail tracks' value for other_issue "
             "can be used on other edge types or to identify remaining or unused tracks "
-            "no longer traveled by trains. Recommended values: yes; no."
+            "no longer traveled by trains."
         )
     )
 
     visual_markings: Annotated[
-        Omitable[str], Tier("optional", {2: "recommended", 3: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "marked - type unknown",
+                    "unmarked",
+                    "transverse",
+                    "longitudinal bar",
+                    "ladder",
+                    "bar pair",
+                    "high visibility",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {2: "recommended", 3: "required"}),
     ] = Field(
         description="The way the crossing is marked within the roadway space. See "
         "the Manual of Uniform Traffic Control Devices "
@@ -4813,7 +6458,29 @@ class CrossingEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -4841,7 +6508,20 @@ class CrossingEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -4849,12 +6529,23 @@ class CrossingEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -4986,13 +6677,12 @@ class RampEdge(EdgeBase):
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -5039,7 +6729,24 @@ class RampEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -5060,7 +6767,22 @@ class RampEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -5071,9 +6793,7 @@ class RampEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -5081,7 +6801,29 @@ class RampEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -5134,7 +6876,29 @@ class RampEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -5150,10 +6914,7 @@ class RampEdge(EdgeBase):
 
     handrail: Annotated[
         Omitable[YesNo], Tier("optional", {3: "recommended", 4: "required"})
-    ] = Field(
-        description="Whether a handrail is available on this set of stairs. "
-        "Recommended values: yes; no."
-    )
+    ] = Field(description="Whether a handrail is available on this set of stairs.")
 
     tactile_marking: Annotated[Omitable[TactileMarking], Tier("optional")] = Field(
         description="Indicates when tactile guidestrips or other markings are "
@@ -5168,7 +6929,29 @@ class RampEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -5196,7 +6979,20 @@ class RampEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -5204,12 +7000,23 @@ class RampEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -5366,18 +7173,17 @@ class TrafficIslandEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -5438,7 +7244,24 @@ class TrafficIslandEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -5472,7 +7295,24 @@ class TrafficIslandEdge(EdgeBase):
         "negative."
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Markings that delineate or mark the area of the road or other "
         "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
         "of bike and pedestrian infrastructure or space. Left/right/both tagging "
@@ -5496,7 +7336,22 @@ class TrafficIslandEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -5507,9 +7362,7 @@ class TrafficIslandEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -5517,7 +7370,29 @@ class TrafficIslandEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -5570,7 +7445,29 @@ class TrafficIslandEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -5599,7 +7496,29 @@ class TrafficIslandEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -5627,7 +7546,20 @@ class TrafficIslandEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -5635,12 +7567,23 @@ class TrafficIslandEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -5779,18 +7722,17 @@ class StepsEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -5845,7 +7787,24 @@ class StepsEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -5883,7 +7842,7 @@ class StepsEdge(EdgeBase):
         Omitable[YesNo], Tier("optional", {3: "recommended", 4: "required"})
     ] = Field(
         description="Whether there is a wheel channel to allow for pushing a "
-        "bicycle up the stairs. Recommended values: yes; no."
+        "bicycle up the stairs."
     )
 
     prohibited_uses: Annotated[Omitable[list[ProhibitedUses]], Tier("optional")] = (
@@ -5901,7 +7860,22 @@ class StepsEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -5912,9 +7886,7 @@ class StepsEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -5922,7 +7894,29 @@ class StepsEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -5950,7 +7944,29 @@ class StepsEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -5975,10 +7991,7 @@ class StepsEdge(EdgeBase):
 
     handrail: Annotated[
         Omitable[YesNo], Tier("optional", {3: "recommended", 4: "required"})
-    ] = Field(
-        description="Whether a handrail is available on this set of stairs. "
-        "Recommended values: yes; no."
-    )
+    ] = Field(description="Whether a handrail is available on this set of stairs.")
 
     tactile_marking: Annotated[Omitable[TactileMarking], Tier("optional")] = Field(
         description="Indicates when tactile guidestrips or other markings are "
@@ -5993,7 +8006,29 @@ class StepsEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -6021,7 +8056,20 @@ class StepsEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -6029,12 +8077,23 @@ class StepsEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -6176,18 +8235,17 @@ class ElevatorEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -6242,7 +8300,24 @@ class ElevatorEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -6291,7 +8366,22 @@ class ElevatorEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -6302,16 +8392,38 @@ class ElevatorEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[Omitable[SurfaceMaterial], Tier("optional")] = Field(
         description="Specifies the material used for the surface of the segment."
     )
 
-    surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
         "no; cracking; scaling; spalling; uneven; frequent water pooling; heaving; "
@@ -6337,7 +8449,31 @@ class ElevatorEdge(EdgeBase):
         "leave blank."
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
         "attribute only if the impediment is close enough to the "
@@ -6362,7 +8498,31 @@ class ElevatorEdge(EdgeBase):
         "curb_ramp_runslope and curb_ramp_toplanding edges in Tiers 3 and 4."
     )
 
-    other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
         "damage. Includes design, construction and other issue types. Note that "
@@ -6389,7 +8549,20 @@ class ElevatorEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -6397,12 +8570,23 @@ class ElevatorEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -6543,18 +8727,17 @@ class EscalatorEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -6609,7 +8792,24 @@ class EscalatorEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -6658,7 +8858,22 @@ class EscalatorEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -6669,16 +8884,38 @@ class EscalatorEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[Omitable[SurfaceMaterial], Tier("optional")] = Field(
         description="Specifies the material used for the surface of the segment."
     )
 
-    surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
         "no; cracking; scaling; spalling; uneven; frequent water pooling; heaving; "
@@ -6704,7 +8941,31 @@ class EscalatorEdge(EdgeBase):
         "leave blank."
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
         "attribute only if the impediment is close enough to the "
@@ -6729,7 +8990,31 @@ class EscalatorEdge(EdgeBase):
         "curb_ramp_runslope and curb_ramp_toplanding edges in Tiers 3 and 4."
     )
 
-    other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
         "damage. Includes design, construction and other issue types. Note that "
@@ -6756,7 +9041,20 @@ class EscalatorEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -6764,12 +9062,23 @@ class EscalatorEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -6912,18 +9221,17 @@ class BikewayEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -6982,7 +9290,21 @@ class BikewayEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    bikeway_type: Annotated[str, Tier("required")] = Field(
+    bikeway_type: Annotated[
+        Annotated[
+            str,
+            SuggestedValues(
+                "Bike Lane",
+                "Buffered Bike Lane",
+                "Separated Bike Lane",
+                "Counter-Flow Bike Lane",
+                "Bicycle Boulevard",
+                "Paved Shoulder",
+                "Shared Lane",
+            ),
+        ],
+        Tier("required"),
+    ] = Field(
         description="Common name used for the bicycle facility type. Should align "
         "with the National Bikeway Network, NACTO, or AASHTO facility types. "
         "Recommended values: Bike Lane; Buffered Bike Lane; Separated Bike Lane; "
@@ -6998,7 +9320,22 @@ class BikewayEdge(EdgeBase):
     )
 
     separation_elements: Annotated[
-        Omitable[list[str]], Tier("recommended", {2: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("recommended", {2: "required"}),
     ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
@@ -7045,7 +9382,24 @@ class BikewayEdge(EdgeBase):
         )
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Markings that delineate or mark the area of the road or other "
         "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
         "of bike and pedestrian infrastructure or space. Left/right/both tagging "
@@ -7069,7 +9423,22 @@ class BikewayEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -7080,16 +9449,38 @@ class BikewayEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
         Omitable[SurfaceMaterial], Tier("optional", {2: "required"})
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
-    surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    surface_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
         "no; cracking; scaling; spalling; uneven; frequent water pooling; heaving; "
@@ -7138,7 +9529,31 @@ class BikewayEdge(EdgeBase):
         "leave blank."
     )
 
-    impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    impediment: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
         "attribute only if the impediment is close enough to the "
@@ -7163,7 +9578,31 @@ class BikewayEdge(EdgeBase):
         "curb_ramp_runslope and curb_ramp_toplanding edges in Tiers 3 and 4."
     )
 
-    other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+    other_issue: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
         "damage. Includes design, construction and other issue types. Note that "
@@ -7190,7 +9629,20 @@ class BikewayEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -7198,12 +9650,23 @@ class BikewayEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -7360,18 +9823,17 @@ class MultiUsePathEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -7432,7 +9894,24 @@ class MultiUsePathEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -7474,7 +9953,24 @@ class MultiUsePathEdge(EdgeBase):
         )
     )
 
-    markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    markings: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "green_paint",
+                        "sharrows",
+                        "edge_lines",
+                        "centerline",
+                        "ped_lane",
+                        "bike_lane",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Markings that delineate or mark the area of the road or other "
         "edge for bicyclists or pedestrians, or for motor vehicle driver awareness "
         "of bike and pedestrian infrastructure or space. Left/right/both tagging "
@@ -7488,7 +9984,7 @@ class MultiUsePathEdge(EdgeBase):
     ] = Field(
         description="Designates whether bicyclists and pedestrians have separate "
         "designated spaces on a multi-use path, or whether all travelers use the "
-        "same space. Recommended values: yes; no."
+        "same space."
     )
 
     prohibited_uses: Annotated[Omitable[list[ProhibitedUses]], Tier("optional")] = (
@@ -7506,7 +10002,22 @@ class MultiUsePathEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -7517,9 +10028,7 @@ class MultiUsePathEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -7527,7 +10036,29 @@ class MultiUsePathEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -7580,7 +10111,29 @@ class MultiUsePathEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -7607,7 +10160,29 @@ class MultiUsePathEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -7635,7 +10210,20 @@ class MultiUsePathEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -7643,12 +10231,23 @@ class MultiUsePathEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[
@@ -7807,18 +10406,17 @@ class TrailEdge(EdgeBase):
     bridge: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates if the edge is or is on a bridge. Can be used for "
         "any bridge type, including road bridges (with or without bike lanes) and "
-        "pedestrian and bike bridges. Recommended values: yes; no."
+        "pedestrian and bike bridges."
     )
 
     underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents an underground path, such "
-        "as a tunnel or an underpass. Recommended values: yes; no."
+        "as a tunnel or an underpass."
     )
 
     overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
         description="Indicates that the edge represents a skywalk, pedestrian or "
-        "bicycle overpass, or other elevated infrastructure that is not a bridge. "
-        "Recommended values: yes; no."
+        "bicycle overpass, or other elevated infrastructure that is not a bridge."
     )
 
     above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = Field(
@@ -7890,7 +10488,24 @@ class TrailEdge(EdgeBase):
         "traversable length of the segment is preferable."
     )
 
-    separation_elements: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    separation_elements: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "bollards",
+                        "concrete barrier",
+                        "parking",
+                        "median",
+                        "trees",
+                        "unknown",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="The materials used to separate the cycleway or footway from "
         "motor vehicle traffic -- for example, as part of a buffer. Recommended "
         "values: bollards; concrete barrier; parking; median; trees; unknown."
@@ -7947,7 +10562,22 @@ class TrailEdge(EdgeBase):
         "footways, and crossings for routing purposes."
     )
 
-    restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    restricted_access: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "private",
+                        "access_code_required",
+                        "membership_required",
+                        "permit_required",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Whether access to the edge is restricted based on membership, "
         "passes / permits or access codes. Meant to help travelers easily know if "
         "general access is not allowed. Recommended values: private; "
@@ -7958,9 +10588,7 @@ class TrailEdge(EdgeBase):
         description="Indicates whether the segment is commonly affected by "
         "seasonal issues. Use this field for recurring (ex. yearly flooding) and "
         "not one-time (ex. single flood) events. Include both the seasonal concern "
-        "and the season when it occurs as a JSON String. Recommended values: "
-        "season; summer; fall; winter; seasonal issues; ice; snow; heavy rain; "
-        "heat / lack of shade; low visibility; fog; wind."
+        "and the season when it occurs as a JSON String."
     )
 
     surface_material: Annotated[
@@ -7968,7 +10596,29 @@ class TrailEdge(EdgeBase):
     ] = Field(description="Specifies the material used for the surface of the segment.")
 
     surface_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "cracking",
+                    "scaling",
+                    "spalling",
+                    "uneven",
+                    "frequent water pooling",
+                    "heaving",
+                    "missing bricks/stones",
+                    "potholes/holes",
+                    "slickness",
+                    "detectable warning surface damage",
+                    "longitudinal cracks and seams",
+                    "metal plates",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Description of surface quality issues that may pose a "
         "challenge for travelers passing along this edge. Recommended values: yes; "
@@ -8021,7 +10671,29 @@ class TrailEdge(EdgeBase):
     )
 
     impediment: Annotated[
-        Omitable[list[str]], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "yes",
+                        "no",
+                        "low overgrowth (lower than 27')",
+                        "high overgrowth (27' or higher)",
+                        "sign",
+                        "low protrusion (lower than 27')",
+                        "high protrusion (27' or higher)",
+                        "utility cover",
+                        "stormwater grate",
+                        "metal plate",
+                        "metal decking (ex. on bridges)",
+                        "other surface impediment",
+                        "other impediment",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies the presence of an object that may pose a "
         "challenge for travelers passing along this edge. Mark an edge with this "
@@ -8048,7 +10720,29 @@ class TrailEdge(EdgeBase):
     )
 
     other_issue: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended", 4: "required"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "yes",
+                    "no",
+                    "detectable warning not aligned with crossing",
+                    "push button not working",
+                    "markings worn",
+                    "markings missing",
+                    "rail tracks",
+                    "broken / damaged signal",
+                    "auditory signal not working",
+                    "vibrotactile signal not working",
+                    "poor volume for auditory signal",
+                    "signal button height issue",
+                    "no visual countdown for signal",
+                    "signal distance from walk path",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended", 4: "required"}),
     ] = Field(
         description="Identifies whether this edge has another type of issue that "
         "may pose a challenge for travelers, besides impediments and surface "
@@ -8076,7 +10770,20 @@ class TrailEdge(EdgeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -8084,12 +10791,23 @@ class TrailEdge(EdgeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[

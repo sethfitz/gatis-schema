@@ -16,6 +16,7 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 from overture.schema.system.numeric import float64, int32
 from pydantic import BaseModel
 
+from gatis_schema.constraints import SuggestedValues
 from gatis_schema.presence import Presence, PresenceRule
 
 
@@ -102,6 +103,20 @@ def field_units(model: type[BaseModel]) -> dict[str, Unit]:
 def field_tiers(model: type[BaseModel]) -> dict[str, Tier]:
     """Every field on `model` that declares tier presence."""
     return _annotations_of(model, Tier)
+
+
+def field_vocabularies(model: type[BaseModel]) -> dict[str, SuggestedValues]:
+    """Every field on `model` that publishes an open vocabulary.
+
+    Keyed by wire name, because the caller is holding data: a GeoJSON property
+    or a DataFrame column is `bikeway:left:bikeway_type`, never the Python
+    field name. A field whose values are closed is absent -- its enum already
+    carries them.
+    """
+    found = _annotations_of(model, SuggestedValues)
+    return {
+        model.model_fields[name].alias or name: values for name, values in found.items()
+    }
 
 
 def _annotations_of(model: type[BaseModel], kind: type[Any]) -> dict[str, Any]:

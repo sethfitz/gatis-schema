@@ -35,6 +35,7 @@ from gatis_schema.annotations import (
     Tier,
 )
 from gatis_schema.constraints import (
+    SuggestedValues,
     all_or_none,
     drop_null_properties,
 )
@@ -216,7 +217,25 @@ class CurbRampNode(NodeBase):
         )
     )
 
-    ramp_type: Annotated[Omitable[str], Tier("optional")] = Field(
+    ramp_type: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "diagonal",
+                    "directional",
+                    "parallel",
+                    "perpendicular",
+                    "built-up",
+                    "combination",
+                    "transition",
+                    "cut-through (median/island ramp)",
+                    "unknown",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Indicates the orientation of the ramp in relation to the "
         "pedestrian direction of travel at the location. Where a double curb ramp "
         "exists, map each ramp as a separate curb_ramp node. Recommended values: "
@@ -266,7 +285,20 @@ class CurbRampNode(NodeBase):
     )
 
     last_inspection_type: Annotated[
-        Omitable[str], Tier("optional", {3: "recommended"})
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "routine maintenance check",
+                    "ADA",
+                    "safety audit",
+                    "construction inspection",
+                    "post-crash audit",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
     ] = Field(
         description="The type of inspection that was carried out on the piece of "
         "infrastructure, on the date listed under last_inspection_date. "
@@ -274,12 +306,23 @@ class CurbRampNode(NodeBase):
         "construction inspection; post-crash audit; other."
     )
 
-    lifecycle_stage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="The lifecycle stage of this piece of infrastructure, as of "
-            "the last_inspection_date. Recommended values: new; operational; nearing "
-            "replacement; replacement planned or in planning."
-        )
+    lifecycle_stage: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "new",
+                    "operational",
+                    "nearing replacement",
+                    "replacement planned or in planning",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="The lifecycle stage of this piece of infrastructure, as of "
+        "the last_inspection_date. Recommended values: new; operational; nearing "
+        "replacement; replacement planned or in planning."
     )
 
     maintenance_schedule: Annotated[

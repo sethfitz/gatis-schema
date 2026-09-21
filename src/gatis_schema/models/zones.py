@@ -33,6 +33,7 @@ from gatis_schema.annotations import (
     Tier,
 )
 from gatis_schema.constraints import (
+    SuggestedValues,
     drop_null_properties,
 )
 from gatis_schema.models.enums import (
@@ -86,13 +87,30 @@ class OpenZone(ZoneBase):
         description="Indicates the type of zone."
     )
 
-    surface_material: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
-        Field(
-            description="Specifies the surface type. Select only one. Where the "
-            "surface material changes, create a new zone. Recommended values: asphalt; "
-            "concrete; gravel; grass; dirt; paved; unpaved; grass paver; paving "
-            "stones; other."
-        )
+    surface_material: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "asphalt",
+                    "concrete",
+                    "gravel",
+                    "grass",
+                    "dirt",
+                    "paved",
+                    "unpaved",
+                    "grass paver",
+                    "paving stones",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional", {3: "recommended"}),
+    ] = Field(
+        description="Specifies the surface type. Select only one. Where the "
+        "surface material changes, create a new zone. Recommended values: asphalt; "
+        "concrete; gravel; grass; dirt; paved; unpaved; grass paver; paving "
+        "stones; other."
     )
 
     facility_name: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
@@ -118,7 +136,27 @@ class OpenZone(ZoneBase):
         "system."
     )
 
-    prohibited_uses: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    prohibited_uses: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "walk",
+                        "bike",
+                        "ebike class 1",
+                        "ebike class 2",
+                        "ebike class 3",
+                        "scooter",
+                        "NEV",
+                        "motor_vehicle",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Specifies which types of users are legally prohibited from "
         "using the facility, based on the laws, policy, or signage on a facility "
         "(ex. “E-bikes prohibited on this trail”). Can provide one or multiple in "
@@ -126,7 +164,27 @@ class OpenZone(ZoneBase):
         "ebike class 3; scooter; NEV; motor_vehicle; other."
     )
 
-    allowed_uses: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+    allowed_uses: Annotated[
+        Omitable[
+            list[
+                Annotated[
+                    str,
+                    SuggestedValues(
+                        "walk",
+                        "bike",
+                        "ebike class 1",
+                        "ebike class 2",
+                        "ebike class 3",
+                        "scooter",
+                        "NEV",
+                        "motor_vehicle",
+                        "other",
+                    ),
+                ]
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Specifies exceptions to the usually prohibited users. "
         "Intended for designating whether bikes are allowed to use sidewalks, "
         "footways, and crossings for routing purposes. Recommended values: walk; "
@@ -158,7 +216,26 @@ class TrafficCalmingZone(ZoneBase):
         description="Indicates the type of zone."
     )
 
-    surface_material: Annotated[Omitable[str], Tier("optional")] = Field(
+    surface_material: Annotated[
+        Omitable[
+            Annotated[
+                str,
+                SuggestedValues(
+                    "asphalt",
+                    "concrete",
+                    "gravel",
+                    "grass",
+                    "dirt",
+                    "paved",
+                    "unpaved",
+                    "grass paver",
+                    "paving stones",
+                    "other",
+                ),
+            ]
+        ],
+        Tier("optional"),
+    ] = Field(
         description="Specifies the surface type. Select only one. Where the "
         "surface material changes, create a new zone. Recommended values: asphalt; "
         "concrete; gravel; grass; dirt; paved; unpaved; grass paver; paving "
