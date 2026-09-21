@@ -96,11 +96,12 @@ of these markers is not roadway associated."
 files. Their field tables — name, description, type, required, listed values, the
 same shape as a core file's — are in
 [`documents/drafts/GATIS Extensions and Tables.pdf`](../spec/extensions.pdf),
-snapshotted here with a `pdftotext -layout` extraction beside it. Nothing else
-carries them: `specification_jsons/`, `json_schemas/` and `gatis_explorer/data/`
-each hold exactly the five core files, so the extensions are the only part of GATIS
-with no machine-readable form and no Explorer page — and the Explorer is what
-`introduction.html` calls the authoritative version.
+snapshotted here with a `pdftotext -layout` extraction beside it. The Explorer
+links it from the same row of buttons as the core tables, so it is discoverable;
+what it is not is machine-readable. `specification_jsons/` and `json_schemas/`
+hold exactly the five core files, so a tool can generate models and validate
+against the core spec and can do neither for the three extensions. This package
+generates from `specification_jsons`, so the extensions are simply outside it.
 
 **Both extension `type` enums predate v1.0.** Each of the three tables keys to a
 feature by `gatis_id` plus a `type`, and the two that publish a vocabulary for it
@@ -1015,17 +1016,16 @@ $ jq -r '[.attributes[], (.types|to_entries[]|.value)]
 #### 7. The extension tables are a PDF, and their type vocabularies predate v1.0
 
 Section 2.1 declares `events.json`, `lrs.json` and `relations.json` alongside the
-five core files. Their definitions are in
+five core files, and the Explorer links their definitions from the same row of
+buttons as the core tables. Those definitions are
 `documents/drafts/GATIS Extensions and Tables.pdf` — full field tables, the same
-shape a core file gets, so this is a publication-channel problem rather than a
-missing-definition one. `specification_jsons/`, `json_schemas/` and
-`gatis_explorer/data/` each hold exactly the five core files, so the extensions
-are the only part of GATIS with no machine-readable form and no Explorer page,
-and the Explorer is what `specification_introduction.html` calls the authoritative
-version. A publisher who starts from the Explorer will not find them.
+shape a core file gets. They are discoverable and they are not machine-readable:
+`specification_jsons/` and `json_schemas/` hold exactly the five core files, so
+nothing can generate a model or validate a feed against an extension the way it
+can against a core file.
 
-Both `type` enums in that PDF are also out of date, which is the kind of drift a
-separate publication channel produces:
+Both `type` enums in that PDF are out of date, which is the drift a separate
+publication channel produces:
 
 | | values | not v1.0 types | v1.0 types omitted |
 | --- | --- | --- | --- |
