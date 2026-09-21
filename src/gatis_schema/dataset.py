@@ -141,7 +141,9 @@ class Dataset:
 
     def _collections(
         self,
-    ) -> Iterator[tuple[str, NodeCollection | EdgeCollection | PointCollection | ZoneCollection]]:
+    ) -> Iterator[
+        tuple[str, NodeCollection | EdgeCollection | PointCollection | ZoneCollection]
+    ]:
         for name in ("nodes", "edges", "points", "zones"):
             collection = getattr(self, name)
             if collection is not None:

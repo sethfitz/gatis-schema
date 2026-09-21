@@ -20,6 +20,8 @@ from __future__ import annotations
 import datetime as dt
 import keyword
 import re
+import subprocess
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -195,7 +197,7 @@ class ClassWriter:
         if reference is not None:
             target, role = reference
             extra.append(
-                f"Reference(Relationship.ASSOCIATION, {target}, role=\"{role}\")"
+                f'Reference(Relationship.ASSOCIATION, {target}, role="{role}")'
             )
 
         return (f"list[{base}]" if is_array else base), extra
@@ -211,16 +213,19 @@ class ClassWriter:
         metadata = [*extra, _tier_src(rule)]
         annotation = f"Annotated[{inner}, {', '.join(metadata)}]"
 
-        description = _escape(" ".join(field.description.split()))
+        description = " ".join(field.description.split())
         if field.valid == "Recommended":
             suggested = parse_listed_values(field.listed_values)
             if suggested:
-                values = _escape("; ".join(v.value for v in suggested))
+                values = "; ".join(v.value for v in suggested)
                 description = (
-                    f"{description} Recommended values: {values}." if description
+                    f"{description} Recommended values: {values}."
+                    if description
                     else f"Recommended values: {values}."
                 )
-        assignment = f' = Field(description="{description}")' if description else ""
+        assignment = (
+            f" = Field(description={_literal(description)})" if description else ""
+        )
         if discriminator and not description:
             assignment = ""
 
@@ -258,7 +263,7 @@ class ClassWriter:
             body: list[str] = [
                 *decorators,
                 f"class {class_name}({base_name}):",
-                f'    """{_summarise(description) or feature_type}"""',
+                *_docstring(_summarise(description) or feature_type),
                 "",
             ]
             for field, rule in fields:
@@ -322,9 +327,7 @@ class ClassWriter:
         id_field = next(
             (f for f in self.spec.fields if f.name == f"{self.name}_id"), None
         )
-        description = _escape(
-            " ".join(id_field.description.split()) if id_field else ""
-        )
+        description = " ".join(id_field.description.split()) if id_field else ""
         return "\n".join(
             [
                 f"class {base_name}(Identified, Feature):",
@@ -351,9 +354,10 @@ class ClassWriter:
                 "    # mandatory. Same narrowing, and the same silencing, as"
                 " Overture's own",
                 "    # `OvertureFeature`.",
-                f'    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]',
+                '    id: Annotated[Id, Tier("required")] = Field(  '
+                "# type: ignore[assignment]",
                 f'        alias="{self.name}_id",',
-                f'        description="{description}",',
+                f"        description={_literal(description)},",
                 "    )",
                 "",
                 "",
@@ -388,7 +392,9 @@ class ClassWriter:
             ")",
         ]
         if any(key[0] == self.name for key in REFERENCES):
-            lines[lines.index("from overture.schema.system.ref import Id, Identified")] = (
+            lines[
+                lines.index("from overture.schema.system.ref import Id, Identified")
+            ] = (
                 "from overture.schema.system.ref import (\n"
                 "    Id,\n"
                 "    Identified,\n"
@@ -430,9 +436,58 @@ def _tier_src(rule: PresenceRule) -> str:
     if not rule.upgrades:
         return f"Tier({base})"
     upgrades = ", ".join(
-        f'{tier}: "{presence.value}"' for tier, presence in sorted(rule.upgrades.items())
+        f'{tier}: "{presence.value}"'
+        for tier, presence in sorted(rule.upgrades.items())
     )
     return f"Tier({base}, {{{upgrades}}})"
+
+
+# `ruff format` puts the first chunk of an implicit concatenation on the same line
+# as the keyword that precedes it and the rest on their own lines, and how deep
+# that sits depends on whether the field's `Annotated[...]` also had to split.
+# Budget for the deeper case (12 spaces) so neither layout overflows 88 columns.
+_INDENT = 12
+_FIRST_CHUNK = 88 - _INDENT - len("description=") - 3
+_NEXT_CHUNK = 88 - _INDENT - 3
+
+
+def _literal(text: str) -> str:
+    """A string literal, wrapped as implicit concatenation when it is long.
+
+    `ruff format` lays implicit concatenation out across lines but never splits a
+    single literal, so the break points have to come from here.
+    """
+    escaped = _escape(" ".join(text.split()))
+    if len(escaped) <= _FIRST_CHUNK:
+        return f'"{escaped}"'
+    chunks = textwrap.wrap(
+        escaped,
+        width=_NEXT_CHUNK,
+        initial_indent=" " * (_NEXT_CHUNK - _FIRST_CHUNK),
+        break_long_words=False,
+    )
+    chunks[0] = chunks[0].lstrip()
+    return " ".join(f'"{chunk} "' for chunk in chunks[:-1]) + f' "{chunks[-1]}"'
+
+
+def _docstring(text: str, indent: str = "    ") -> list[str]:
+    """A docstring, wrapped. `ruff format` does not reflow these either."""
+    flat = _escape(" ".join(text.split()))
+    if not flat:
+        return []
+    body = 88 - len(indent)
+    if len(flat) <= body - 6:
+        return [f'{indent}"""{flat}"""']
+    # The opening line carries the three quote characters too.
+    lines = textwrap.wrap(
+        flat, width=body, initial_indent="   ", break_long_words=False
+    )
+    lines[0] = lines[0].lstrip()
+    return [
+        f'{indent}"""{lines[0]}',
+        *(f"{indent}{line}" for line in lines[1:]),
+        f'{indent}"""',
+    ]
 
 
 def _class_name(token: str) -> str:
@@ -499,7 +554,19 @@ def generate(
             continue
         path.write_text(source if source.endswith("\n") else source + "\n")
         written.append(path)
+
+    if written:
+        _format(written)
     return written, skipped
+
+
+def _format(paths: list[Path]) -> None:
+    """Hand the output to ruff. Generated line breaks are a starting point only."""
+    for command in (
+        ["ruff", "check", "--fix-only", "--quiet", *map(str, paths)],
+        ["ruff", "format", "--quiet", *map(str, paths)],
+    ):
+        subprocess.run(command, check=False)
 
 
 def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> str:
@@ -508,7 +575,8 @@ def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> 
         "BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot\n"
         f"(workbook Drive revision {snapshot.workbook_version}).\n\n"
         "Each member's value is the literal display string the workbook lists. GATIS\n"
-        "defines no canonical token spelling, so normalising here would fork the spec.\n"
+        "defines no canonical token spelling, so normalising here would fork the "
+        "spec.\n"
         '"""\n',
         "from __future__ import annotations",
         "",
@@ -526,7 +594,8 @@ def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> 
                 # DocumentedEnum takes (value, doc); several GATIS cells carry the
                 # definition after a colon, which is exactly what belongs there.
                 parts.append(
-                    f'    {entry.member} = ("{value}", "{_escape(entry.description)}")'
+                    f"    {entry.member} = "
+                    f"({_literal(value)}, {_literal(entry.description)})"
                 )
             else:
                 parts.append(f'    {entry.member} = "{value}"')
@@ -542,7 +611,8 @@ def _field_of(enum_name: str) -> str:
 
 def _render_package(names: list[str]) -> str:
     lines = [
-        '"""GATIS models, bootstrapped by `gatis_schema.codegen` then hand-refined."""\n',
+        '"""GATIS models, bootstrapped by `gatis_schema.codegen` then '
+        'hand-refined."""\n',
         "from __future__ import annotations",
         "",
     ]
@@ -550,10 +620,7 @@ def _render_package(names: list[str]) -> str:
     for name in names:
         title = _class_name(name)
         symbols = [title, f"{title}Adapter", f"{title}Base", f"{title}Collection"]
-        lines.append(
-            f"from gatis_schema.models.{name}s import "
-            + ", ".join(symbols)  # noqa: FLY002
-        )
+        lines.append(f"from gatis_schema.models.{name}s import " + ", ".join(symbols))
         exports.extend(symbols)
     lines.extend(["", "__all__ = ["])
     lines.extend(f'    "{symbol}",' for symbol in sorted(exports))

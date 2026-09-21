@@ -85,9 +85,9 @@ def test_forbidden_never_varies_by_tier(snapshot: SpecSnapshot) -> None:
         for field in spec.fields:
             for type_name, rule in field.presence.items():
                 values = {rule.at(tier) for tier in TIERS}
-                assert not (
-                    Presence.FORBIDDEN in values and len(values) > 1
-                ), f"{field.name}/{type_name}"
+                assert not (Presence.FORBIDDEN in values and len(values) > 1), (
+                    f"{field.name}/{type_name}"
+                )
 
 
 def test_conditionally_required_is_only_the_ada_pair(snapshot: SpecSnapshot) -> None:
@@ -131,9 +131,9 @@ def test_the_snapshot_reads_clean_once_repairs_are_applied(
     # the two presence columns. `spec/repairs.json` blanks them; anything NOT
     # covered by a repair surfaces here instead of being silently absorbed.
     assert snapshot.defects == []
-    assert [(r.feature_class, r.field, r.columns) for r in snapshot.repairs_applied] == [
-        ("point", "impediment", ["object", "point"])
-    ]
+    assert [
+        (r.feature_class, r.field, r.columns) for r in snapshot.repairs_applied
+    ] == [("point", "impediment", ["object", "point"])]
 
 
 def test_an_unrepaired_bad_cell_is_collected_not_raised(tmp_path: Path) -> None:

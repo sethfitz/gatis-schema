@@ -20,7 +20,9 @@ def _node(node_id: str, lon: float) -> dict[str, object]:
     }
 
 
-def _edge(edge_id: str, from_node: str, to_node: str, **extra: object) -> dict[str, object]:
+def _edge(
+    edge_id: str, from_node: str, to_node: str, **extra: object
+) -> dict[str, object]:
     return {
         "type": "Feature",
         "geometry": {

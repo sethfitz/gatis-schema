@@ -7,8 +7,8 @@ vendored snapshot of that sheet.
 
 __version__ = "0.1.0"
 
-from gatis_schema.presence import TIERS, Presence, PresenceRule
 from gatis_schema.dataset import Dataset, IntegrityError
+from gatis_schema.presence import TIERS, Presence, PresenceRule
 from gatis_schema.spec_source import (
     FEATURE_CLASSES,
     SPEC_DIR,
@@ -36,10 +36,10 @@ __all__ = [
     "IntegrityError",
     "Manifest",
     "MetadataField",
-    "Repair",
-    "RepairSet",
     "Presence",
     "PresenceRule",
+    "Repair",
+    "RepairSet",
     "SourcePin",
     "SpecDefect",
     "SpecReader",

@@ -113,7 +113,7 @@ class FeatureClassSpec(BaseModel):
 
     @property
     def types_without_fields(self) -> list[str]:
-        """Declared types with no presence column, so no fields at all -- not even an id.
+        """Declared types with no presence column, so no fields at all.
 
         Upstream drift between the `*_Types` and `*_Fields` tabs.
         """
@@ -190,9 +190,7 @@ class SpecSnapshot(BaseModel):
     def defects(self) -> list[SpecDefect]:
         """Every cell the reader could not interpret, across all feature classes."""
         return [
-            defect
-            for spec in self.feature_classes.values()
-            for defect in spec.defects
+            defect for spec in self.feature_classes.values() for defect in spec.defects
         ]
 
     @property
@@ -294,7 +292,8 @@ class SpecReader:
                 name=field_name,
                 description=_cell(row, index.get("Description")),
                 type=_cell(row, index.get("Type")),
-                valid=_cell(row, index.get("Valid")) or _cell(row, index.get("Valid Values")),
+                valid=_cell(row, index.get("Valid"))
+                or _cell(row, index.get("Valid Values")),
                 listed_values=_cell(row, index.get("Listed Values")),
                 example=_cell(row, index.get("Example")),
                 provenance=_cell(row, index.get("Provenance")),
@@ -331,7 +330,6 @@ class SpecReader:
                 )
             )
         return fields
-
 
     def _blanked(
         self,

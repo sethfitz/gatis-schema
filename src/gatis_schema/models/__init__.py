@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from gatis_schema.models.nodes import Node, NodeAdapter, NodeBase, NodeCollection
 from gatis_schema.models.edges import Edge, EdgeAdapter, EdgeBase, EdgeCollection
+from gatis_schema.models.nodes import Node, NodeAdapter, NodeBase, NodeCollection
 from gatis_schema.models.points import Point, PointAdapter, PointBase, PointCollection
 from gatis_schema.models.zones import Zone, ZoneAdapter, ZoneBase, ZoneCollection
 

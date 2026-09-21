@@ -4,7 +4,8 @@ sidebar_position: 1
 
 # PedestrianZone
 
-Indicates a zone where pedestrians may travel freely in a range of paths they choose.
+Indicates a zone where pedestrians may travel freely in a range of paths they
+choose.
 
 ## Fields
 

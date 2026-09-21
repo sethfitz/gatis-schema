@@ -5,8 +5,8 @@ The workbook encodes the tier axis inside a single cell as a base value followed
 zero or more upgrade lines::
 
     optional
-    T3:recommended
-    T4:required
+    T3: recommended
+    T4: required
 
 meaning optional at tiers 1-2, recommended at tier 3, required at tier 4. A cell with
 no upgrade lines holds at every tier.

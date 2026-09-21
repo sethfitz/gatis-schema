@@ -152,8 +152,15 @@ class RailCrossing(str, DocumentedEnum):
 class SeparationPermeableCar(str, DocumentedEnum):
     """Allowed values for `separation_permeable_car`."""
 
-    HARD_SEPARATOR = ("hard separator", "the separator cannot be easily bypassed by motor vehicles (jersey barriers, curbs)")
-    SOFT_SEPARATOR = ("soft separator", "the separator can be easily bypassed by motor vehicles (flex posts, k-rail)")
+    HARD_SEPARATOR = (
+        "hard separator",
+        "the separator cannot be easily bypassed by motor vehicles "
+        "(jersey barriers, curbs)",
+    )
+    SOFT_SEPARATOR = (
+        "soft separator",
+        "the separator can be easily bypassed by motor vehicles (flex posts, k-rail)",
+    )
     NONE = ("none", "no separator is present (just paint separation)")
 
 
@@ -171,7 +178,11 @@ class StreetParking(str, DocumentedEnum):
 
     PARALLEL = "parallel"
     ANGLED = "angled"
-    FLOATING = ("floating", "Also known as parking protected. Put this value if present regardless if parking is parallel/angled parking.")
+    FLOATING = (
+        "floating",
+        "Also known as parking protected. Put this value if present "
+        "regardless if parking is parallel/angled parking.",
+    )
 
 
 class SurfaceIssue(str, DocumentedEnum):
@@ -184,7 +195,9 @@ class SurfaceIssue(str, DocumentedEnum):
     FREQUENT_WATER_POOLING = "frequent water pooling"
     HEAVING = "heaving"
     MISSING_BRICKS_STONES = "missing bricks / stones"
-    GRATES_UTILITY_COVERS_OTHER_SURFACE_IMPEDIMENTS = "grates / utility covers / other surface impediments"
+    GRATES_UTILITY_COVERS_OTHER_SURFACE_IMPEDIMENTS = (
+        "grates / utility covers / other surface impediments"
+    )
     POTHOLES_HOLES = "potholes / holes"
     SLICKNESS = "slickness"
     UNEVEN_JOINTS = "uneven joints"
