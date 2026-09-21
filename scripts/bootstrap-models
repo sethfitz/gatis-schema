@@ -1,0 +1,33 @@
+#!/usr/bin/env -S uv run python
+"""Write the bootstrap models from the pinned spec snapshot.
+
+Refuses to overwrite existing files: they are hand-owned once written. Use
+`--force` to reseed, or `--into DIR` to write a fresh bootstrap elsewhere and diff
+it against the hand-edited models.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from gatis_schema.codegen import MODELS_DIR, generate
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--into", type=Path, default=MODELS_DIR)
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+
+    written, skipped = generate(out_dir=args.into, force=args.force)
+    for path in written:
+        print(f"wrote   {path}")
+    for path in skipped:
+        print(f"kept    {path} (hand-owned; --force to overwrite)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

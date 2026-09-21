@@ -147,6 +147,29 @@ class SourcePin(BaseModel):
     tab_count: int | None = None
 
 
+class Repair(BaseModel):
+    """One deliberate correction applied to a snapshot cell on read."""
+
+    feature_class: str
+    field: str
+    columns: list[str]
+    match_prefix: str = ""
+    reason: str
+
+
+class RepairSet(BaseModel):
+    """`spec/repairs.json`: every departure from the verbatim snapshot."""
+
+    blank_presence: list[Repair] = Field(default_factory=list)
+
+    def blanks_for(self, feature_class: str, field: str) -> list[Repair]:
+        return [
+            repair
+            for repair in self.blank_presence
+            if repair.feature_class == feature_class and repair.field == field
+        ]
+
+
 class Manifest(BaseModel):
     """`spec/MANIFEST.json`: what was fetched, from where, and at which revision."""
 
@@ -161,6 +184,7 @@ class SpecSnapshot(BaseModel):
     manifest: Manifest
     feature_classes: dict[str, FeatureClassSpec]
     metadata_fields: list[MetadataField]
+    repairs_applied: list[Repair] = Field(default_factory=list)
 
     @property
     def defects(self) -> list[SpecDefect]:
@@ -184,14 +208,25 @@ class SpecReader:
         self.spec_dir = Path(spec_dir)
 
     def load(self) -> SpecSnapshot:
+        self._applied: list[Repair] = []
+        feature_classes = {
+            name: self._feature_class(name, types_csv, fields_csv)
+            for name, (types_csv, fields_csv) in FEATURE_CLASSES.items()
+        }
         return SpecSnapshot(
             manifest=self.manifest,
-            feature_classes={
-                name: self._feature_class(name, types_csv, fields_csv)
-                for name, (types_csv, fields_csv) in FEATURE_CLASSES.items()
-            },
+            feature_classes=feature_classes,
             metadata_fields=self._metadata_fields(),
+            repairs_applied=self._applied,
         )
+
+    @cached_property
+    def repairs(self) -> RepairSet:
+        path = self.spec_dir / "repairs.json"
+        if not path.exists():
+            return RepairSet()
+        with path.open() as handle:
+            return RepairSet.model_validate(json.load(handle))
 
     @cached_property
     def manifest(self) -> Manifest:
@@ -266,7 +301,12 @@ class SpecReader:
                 osm_mapping=_cell(row, index.get("OSM Mapping")),
                 notes=_cell(row, index.get("Notes")),
                 presence=_presence(
-                    row, type_columns, feature_class, field_name, defects
+                    row,
+                    type_columns,
+                    feature_class,
+                    field_name,
+                    defects,
+                    self._blanked(feature_class, field_name, row, first_attribute),
                 ),
             )
 
@@ -293,6 +333,27 @@ class SpecReader:
         return fields
 
 
+    def _blanked(
+        self,
+        feature_class: str,
+        field_name: str,
+        row: Sequence[str],
+        first_attribute: int,
+    ) -> set[str]:
+        """Presence columns this row's repairs say to treat as empty."""
+        blanked: set[str] = set()
+        for repair in self.repairs.blanks_for(feature_class, field_name):
+            cells = [c for c in row[:first_attribute] if c]
+            if repair.match_prefix and not any(
+                cell.startswith(repair.match_prefix) for cell in cells
+            ):
+                continue
+            blanked.update(repair.columns)
+            if repair not in self._applied:
+                self._applied.append(repair)
+        return blanked
+
+
 def _column_index(header: Sequence[str]) -> dict[str, int]:
     """Map header label -> column. Later duplicates lose to the first."""
     index: dict[str, int] = {}
@@ -314,9 +375,12 @@ def _presence(
     feature_class: str,
     field_name: str,
     defects: list[SpecDefect],
+    blanked: set[str],
 ) -> dict[str, PresenceRule]:
     rules = {}
     for position, type_name in type_columns:
+        if type_name in blanked:
+            continue
         value = _cell(row, position)
         try:
             rule = PresenceRule.parse(value)

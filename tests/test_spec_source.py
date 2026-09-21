@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import pytest
 
 from gatis_schema import FEATURE_CLASSES, TIERS, Presence, PresenceRule, SpecReader
@@ -121,15 +124,29 @@ def test_known_upstream_duplicate_field_rows_are_reported(
         assert snapshot.feature_classes[spec].duplicate_field_names == []
 
 
-def test_unparseable_upstream_cells_are_collected_not_raised(
+def test_the_snapshot_reads_clean_once_repairs_are_applied(
     snapshot: SpecSnapshot,
 ) -> None:
     # One Points_Fields `impediment` row has its name and description pasted into
-    # the two presence columns. Collected so a snapshot still loads.
+    # the two presence columns. `spec/repairs.json` blanks them; anything NOT
+    # covered by a repair surfaces here instead of being silently absorbed.
+    assert snapshot.defects == []
+    assert [(r.feature_class, r.field, r.columns) for r in snapshot.repairs_applied] == [
+        ("point", "impediment", ["object", "point"])
+    ]
+
+
+def test_an_unrepaired_bad_cell_is_collected_not_raised(tmp_path: Path) -> None:
+    # Control: the defect path still fires when no repair covers the cell.
+    spec = SpecReader().spec_dir
+    shutil.copytree(spec, tmp_path / "spec")
+    (tmp_path / "spec" / "repairs.json").unlink()
+    snapshot = SpecReader(tmp_path / "spec").load()
     assert [(d.feature_class, d.field, d.column) for d in snapshot.defects] == [
         ("point", "impediment", "object"),
         ("point", "impediment", "point"),
     ]
+    assert snapshot.repairs_applied == []
 
 
 def test_metadata_fields_cover_the_required_basics(snapshot: SpecSnapshot) -> None:

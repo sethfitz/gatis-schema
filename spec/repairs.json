@@ -1,0 +1,17 @@
+{
+  "comment": [
+    "Deliberate corrections applied when reading the snapshot. The snapshot itself",
+    "stays a verbatim export; every departure from it is recorded here so it is",
+    "reviewable and survives a refresh. Each entry names an upstream defect --",
+    "see spec/README.md -- and is removed once upstream fixes it."
+  ],
+  "blank_presence": [
+    {
+      "feature_class": "point",
+      "field": "impediment",
+      "columns": ["object", "point"],
+      "match_prefix": "impediment",
+      "reason": "Column-shifted row: the field name and description are pasted into the two presence columns, so neither holds a presence value. Blanked rather than guessed -- upstream does not say which point types carry impediment."
+    }
+  ]
+}
