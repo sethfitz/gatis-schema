@@ -21,6 +21,11 @@ generation is not.
 - `gatis_schema.spec_source` -- reads that snapshot into typed records
   (`FieldSpec`, `FeatureType`, `PresenceRule`).
 - `gatis_schema.presence` -- the tier-varying presence grammar.
+- `gatis_schema.models` -- the models themselves, bootstrapped by
+  `scripts/bootstrap-models` and hand-owned from there.
+- [`docs/spec-review.md`](docs/spec-review.md) -- defects found in the spec while
+  modelling it, plus critiques from Overture's experience and from what the
+  GeoJSON container has quietly decided.
 
 ## Why generate rather than hand-write
 
