@@ -1,0 +1,187 @@
+#!/usr/bin/env -S uv run python
+"""Validate a GATIS GeoJSON file against this package's models and report defects.
+
+Feature-by-feature, so one bad feature does not mask the rest, and bucketed by
+(feature type, field, defect class) so a 334k-feature file reports a dozen
+distinct problems rather than a million error lines.
+
+    scripts/validate-sample edges.geojson --as edges
+
+Two kinds of noise are collapsed, both artifacts of how the models are built
+rather than anything about the data:
+
+* `Omitable[T]` is a union of `T` and a MISSING sentinel, so every failure on an
+  optional field arrives twice, once per arm. The sentinel arm is dropped.
+* The discriminated union prefixes each location with its tag, so a path reads
+  `road.road.width`. The duplicate tag is dropped.
+
+Defect classes are named for what a publisher would have to change, not for the
+Pydantic error code, because the code is the same for several unrelated causes.
+
+A class subtotal counts a *class*, not a category you might name it after:
+`wrong JSON scalar type` holds non-string identifiers and a fractional
+`traffic_volume` alike. Quote the per-field lines, which name a field; count
+anything narrower from the data itself.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+from pydantic import TypeAdapter, ValidationError
+from pydantic_core import ErrorDetails
+
+from gatis_schema.models import EdgeAdapter, NodeAdapter, PointAdapter, ZoneAdapter
+
+ADAPTERS: dict[str, TypeAdapter[Any]] = {
+    "edges": EdgeAdapter,
+    "nodes": NodeAdapter,
+    "points": PointAdapter,
+    "zones": ZoneAdapter,
+}
+
+NULL_FOR_ABSENT = "explicit null for an absent field"
+
+
+def classify(error: ErrorDetails) -> str:
+    """Name the defect a publisher would have to fix."""
+    code: str = error["type"]
+    if error.get("input") is None and code != "missing":
+        return NULL_FOR_ABSENT
+    if code == "enum":
+        return "value outside the spec vocabulary"
+    if code == "list_type":
+        return "scalar where the spec says a list"
+    if code in {"string_type", "int_type", "float_type", "int_from_float"}:
+        return "wrong JSON scalar type"
+    if code == "missing":
+        return "required field absent"
+    return code
+
+
+def field_path(loc: tuple[Any, ...], tag: str | None) -> str:
+    parts = [str(part) for part in loc]
+    if tag and parts[:1] == [tag]:
+        parts = parts[1:]
+    # Drop a trailing union-arm descriptor such as `width.constrained-float`.
+    if len(parts) > 1 and ("[" in parts[-1] or "-" in parts[-1]):
+        parts = parts[:-1]
+    return ".".join(parts) or "<feature>"
+
+
+def validate(path: Path, kind: str, limit: int | None = None) -> dict[str, Any]:
+    adapter = ADAPTERS[kind]
+    tag_field = "edge_type" if kind == "edges" else f"{kind[:-1]}_type"
+    features = json.loads(path.read_text())["features"]
+    if limit is not None:
+        features = features[:limit]
+
+    defects: dict[tuple[str | None, str, str], Counter[str]] = defaultdict(Counter)
+    samples: dict[tuple[str | None, str, str], Any] = {}
+    extras: Counter[tuple[str | None, str]] = Counter()
+    failed: Counter[str | None] = Counter()
+    valid = 0
+
+    for feature in features:
+        tag = (feature.get("properties") or {}).get(tag_field)
+        try:
+            # `validate_json`, never `validate_python`: the Overture `Feature`
+            # wrap-validator only unwraps the GeoJSON envelope in JSON mode, so a
+            # parsed dict validates as a flat model and every field reads missing.
+            model = adapter.validate_json(json.dumps(feature))
+        except ValidationError as exc:
+            seen = set()
+            for error in exc.errors():
+                if any(str(part) == "missing-sentinel" for part in error["loc"]):
+                    continue
+                key = (tag, field_path(error["loc"], tag), classify(error))
+                if key in seen:
+                    continue
+                seen.add(key)
+                defects[key][error["msg"]] += 1
+                samples.setdefault(key, error.get("input"))
+            failed[tag] += 1
+            continue
+        valid += 1
+        for name in getattr(model, "model_extra", None) or {}:
+            extras[(tag, name)] += 1
+
+    return {
+        "total": len(features),
+        "valid": valid,
+        "defects": defects,
+        "samples": samples,
+        "extras": extras,
+        "failed": failed,
+    }
+
+
+def report(name: str, result: dict[str, Any], top: int) -> None:
+    total, valid = result["total"], result["valid"]
+    print(f"\n{'=' * 78}")
+    print(f"{name}: {valid}/{total} features valid ({total - valid} failed)")
+    if result["failed"]:
+        breakdown = ", ".join(f"{t}={n}" for t, n in result["failed"].most_common())
+        print(f"  failed by feature type: {breakdown}")
+
+    DefectKey = tuple[str | None, str, str]
+    Row = tuple[int, str | None, str, "Counter[str]", DefectKey]
+    grouped: dict[str, list[Row]] = defaultdict(list)
+    for key, messages in result["defects"].items():
+        tag, field, defect_class = key
+        grouped[defect_class].append(
+            (sum(messages.values()), tag, field, messages, key)
+        )
+
+    for defect_class, rows in sorted(
+        grouped.items(), key=lambda kv: -sum(row[0] for row in kv[1])
+    ):
+        occurrences = sum(row[0] for row in rows)
+        print(f"\n  -- {defect_class}: {occurrences} in {len(rows)} fields --")
+        for count, tag, field, messages, key in sorted(rows, key=lambda r: -r[0])[:top]:
+            print(f"  [{count:>7}] {tag}.{field}")
+            print(f"            {messages.most_common(1)[0][0][:100]}")
+            if defect_class != NULL_FOR_ABSENT:
+                print(f"            sample: {result['samples'][key]!r:.110}")
+        if len(rows) > top:
+            print(f"            ... and {len(rows) - top} further fields")
+
+    if result["extras"]:
+        kept = len(result["extras"])
+        print(f"\n  -- unknown fields kept on valid features: {kept} --")
+        for (tag, field), count in result["extras"].most_common(top):
+            print(f"  [{count:>7}] {tag}.{field}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("path", type=Path)
+    parser.add_argument(
+        "--as",
+        dest="kind",
+        choices=sorted(ADAPTERS),
+        help="which feature class; inferred from the filename when omitted",
+    )
+    parser.add_argument("--limit", type=int, help="validate only the first N features")
+    parser.add_argument("--top", type=int, default=25, help="fields shown per class")
+    args = parser.parse_args()
+
+    kind = args.kind
+    if kind is None:
+        matches = [k for k in ADAPTERS if k in args.path.name.lower()]
+        if len(matches) != 1:
+            parser.error(f"cannot infer feature class from {args.path.name}; pass --as")
+        kind = matches[0]
+
+    result = validate(args.path, kind, args.limit)
+    report(args.path.name, result, args.top)
+    return 1 if result["valid"] < result["total"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
