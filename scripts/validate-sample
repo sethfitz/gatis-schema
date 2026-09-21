@@ -56,8 +56,18 @@ from pydantic_core import ErrorDetails
 #                       on a 280 MB file, a 137x cost for no gain: JSON is a
 #                       YAML 1.2 subset, so the parse is equivalent.
 #
-# Both are filed upstream. Neither affects the verdict -- results are identical
-# either way -- so if they are fixed, delete this and call the helpers.
+# Both are filed upstream as bd-dfsc. Neither affects the verdict -- results are
+# identical either way -- so if they are fixed, delete this and call them.
+#
+# The rule that picks them apart, since taking all three was the mistake:
+# borrow the helper that encodes SHARED KNOWLEDGE and would otherwise drift
+# (which types exist, how the union is built), not the ones that merely wrap a
+# call you can make yourself. Convenience wrappers carry a library's cost model,
+# not its meaning, and this file runs over 334k features.
+#
+# TRIPWIRE: austin_edges.geojson (334,007 features) validates in ~9 s. If a
+# change makes that minutes, the parse or the adapter has moved back into the
+# loop -- measure before assuming it is the models.
 TYPE_NAMES = {
     "edges": "gatis_edge",
     "nodes": "gatis_node",
