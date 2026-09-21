@@ -1,0 +1,315 @@
+{
+  "_provenance": {
+    "what": "A local transcription of the three extension tables in extensions.pdf.",
+    "why": "Upstream publishes the core five as structured JSON under specification_jsons/ and the three extensions only as a PDF, so nothing machine-readable describes lrs.json, events.json or relations.json. This file is that, transcribed by hand and kept beside the PDF it came from.",
+    "not_upstream": "This is NOT part of the pinned snapshot. scripts/snapshot-spec does not write it and MANIFEST.json does not list it. If upstream publishes the tables as JSON, delete this and read theirs.",
+    "source": {
+      "file": "extensions.pdf",
+      "repo_path": "documents/drafts/GATIS Extensions and Tables.pdf",
+      "sha256": "8e17cc7f9e0f214c503dcab00629403a9f0d9bf2 (git blob); see MANIFEST.json for the content hash",
+      "read_via": "pdftotext -layout, cross-checked against markitdown"
+    },
+    "transcribed": "2026-09-21",
+    "verbatim": "Field names, declared types, required flags, listed values and descriptions are as printed. Ligatures (fi, ffi) are normalised to ASCII; mid-word line breaks are joined. Typos are kept -- events.type reads 'wtihin GATIS' upstream.",
+    "defects": "Recorded in docs/spec-review.md, not corrected here. The PDF's own header for the relations table says 'Valid' where the other two say 'Required'."
+  },
+
+  "tables": {
+    "lrs": {
+      "title": "LRS Extension",
+      "file": "lrs.json",
+      "note": "Optional extension; JSON format",
+      "fields": [
+        {
+          "name": "gatis_id",
+          "description": "The identification number within GATIS for this piece of infrastructure.",
+          "type": "Text",
+          "required": true,
+          "listed_values": null
+        },
+        {
+          "name": "geometry_type",
+          "description": "The type of geospatial feature within GATIS of the infrastructure.",
+          "type": "Enum",
+          "required": false,
+          "listed_values": ["edge", "node", "point", "zone"]
+        },
+        {
+          "name": "Type",
+          "description": "The type of infrastructure. Valid values are any edge, node, point or zone types within GATIS.",
+          "type": "Enum",
+          "required": false,
+          "listed_values": [
+            "sidewalk", "footway", "crossing", "ramp", "traffic island", "steps",
+            "elevator", "escalator", "bikeway", "multi_use_path", "trail",
+            "virtual_link", "generic", "curb_ramp", "object", "sign",
+            "transit_stop", "issue", "counter", "bike_parking", "open",
+            "traffic_calming"
+          ]
+        },
+        {
+          "name": "reference_ids",
+          "description": "The identification number or other identifier of the related road segment within the linear referencing system. Can be the identification number within a government, commercial or third-party LRS. If multiple LRS segments align with a piece of infrastructure mapped in GATIS, provide all IDs within a properly formatted list.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_source_url",
+          "description": "The URL where the linear referencing system referenced in reference_ids can be found.",
+          "type": "Fully qualified URL",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_starting_milepoint",
+          "description": "The milepoint on the LRS segment at which this specific infrastructure begins.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_ending_milepoint",
+          "description": "The milepoint on the LRS segment at which this specific infrastructure ends.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_side",
+          "description": "The side of the LRS segment where this infrastructure appears. This tagging should align with the direction of the LRS segment, with the segment start point appearing at milepoint 0. It may contradict the directionality of the GATIS segment, which is assigned based on the order in which the geometry of the GATIS segment was drawn.",
+          "type": "Enum",
+          "required": false,
+          "listed_values": ["left", "right", "both"]
+        }
+      ]
+    },
+
+    "events": {
+      "title": "Events Table",
+      "file": "events.json",
+      "note": "Optional extension; JSON format",
+      "fields": [
+        {
+          "name": "event_id",
+          "description": "The unique identifier for the event. If the event already has an ID assigned within another dataset, such as an agency asset management dataset, use that ID here as well.",
+          "type": "Text",
+          "required": true,
+          "listed_values": null
+        },
+        {
+          "name": "event_datetime",
+          "description": "The date on which the event occurred. Include time if available; if not, fill in time with zeroes.",
+          "type": "Datetime",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "event_type",
+          "description": "The type of event that occurred. If multiple events occurred on the same day, break each out into a separate row.",
+          "type": "Text",
+          "required": false,
+          "listed_values": [
+            "maintenance inspection", "ADA assessment", "other assessment",
+            "data update", "complaint", "repair", "other maintenance work",
+            "construction", "redesign", "removal", "other"
+          ]
+        },
+        {
+          "name": "gatis_id",
+          "description": "The GATIS identification number for the piece of infrastructure, used in the edge, node, point or zone tables.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "type",
+          "description": "The type of infrastructure. Valid values are any edge, node, point or zone types wtihin GATIS.",
+          "type": "Enum",
+          "required": false,
+          "listed_values": [
+            "sidewalk", "footway", "crossing", "ramp", "traffic island", "steps",
+            "elevator", "escalator", "bikeway", "multi_use_path", "trail",
+            "virtual_link", "virtual_node", "curb_ramp", "object", "sign",
+            "transit_stop", "issue", "counter", "bike_parking", "open_movement"
+          ]
+        },
+        {
+          "name": "geometry_type",
+          "description": "The type of geospatial feature within GATIS of the infrastructure.",
+          "type": "Enum",
+          "required": false,
+          "listed_values": ["edge", "node", "point", "zone"]
+        },
+        {
+          "name": "event_location",
+          "description": "Geospatial point or edge location where the event occurred. If inspection of a sidewalk, include the full sidewalk edge coordinates. If repair, include the point location where the repair was carried out.",
+          "type": "Geometry (Point)",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "location_description",
+          "description": "Text description of the location where the event occurred.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_segment_id",
+          "description": "If the event occurred along a segment represented in the infrastructure owner's linear referencing system, the identification number or other identifier of the LRS segment.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "lrs_milepoint",
+          "description": "If the event occurred along a segment represented in the infrastructure owner's linear referencing system, the milepoint at which the event occurred.",
+          "type": "Decimal",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "work_order_id",
+          "description": "The identification number of the work order or other identifier within the managing jurisdiction's data systems.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "owner",
+          "description": "The entity that owns this piece of infrastructure. If a department, office or subagency is responsible for the infrastructure, list that department, office or subagency.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "maintainer",
+          "description": "The entity that is responsible for maintaining this piece of infrastructure. It may or may not be the same as owner. If a department, office or subagency is responsible for the infrastructure, list that department, office or subagency.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "executor_of_work",
+          "description": "The entity that carried out any work associated with this event. If multiple, list all in list format. The executor may be a contractor, or it may be the entity listed as owner or maintainer for the infrastructure.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "inspector",
+          "description": "If an inspection, the name or names of the party or parties carrying out the inspection. This may be the name of an individual, a contractor or some other party. If multiple, list all in list format.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "inspection_method",
+          "description": "The method used for inspecting the infrastructure.",
+          "type": "Text",
+          "required": false,
+          "listed_values": [
+            "visual inspection", "survey/audit", "satellite", "lidar",
+            "other imagery", "other"
+          ]
+        },
+        {
+          "name": "description",
+          "description": "A description of the event, to convey further detail of what was done. This may include listing construction or repair work activities and describing materials used, providing the specific ADA standard under which an assessment was carried out and conveying results or planned next steps, or providing information on redesign- or planning-related activities.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "comments",
+          "description": "Any additional remarks or notes provided within the infrastructure owner's asset management dataset related to the event.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "costs",
+          "description": "The total amount spent on carrying out any work or inspections that were part of the event, rounded to the nearest whole number.",
+          "type": "Integer",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "downtime",
+          "description": "The total amount of time related to the event during which the infrastructure was closed or inaccessible in whole or in part. Provide a value plus units - ex. \"2 weeks\", \"3.5 days\", \"12 hours\".",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "related_issue",
+          "description": "The GATIS ID for an issue point related to this event.",
+          "type": "ID",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "funding_source",
+          "description": "The source of funds for the construction, repair or other action taken as a part of the event.",
+          "type": "Text",
+          "required": false,
+          "listed_values": null
+        }
+      ]
+    },
+
+    "relations": {
+      "title": "Relations Table",
+      "file": "relations.json",
+      "note": "Optional extension; JSON format",
+      "fields": [
+        {
+          "name": "relation_id",
+          "description": "The identification number for the relation described in this row.",
+          "type": "ID",
+          "required": true,
+          "listed_values": null
+        },
+        {
+          "name": "from_id",
+          "description": "For a relation that is a movement, the GATIS ID for the piece of infrastructure at which the movement begins.",
+          "type": "ID",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "to_id",
+          "description": "For a relation that is a movement, the GATIS ID for the piece of infrastructure at which the movement completes.",
+          "type": "ID",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "signal_id",
+          "description": "For a signal relation, the GATIS ID for the signal point. If multiple (ex. at the west and east ends of a crossing), provide all IDs in a list.",
+          "type": "ID",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "crossing_id",
+          "description": "For a signal relation, the GATIS ID for the crossing edge that is affected when the signal point under signal_id is interacted with by a traveler. If multiple, provide all IDs in a list.",
+          "type": "ID",
+          "required": false,
+          "listed_values": null
+        },
+        {
+          "name": "turning_treatment",
+          "description": "For a relation that is a turning movement, any treatments at the intersection that are meant to facilitate the turn for travelers.",
+          "type": "Text",
+          "required": false,
+          "listed_values": [
+            "bike box", "two-stage turn box", "protected intersection",
+            "bike signal", "bike leading interval", "mixing zone", "scramble"
+          ]
+        }
+      ]
+    }
+  }
+}

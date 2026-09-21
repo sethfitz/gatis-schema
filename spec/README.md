@@ -20,6 +20,7 @@ belongs. Both artifacts are CC0 1.0.
 | `explorer/**` | `gatis_explorer/data/` -- the same content as CSV, rendered at [the GATIS Explorer](https://dotbts.github.io/BPA/). A cross-check, not a source. |
 | `introduction.html` | `gatis_explorer/pages/specification_introduction.html` -- the narrative sections the attribute tables assume. |
 | `extensions.pdf` | `documents/drafts/GATIS Extensions and Tables.pdf` -- the only definition of the `lrs.json`, `events.json` and `relations.json` files section 2.1 declares. `extensions.txt` beside it is a `pdftotext -layout` extraction, derived rather than upstream, so the field tables can be grepped and diffed. |
+| `extensions.json` | **Not upstream.** A hand transcription of those three tables into the shape `specification_jsons` would have used, so `models/extensions.py` has a source to be checked against. `scripts/snapshot-spec` does not write it and `MANIFEST.json` does not list it. Delete it the day upstream publishes the tables as JSON. |
 | `playbook.md` | The [GATIS Playbook](https://docs.google.com/document/d/1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE/edit), which `introduction.html` links as one of the three published artifacts. Not in the repository, so it has its own pin. |
 
 ## Why a repository and not a Google Sheet

@@ -1,4 +1,4 @@
-"""A GATIS dataset: the five files together, and the checks that need all of them.
+"""A GATIS dataset: the eight files together, and the checks that need more than one.
 
 The `Reference` annotations on `from_node` and `to_node` are declarative -- they say
 what an identifier points at so downstream tooling can read it, and they enforce
@@ -16,13 +16,20 @@ from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from gatis_schema.models import (
     EdgeCollection,
+    Event,
+    EventAdapter,
+    LrsCrosswalk,
+    LrsCrosswalkAdapter,
     NodeCollection,
     PointCollection,
+    Relation,
+    RelationAdapter,
     ZoneCollection,
 )
 
@@ -32,7 +39,13 @@ FILES = {
     "points": "points.geojson",
     "zones": "zones.geojson",
     "metadata": "metadata.json",
+    "lrs": "lrs.json",
+    "events": "events.json",
+    "relations": "relations.json",
 }
+
+EXTENSIONS = ("lrs", "events", "relations")
+"""The three optional tables from section 2.1. Rows, not GeoJSON features."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,11 +63,17 @@ class IntegrityError:
 
 @dataclass(slots=True)
 class Dataset:
-    """The five files of a GATIS dataset, parsed.
+    """The eight files of a GATIS dataset, parsed.
 
     Every file is optional: the spec's tier model lets a publisher ship edges with
     no zones, and a dataset that omits `nodes.geojson` simply cannot be checked for
-    dangling endpoints.
+    dangling endpoints. The three extension tables are optional in a stronger
+    sense -- they sit outside the tier model entirely, so nothing about a dataset
+    makes them expected.
+
+    An extension that is present is `[]` rather than `None`, which is the
+    distinction `check_integrity` needs: an empty `relations.json` is a publisher
+    saying there are no relations, and an absent one says nothing at all.
     """
 
     nodes: NodeCollection | None = None
@@ -62,10 +81,13 @@ class Dataset:
     points: PointCollection | None = None
     zones: ZoneCollection | None = None
     metadata: dict[str, object] | None = None
+    lrs: list[LrsCrosswalk] | None = None
+    events: list[Event] | None = None
+    relations: list[Relation] | None = None
 
     @classmethod
     def load(cls, directory: Path | str) -> Dataset:
-        """Read whichever of the five files are present in `directory`."""
+        """Read whichever of the eight files are present in `directory`."""
         root = Path(directory)
         collections: dict[str, type[BaseModel]] = {
             "nodes": NodeCollection,
@@ -82,6 +104,19 @@ class Dataset:
         if metadata_path.exists():
             with metadata_path.open() as handle:
                 parsed["metadata"] = json.load(handle)
+
+        adapters: dict[str, TypeAdapter[Any]] = {
+            "lrs": LrsCrosswalkAdapter,
+            "events": EventAdapter,
+            "relations": RelationAdapter,
+        }
+        for name in EXTENSIONS:
+            path = root / FILES[name]
+            if path.exists():
+                with path.open() as handle:
+                    parsed[name] = adapters[name].validate_python(
+                        _rows(json.load(handle), name, path)
+                    )
         return cls(**parsed)  # type: ignore[arg-type]
 
     @property
@@ -96,7 +131,11 @@ class Dataset:
         dataset with no `nodes.geojson` says nothing about its endpoints -- see
         `unchecked`.
         """
-        return [*self._duplicate_ids(), *self._dangling_endpoints()]
+        return [
+            *self._duplicate_ids(),
+            *self._dangling_endpoints(),
+            *self._dangling_extension_refs(),
+        ]
 
     @property
     def unchecked(self) -> list[str]:
@@ -107,6 +146,12 @@ class Dataset:
                 "edge endpoints: edges.geojson is present and nodes.geojson is not, "
                 "so from_node and to_node cannot be resolved"
             )
+        for name in EXTENSIONS:
+            if getattr(self, name) and not self._feature_ids:
+                missing.append(
+                    f"{FILES[name]} references: no core file is present, so its "
+                    "GATIS ids cannot be resolved"
+                )
         return missing
 
     def _duplicate_ids(self) -> Iterator[IntegrityError]:
@@ -139,6 +184,40 @@ class Dataset:
                         f"{FILES['nodes']}",
                     )
 
+    @property
+    def _feature_ids(self) -> set[str]:
+        """Every id in the core files, across all four."""
+        return {
+            feature.id
+            for _, collection in self._collections()
+            for feature in collection.features
+        }
+
+    def _dangling_extension_refs(self) -> Iterator[IntegrityError]:
+        """An extension row's GATIS ids must name a feature in a core file.
+
+        This is the whole point of the three tables -- they carry no geometry and
+        exist only to say something about a feature that lives elsewhere -- and it
+        is a check nothing upstream can perform, because no JSON Schema covers
+        them and the published validator reads the core five.
+
+        Silent when no core file is loaded; `unchecked` says so.
+        """
+        known = self._feature_ids
+        if not known:
+            return
+        # `relation_id` and `event_id` name the row, not a feature, so neither is
+        # resolved here.
+        referencing = {
+            "lrs": ("gatis_id",),
+            "events": ("gatis_id",),
+            "relations": ("from_id", "to_id", "signal_id", "crossing_id"),
+        }
+        for name, fields in referencing.items():
+            for index, row in enumerate(getattr(self, name) or []):
+                for field in fields:
+                    yield from _missing(name, index, row, field, known)
+
     def _collections(
         self,
     ) -> Iterator[
@@ -148,3 +227,51 @@ class Dataset:
             collection = getattr(self, name)
             if collection is not None:
                 yield name, collection
+
+
+def _missing(
+    name: str,
+    index: int,
+    row: object,
+    field: str,
+    known: set[str],
+) -> Iterator[IntegrityError]:
+    """Yield an error for each id in `row.field` that no core file declares."""
+    value = getattr(row, field, None)
+    if value is None:
+        return
+    targets = value if isinstance(value, list) else [value]
+    row_id = str(
+        getattr(row, "event_id", None) or getattr(row, "relation_id", None) or index
+    )
+    for target in targets:
+        if isinstance(target, str) and target not in known:
+            yield IntegrityError(
+                file=FILES[name],
+                feature_id=row_id,
+                field=field,
+                problem=f"references GATIS id {target!r}, which is in no core file",
+            )
+
+
+def _rows(payload: object, name: str, path: Path) -> list[object]:
+    """The rows of an extension file, whichever envelope it arrived in.
+
+    Section 2.1 names the file and its format and stops, so nothing says whether
+    the payload is a bare array or an object wrapping one. Both are accepted, and
+    anything else is refused rather than guessed at.
+    """
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        rows = payload.get(name)
+        if isinstance(rows, list):
+            return rows
+        if len(payload) == 1:
+            only = next(iter(payload.values()))
+            if isinstance(only, list):
+                return only
+    raise ValueError(
+        f"{path}: expected a list of {name} rows, or an object with one key "
+        f"holding that list; got {type(payload).__name__}"
+    )

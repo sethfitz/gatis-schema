@@ -1037,6 +1037,26 @@ takes an underscore; v1.0 uses `traffic_island`. So an extension row cannot name
 road, a pushbutton or a curb ramp run slope, and can name three things v1.0
 renamed or removed.
 
+**Eight smaller things, found by modelling the tables.** Each has an unambiguous
+fix.
+
+- The LRS table names its discriminator `Type`, capitalised; the events table
+  names the same concept `type`. One of the two is a typo.
+- The relations table's fourth column is headed `Valid`; the other two head it
+  `Required`, and the values under it are Required and Optional.
+- `reference_ids` on the LRS table is declared `Text`. On every core feature it
+  is `Array<Object>`. That is a third meaning for one field name, and the LRS
+  description asks for "all IDs within a properly formatted list" against a
+  scalar type.
+- A milepoint is `Text` in the LRS table (`lrs_starting_milepoint`,
+  `lrs_ending_milepoint`) and `Decimal` in the events table (`lrs_milepoint`).
+- `event_location` is declared `Geometry (Point)` and its own description says
+  "If inspection of a sidewalk, include the full sidewalk edge coordinates."
+- Four columns declared `ID` or `Text` instruct the publisher to write a list:
+  `signal_id`, `crossing_id`, `executor_of_work`, `inspector`.
+- `costs` is an `Integer` and no currency is named, in the table or the Playbook.
+- The events `type` description reads "wtihin GATIS".
+
 **One gap the tables make visible.** The relations table has `from_id` and `to_id`
 and no extent and no side. The LRS table has `lrs_starting_milepoint`,
 `lrs_ending_milepoint` and `lrs_side` — the only extent anywhere in GATIS — and
