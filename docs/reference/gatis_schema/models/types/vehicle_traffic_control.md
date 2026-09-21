@@ -4,12 +4,13 @@ Allowed values for `vehicle_traffic_control`.
 
 ## Values
 
-- `uncontrolled`
-- `standard signal`
-- `flashing red signal`
-- `flashing yellow signal`
+- `no vehicle control`
+- `traffic signal`
+- `flashing red light`
+- `flashing yellow light`
 - `yield sign`
 - `stop sign`
+- `other`
 
 ## Used By
 

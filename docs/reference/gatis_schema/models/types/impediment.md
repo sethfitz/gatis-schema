@@ -6,11 +6,11 @@ Allowed values for `impediment`.
 
 - `yes`
 - `no`
-- `low overgrowth (lower than 27')`
-- `high overgrowth (27' or higher)`
+- `low overgrowth (more than 48' remaining)`
+- `high overgrowth (less than 48' remaining)`
 - `sign`
-- `low protrusion (lower than 27')`
-- `high protrusion (27' or higher)`
+- `low protrusion (more than 48' remaining)`
+- `high protrusion (less than 48' remaining)`
 - `utility cover`
 - `stormwater grate`
 - `metal plate`

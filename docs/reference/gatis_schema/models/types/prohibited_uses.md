@@ -6,10 +6,13 @@ Allowed values for `prohibited_uses`.
 
 - `walk`
 - `bike`
-- `ebike`
+- `ebike class 1`
 - `scooter`
 - `NEV`
 - `motor_vehicle`
+- `ebike class 2`
+- `ebike class 3`
+- `other`
 
 ## Used By
 

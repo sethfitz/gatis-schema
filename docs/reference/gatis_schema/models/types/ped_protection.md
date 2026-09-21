@@ -6,8 +6,14 @@ Allowed values for `ped_protection`.
 
 - `scramble / all pedestrian interval`
 - `leading pedestrian interval`
-- `no right on red`
-- `raised sidewalk`
+- `no right on red for motor vehicles`
+- `automatic pedestrian recall`
+- `high visibility crosswalk markings`
+- `enhanced crosswalk lighting`
+- `advance stop / yield lines`
+- `additional signage`
+- `supplemental flashing beacon`
+- `other`
 - `none`
 - `unknown`
 

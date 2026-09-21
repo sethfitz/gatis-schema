@@ -11,4 +11,5 @@ Allowed values for `detectable_warning`.
 
 ## Used By
 
+- [`Edge`](../edge.md)
 - [`Node`](../node.md)

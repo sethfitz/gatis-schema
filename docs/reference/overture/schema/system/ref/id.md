@@ -13,5 +13,5 @@ Underlying type: `string`
 
 - [`Edge`](../../../../gatis_schema/models/edge.md)
 - [`Node`](../../../../gatis_schema/models/node.md)
-- [`PedestrianZone`](../../../../gatis_schema/models/pedestrian_zone.md)
 - [`Point`](../../../../gatis_schema/models/point.md)
+- [`Zone`](../../../../gatis_schema/models/zone.md)

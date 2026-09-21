@@ -1,410 +1,414 @@
-# Review of the GATIS v2 draft
+# Review of GATIS v1.0
 
 Findings from modelling the spec in Pydantic, against the snapshot in
-[`spec/`](../spec/) — workbook Drive revision 3542 (modified 2026-01-30),
-document revision 5909 (2025-11-12).
+[`spec/`](../spec/) — `dotbts/BPA` at commit `ecc45ff8`, whose specification files
+last changed 2026-02-03. GATIS v1.0 was voted through unanimously on 2026-02-27.
 
 Three sections: defects, which are wrong as written and fixable in a pass;
-modelling critiques, drawn from what Overture has learned building a schema
-over the same subject matter; and GeoJSON artifacts, where a container's limits
-have been written down as though they were design decisions. The third is the
-one least likely to be noticed from inside the format.
+modelling critiques, drawn from what Overture has learned building a schema over
+the same subject matter; and GeoJSON artifacts, where a container's limits have
+been written down as though they were design decisions.
 
 Counts are measured against the snapshot, not estimated. Every defect below is
-pinned by a test or a repair entry in this repo, so an upstream fix shows up
-here as a failure rather than going unnoticed.
+pinned by a test or a repair entry in this repo, so an upstream fix shows up here
+as a failure rather than going unnoticed.
+
+## What v1.0 fixed
+
+This package reviewed draft 2 before the vote. Roughly half of that review's
+defects are gone, and two of its structural critiques were answered:
+
+- Every declared type now has fields. `elevator` was an allowed edge type with
+  nothing defined for it, not even `edge_id`; `Points_Types` and `Points_Fields`
+  disagreed about what a point was. Both files now declare and populate the same
+  set.
+- The duplicated `Points_Fields` rows, the column-shifted `impediment` row, the
+  three field names carrying trailing whitespace, and the `mutli_use_path` /
+  `raisedtraffic_island` misspellings are all gone.
+- **Units are machine-readable**, which was recommendation 7. Fifteen fields carry
+  the unit as a name suffix — `width_in`, `buffer_width_ft`,
+  `posted_speed_limit_mph`, `crossing_time_sec` — where draft 2 stated all
+  eighteen in prose only.
+- **The document no longer contends with the field tables**, which was
+  recommendation 4. Draft 2's specification document pasted stale copies of the
+  workbook's pivots and named eleven fields the workbook did not define. v1.0
+  publishes the tables as JSON and the prose as a short introduction that does not
+  restate them. Nothing is now hand-copied between the two.
+- `conditionally_required` is gone from the presence vocabulary, and with it the
+  "Conditionally Forbidden" descriptor the document defined and never used.
+- `transit_stop` and `issue` are no longer both a node type and a point type.
+  Nodes are now four routing-participation types and everything else is a point,
+  which is the distinction draft 2's internal notes were arguing about.
+- Per-feature provenance exists where it did not: `owner`, `maintainer`,
+  `lifecycle_stage`, `planned_work`, `last_inspection_date`, `last_inspection_type`
+  and `maintenance_schedule`.
+- `gtfs_id` no longer contradicts itself. It is two fields, `gtfs_stop_id` and
+  `gtfs_agency_id`, both `Text`.
+
+What did not move: identifiers, `reference_ids`, enum tokenisation, the tier model,
+and the segmentation mandate. Those are recommendations 1, 2, 6 and 8, and they are
+the ones everything else compounds on.
 
 ## Defects
 
-**The document and the workbook have diverged, and the document is stale.**
-Section 3.0 is a stub: every field and type table reads *"Moved here"* and
-links to a workbook tab. The workbook's own README states the direction of
-travel — *"the 'final' tabs are imported into the Google Doc"* — but that
-import is manual and the document is two and a half months behind. The presence
-tables still in the document name eleven fields the workbook does not define:
-`road_speed` (thirteen occurrences), `width_min`, `surface_quality`,
-`car_freeflow_speed`, `ada_compliance`, `rail`, `issue`,
-`bike_runnelwheel_channel`, a `detectable_warning` that exists only on nodes,
-and the misspellings below. Twenty workbook fields are never mentioned in the
-document, four of which change the data model: `presence`, `directionality`,
-`reference_ids`, `restricted_access`. Anyone implementing from the published
-document builds the wrong schema.
+**The presence vocabulary has four values and the specification defines three.**
+Section 2.3 defines Optional, Recommended and Required. `forbidden` appears 2,860
+times across the four files — 45% of all 6,408 presence decisions — and no
+published prose says what it means. It is the descriptor that carries the most
+information, because it is the one that makes a field *illegal* for a type rather
+than merely absent, and it is the one a reader cannot look up.
 
-**Fourteen of 109 fields (13%) apply to no feature type.** They are defined —
-name, type, description, allowed values — with every presence cell blank, so no
-feature may carry them. They are unreachable rather than optional: `tunnel`,
-`height_max_passable`, `above_below_grade`, `building_level`, `markings`,
-`restricted_access` and `other_issue` on edges; `other_issue` on nodes;
-`impediment`, `surface_issue` and `other_issue` on points; `prohibited_uses` and
-`allowed_uses` on zones. Several are load-bearing — `tunnel` and
-`height_max_passable` are the only clearance and grade-separation signals in the
-schema, and `restricted_access` is the only way to say a path is private.
+**The two machine-readable artifacts disagree, and one of them is generated
+wrong.** `json_schemas/*_schema.json` gives every `Array<Enum>` field the *last*
+such field's vocabulary. In `edges_schema.json`, `allowed_uses`,
+`prohibited_uses` and `cross_vehicle_traffic_control` all carry `ped_protection`'s
+list, so `prohibited_uses` offers "leading pedestrian interval" and does not offer
+"bike". In `nodes_schema.json`, `impediment` and `rail_crossing_control` carry
+`surface_issue`'s list; in `points_schema.json`, `accessibility_features` does.
+Seven fields, three files, one loop-variable bug. A publisher validating against
+the shipped JSON Schema is validating against the wrong vocabulary and will be
+told so by neither artifact.
 
-**`elevator` is an allowed edge type with no fields at all.** It appears in
-`Edges_Types` but has no presence column in `Edges_Fields`, so the workbook
-defines nothing for it — not even `edge_id`. It is also still listed as a node
-type, where the internal note says *"Remove as node, move to edge"*; the move
-happened in one tab and not the other.
+**Upstream's JSON Schema declares no required fields at all.** Not `edge_id`, not
+`edge_type`. Every property is optional in all four schemas, so the published
+validator cannot check presence — which is what the tier model is made of, and
+most of what the specification says.
 
-**`Points_Types` and `Points_Fields` disagree about what a point is.**
-`Points_Types` declares `object`, `sign`, `transit_stop` and `issue`.
-`Points_Fields` has presence columns for `object` and `point` — so three of the
-four declared types have no fields, and `point` is not a declared type. The
-`sign_*` fields hang off the undeclared column.
+**Six `listed_values` arrays do not survive publication.** v1.0 splits a
+spreadsheet cell on newlines, and six edge cells were hard-wrapped, blank-lined or
+run together. `separation_permeable_car` publishes as six entries including
+`"curbs)"`, `"k-rail)"` and two empty strings; `separation_elements` ends in
+`"trees  unknown"`; `allowed_uses` and `prohibited_uses` both end in
+`"motor_vehicle ebike class 2 ebike class 3 other"`; `markings` carries an empty
+value; `traffic_calming` interleaves the section headings `"for road edge type:"`
+and `"for crossing edge type:"` with its values. Corrected in
+[`spec/repairs.json`](../spec/repairs.json).
 
-**One `Points_Fields` row is column-shifted.** The `impediment` row has its own
-name and description pasted into the two presence columns, so it carries no
-presence value at all. Recorded in [`spec/repairs.json`](../spec/repairs.json)
-rather than guessed.
+**Nine field names mean different things in different files.** `status` has three
+vocabularies — edges add "proposed and funded" and "proposed - not yet funded",
+nodes add "planned", zones add "other" — and two different stated defaults: a blank
+`status` is assumed `unknown` on an edge and `open` on a node or zone. `impediment`,
+`surface_issue`, `other_issue`, `presence`, `allowed_uses`, `prohibited_uses`,
+`surface_material` and `ada_compliant_with` all differ too. Five of them change
+*declared type* as well: `surface_issue` is `Text` on edges and `Array<Enum>` on
+nodes and points; `impediment` is `Array<Text>` on edges and points and
+`Array<Enum>` on nodes; `surface_material` is `Enum` on edges and `Text` on zones.
+A consumer reading two GATIS files cannot treat a shared field name as a shared
+field. This package emits `EdgeStatus`, `NodeStatus` and `ZoneStatus` rather than
+one `Status`, because generating the short name let one file's vocabulary silently
+overwrite another's.
 
-**`Points_Fields` lists `impediment` and `surface_issue` twice**, with value
-sets that disagree with each other and with the node equivalents. Nothing says
-which wins.
+**`edges.json` carries a presence column for a type it does not declare.**
+`virtual_link` was removed from the edge types and left in the presence map of all
+78 attributes. Generating from the presence columns — the obvious reading — puts
+the type back into the data model.
 
-**The same field name means different things on different feature classes.**
-`rail_crossing` is a `Boolean` (`yes`/`no`) on edges and an `Array<Enum>` of
-warning devices (`Gates and flashing lights`, `flashing lights only`,
-`crossbucks or stop sign only`, …) on nodes. `width` is `Integer` on edges and
-`Float` on nodes, with both descriptions saying inches rounded to the nearest
-inch.
+**Three edge types forbid a field that no longer exists.** `sidewalk`, `bikeway`
+and `multi_use_path` each list `road_associated` in
+`forbidden_field_if_allowed_on_road`. v1.0 removed the attribute, so the rule
+constrains nothing, and the one field that recorded an edge's relationship to a
+road is gone with no replacement.
 
-**Three field names carry trailing whitespace**: `ped_traffic_control `,
-`vehicle_traffic_control `, `cross_vehicle_traffic_control `. A generator that
-does not strip emits fields nothing can populate.
+**Null-versus-omitted is unstated, and publishers have already diverged.** Section
+2.1.2 mentions it once, for booleans — "Boolean fields may be left blank. Most
+software will interpret blank values as 'null'" — and nowhere generally. The two
+sample datasets GATIS itself publishes choose differently: Austin omits unset
+fields entirely, Newark writes explicit nulls for 57% of every feature's slots.
+Upstream's JSON Schema permits null on 159 of 370 edge properties and says nothing
+about the rest. Both datasets conform; neither can be read by a consumer who
+assumed the other convention.
 
-**Two Listed Values cells contain an editorial comment instead of values**:
-`edge.incline` and `node.traffic_calming_type` both hold `[JG1]Grabbed from
-NACTO Bike design guide`. `edge.pedestrian_lane` is typed `Enum` with an empty
-Listed Values cell and is optional on all twelve edge types, so it has no
-allowed values at all. `edge.surface_issue`'s Description column is a verbatim
-copy of its Listed Values.
+**Section 3.0, Governance and Process for Changes, is four unfilled
+placeholders.** "This specification is managed by [ORGANIZATION] through community
+consultation. Please visit [LINK]." This is in the version that was voted through.
 
-**`zone.prohibited_uses` and `zone.allowed_uses` have no Type cell.**
+**Two Listed Values cells still hold an editorial comment instead of values.**
+`edge.incline` carries `[JG1]Grabbed from NACTO Bike design guide`; `point_type`
+carries `[Same as Point Types]`.
 
-**The Valid column has six spellings for four states**: `Valid`, `Valild`, `NA`,
-`N/A`, `Recommended`, and blank.
-
-**Four fields state a default in prose and declare none.** `status` defaults to
-`"open"` on nodes, edges and zones; `directionality` "assumes both" if left
-blank. Two implementations will disagree about an absent value, and both will
-believe they conform.
-
-**`presence` states its own conditional in prose**: *"Conditionally required if
-no other identifying fields supplied."* The presence column says `optional`. The
-spec has a `conditionally_required` descriptor and does not use it here.
-
-**The document defines a presence descriptor the workbook never uses**:
-"Conditionally Forbidden" (section 3.3). Nothing in the workbook is
-conditionally forbidden.
-
-**The derived tabs and the document still carry two misspellings the source tabs
-have fixed**: `mutli_use_path` for `multi_use_path`, `raisedtraffic_island` for
-`traffic_island`.
-
-**The document's section numbering collides.** There are two 3.1s (Files,
-Metadata), two 3.2s (Definitions, Nodes), two 3.4s (Attribute Types — and then
-Points *and* Zones both numbered 3.4), and three 2.2.1s (Relation Tables,
-Routing, Directionality). Section 3.1 also introduces `points.geojson` as a
-fourth file after 2.2.0 has stated there are three core entity types.
+**The introduction's section numbering collides.** 2.1.2 (Attribute Types) appears
+after 2.2 (Geospatial Features) and before 2.3, so the only third-level heading in
+the document sorts into the wrong parent.
 
 ## Modelling critiques
 
-Not defects: places where the schema will cost its users something, judged
-against what Overture has already paid for.
+Not defects: places where the schema will cost its users something, judged against
+what Overture has already paid for.
 
-**Identifiers are unspecified, and everything depends on them.** Every `*_id`
-description ends `[NOTE: We will fill in instructions here on how to generate
-IDs…]`. Downstream that is change detection between releases, conflation to OSM
-or a system of record, per-feature provenance, and the `from_node`/`to_node`
-graph itself. Overture spent years arriving at GERS for this. ID stability is a
-schema-level commitment; a validator cannot supply it later. Deciding it late
-means every early adopter has already chosen differently.
+**Identifiers are still unspecified, and everything depends on them.** Every
+`*_id` description still ends `[NOTE: We will fill in instructions here on how to
+generate IDs…]` — unchanged through two drafts and a ratification vote.
+Downstream that is change detection between releases, conflation to OSM or a system
+of record, per-feature provenance, and the `from_node`/`to_node` graph itself.
+Overture spent years arriving at GERS for this. ID stability is a schema-level
+commitment a validator cannot supply later, and v1.0 shipping without it means
+every early adopter has already chosen differently. The sample datasets show it
+happening: Newark ships `edge_id` as an integer and `from_node` as a float
+(`2000002.0`) against a type the JSON Schema resolves to `string`.
 
 **`reference_ids` is the only join to the rest of the world and it is
-unspecified.** Its entire definition is *"an array of JSONs with the source
-name and ID pair. Each JSON should contain an ID field and source field at
-minimum."* The field names are not given, the source vocabulary is not given,
-and the milepost extension is described but not typed. Section 9.1's
-interoperability claim — to OSM, Overture, ARNOLD, HPMS and TIGER — rests
-entirely on this field. Two publishers will produce incompatible arrays and
-both will validate.
+unspecified.** Its definition is still *"an array of JSONs with the source name and
+ID pair. Each JSON should contain an ID field and source field at minimum."* The
+field names are not given and the source vocabulary is not given; the JSON Schema
+types it `{"type": "object", "properties": {}}`, so any object validates. The two
+published sample datasets use four different encodings across 348,223 features and
+none of them uses a key called `id`: `{"source": "austin", "sidewalks_id": "…"}`,
+`{"source": "austin", "CURB_RAMPS_ID": …}`, `{"source": "austin",
+"asmp_street_network_id": "…"}`, `{"source": "newark", "edge_id": …}`. All four
+conform. This is the field the interoperability claim to OSM, Overture, ARNOLD,
+HPMS and TIGER rests on.
 
-**Enumerated values are display text, not tokens.** Twenty-one enums have
-values with spaces or capitals: `under construction`, `Buffered Bike Lane`,
-`Gates and flashing lights`, `detectable warning not aligned with crossing`.
-Some cells mash the token and its definition together —
-`separation_permeable_car` lists `hard separator: the separator cannot be
-easily bypassed by motor vehicles (jersey barriers, curbs)`. Display text as a
-wire value means the value cannot be renamed, localised or matched without
-string normalisation, and every consumer invents its own. Overture uses
-`lower_snake_case` throughout and carries the human-readable form as
-documentation. This package keeps the literal strings, because changing them
-would fork the spec. The fix is cheap now and expensive once the first dataset
-ships.
+**Enumerated values are display text, not tokens.** Values carry spaces, capitals
+and punctuation — `under construction`, `Gates and flashing lights`, `proposed -
+not yet funded`, `uneven / displacement` — and several mash the token together with
+its definition, so `separation_permeable_car`'s first value is the sentence `hard
+separator: the separator cannot be easily bypassed by motor vehicles (jersey
+barriers, curbs)`. Display text as a wire value cannot be renamed, localised or
+matched without string normalisation, and every consumer invents its own. Overture
+uses `lower_snake_case` throughout and carries the human-readable form as
+documentation. v1.0 shows the cost arriving: the six mangled `listed_values` cells
+above are all cells where the definition and the token share a field, and the
+newline that separated them was load-bearing. This package keeps the literal
+strings, because changing them would fork the spec.
 
-**`other` without a companion free-text field destroys the enum.** Nearly every
-enum ends in `other`, and there is nowhere to say what it was. A consumer
-learns only that something unlisted happened.
+**`other` without a companion free-text field destroys the enum.** Twenty-eight
+fields across the four classes offer an `other`-ish value and not one has a
+companion field to say what it was. A consumer learns only that something unlisted
+happened.
 
-**Three fields fuse a boolean with a taxonomy.** `impediment`, `surface_issue`
-and `other_issue` are `Array<Enum>` whose first two members are `yes` and `no`,
-followed by specific conditions (`potholes/holes`, `heaving`, `markings worn`).
-`["yes"]` and `["potholes/holes"]` are both valid and overlap in meaning, and
-`["yes", "no"]` is legal. Presence and classification are separate facts and
-want separate fields.
+**Nine fields fuse a boolean with a taxonomy.** `impediment`, `surface_issue` and
+`other_issue` are enumerations whose first two members are `yes` and `no`, followed
+by specific conditions. `["yes"]` and `["potholes/holes"]` are both valid and
+overlap in meaning, and `["yes", "no"]` is legal. Presence and classification are
+separate facts and want separate fields.
 
-**Units are fixed by the schema and stated only in prose.** Eighteen fields
-carry a dimension and none of it is machine-readable: inches for `width`,
-`width_min_passable`, `width_tolerance`, `height_max_passable` and
-`curb_height`; feet for `buffer_width`, `shoulder_width`,
-`street_parking_buffer` and `measured_length`; percent for the slopes; mph for
-the speeds; AADT for `traffic_volume`. Because the units are mixed, a consumer
-converting GATIS to any other schema must parse English to know whether 60 is
-inches or feet. The `node.width` / `edge.width` type disagreement above is what
-prose-only units produce. Overture is working the same gap from the other side
-(schema issue bd-uzbn) and has the easier case, since its fixed units are
-uniformly metres. CurbLR shows the cheap version: `unitHeightLength` and
-`unitWeight` sit in the feed manifest, each required only when a rule using it
-is present. Feed-level is coarser than per-field, and it is machine-readable,
-which English is not.
-
-**The tier model is conformance, and it has been folded into the schema.**
-Tiers are a maturity roadmap — a claim about a *dataset's* completeness — but
-they are expressed by varying each field's presence, which makes presence
-four-dimensional (feature class × feature type × field × tier) and yields 3,120
-decisions for edges alone. Overture keeps schema and conformance apart for this
+**The tier model is conformance, and it has been folded into the schema.** Tiers
+are a maturity roadmap — a claim about a *dataset's* completeness — but they are
+expressed by varying each field's presence, which makes presence four-dimensional
+(feature class × feature type × field × tier) and yields 4,368 decisions for edges
+alone, 6,408 across the spec. Overture keeps schema and conformance apart for this
 reason: the schema says what a valid feature looks like, and a separate profile
 says what a publisher has committed to. Folding them together means a Tier 1
-publisher and a Tier 4 publisher validate against different schemas that share
-a name.
+publisher and a Tier 4 publisher validate against different schemas that share a
+name — and, since v1.0's published JSON Schema declares nothing required at all,
+against no tier in particular.
 
-**`recommended` is not a validation state.** It sits in the presence vocabulary
-between `optional` and `required`, and a validator can do nothing with it that
-it cannot do with `optional`. It is documentation, and it roughly doubles the
-size of the presence matrix.
+**`recommended` is not a validation state, and it now carries more weight.** It
+sits between `optional` and `required`, and a validator can do nothing with it that
+it cannot do with `optional`. v1.0 retired `conditionally_required` in its favour
+("recommended over 'conditionally'", upstream, 2026-01-30), so 613 presence
+decisions now rest on a descriptor that is documentation. Where draft 2 could at
+least say *this field is required when that one is present*, v1.0 can only suggest.
 
-**Referential integrity is nobody's job, and the spec should say so.**
-`from_node` and `to_node` reference `nodes.node_id` across files, and the files
-are validated separately — nothing holds both an edge and its endpoints at
-validation time. A dangling `from_node` is therefore a conforming dataset. This
-is not a criticism of the split: Overture has the identical shape, with
-`Segment.connectors[].connector_id` referencing a `Connector` that ships in its
-own partition, and it declares the relationship in the schema while checking
-nothing. The declaration is for downstream tooling; enforcement is a
-dataset-level step. What GATIS is missing is the *declaration* — there is no
-machine-readable statement that `from_node` points at `nodes.node_id` at all,
-only the sentence "Value needs to be from the nodes table in the node ID field."
-This package declares it with an Overture `Reference` and implements the
-integrity check at the dataset level.
+**Referential integrity is nobody's job, and the spec should say so.** `from_node`
+and `to_node` reference `nodes.node_id` across files, and the files are validated
+separately — nothing holds both an edge and its endpoints at validation time. A
+dangling `from_node` is therefore a conforming dataset. This is not a criticism of
+the split: Overture has the identical shape, with
+`Segment.connectors[].connector_id` referencing a `Connector` that ships in its own
+partition, and it declares the relationship in the schema while checking nothing.
+The declaration is for downstream tooling; enforcement is a dataset-level step.
+What GATIS is missing is the *declaration* — nothing machine-readable says
+`from_node` points at `nodes.node_id`, only the prose "using the node_id attribute
+on the nodes table." This package declares it with an Overture `Reference` and
+implements the check in `gatis_schema.dataset`.
 
-**Relation tables are named and not defined.** *"At this time, the
-specification does not explicitly define how to create or utilize relation
-tables. We expect to address this more fully in the second draft."* They are
-the stated mechanism for intersections, turn restrictions and two-stage left
-turns, which is where routing is hardest. Overture's segment/connector model
-with turn-restriction rules is a worked precedent for the same problem and is
-worth reading before the second draft settles the shape.
+**The type vocabulary is named and not defined anywhere machine-readable.**
+Section 2.1.2 describes `Date`, `ID`, `Boolean`, `Enum`, `Array<Type>` in prose and
+gives an example each; nothing else pins them. What that permits is visible in the
+sample data: 8,815 of Austin's 9,979 curb-ramp nodes carry
+`last_inspection_date: "1970-01-01"` — Unix epoch zero, an Esri export rendering
+null as a date — and all 73,482 of its `date_built` values are full RFC 3339
+datetimes against a field typed `Date`, every one at midnight `-06:00`, across 42
+distinct values. Both pass any date check the spec implies. A `Date` that forbids a
+time component, and an `ID` with a stated format, would catch both.
 
 ## Artifacts of assuming GeoJSON
 
-GeoJSON is the delivery format, and in several places its limits have been
-written down as though they were decisions. Two of the entries below turn out
-not to be limits at all: CurbLR ships curb regulations as GeoJSON and avoids
-both, which makes those GATIS choices rather than constraints.
+GeoJSON is the delivery format, and in several places its limits have been written
+down as though they were decisions. Two of the entries below turn out not to be
+limits at all: CurbLR ships curb regulations as GeoJSON and avoids both, which
+makes those GATIS choices rather than constraints.
 
-**Open extensibility is what the container already does.** Section 6.1 grants
-that *"anyone can add any attribute they want to a dataset"* and that the
-validator *"will warn, but not fail on, new or unknown fields."* GeoJSON's
-`properties` is an untyped bag, so the spec has described its container rather
-than decided anything here. The cost is real: a field
-that is `forbidden` for a feature type and a field nobody has heard of arrive
-identically, and the validator cannot distinguish a spec violation from a
-sanctioned local extension without the presence matrix in hand. A schema'd
-container makes extension explicit — a declared namespace, a typed extension
-column — so a warning says which kind it is. This repo models it the same way
-for compatibility, keeping the forbidden set as data purely to produce the
-right diagnostic.
+**The four files do the type system's work.** Nodes and points are both `Point`
+geometry, distinguished only by which file they are in. v1.0 settled draft 2's
+argument — `transit_stop` and `issue` were both, with near-identical descriptions
+and internal notes reading *"This is a point, not a node"* against *"a lot of folks
+in the accessibility working group wanted them to be nodes, for routing
+convenience"* — by making nodes purely about graph participation: `generic`,
+`curb_ramp`, and the two curb-ramp transition types. That is the right cut, and it
+is being carried by file placement rather than stated, because a GeoJSON file holds
+one FeatureCollection and has no room for a second discriminator. Overture's theme
+/ type / subtype / class nesting lets a transit stop be one kind of thing that is
+or is not part of the routing graph.
 
-**The four files do the type system's work, and one axis is missing.** Nodes
-and points are both `Point` geometry, distinguished only by which file they are
-in. `transit_stop` and `issue` appear as *both* a node type and a point type
-with near-identical descriptions, and the internal notes are an unresolved
-argument about which they should be — *"This is a point, not a node"* / *"a lot
-of folks in the accessibility working group wanted them to be nodes, for
-routing convenience."* The disagreement is about graph participation, and file
-placement is settling it, because a GeoJSON file holds one FeatureCollection
-and has no room for a second discriminator. Overture's theme / type / subtype /
-class nesting lets a transit stop be one kind of thing that is or is not part
-of the routing graph.
+**Banning MultiLineString is aimed at the wrong target.** Section 2.1 says edge
+features *"must be LINE type (MULTILINE type is not supported)"*. The real
+requirement is one traversable path per edge, so the topology is well-defined. The
+prohibition does not deliver that — a self-intersecting LineString or two
+coincident edges both pass — and it rules out legitimate multipart geometry for a
+zone with a hole. State the topological requirement and let the geometry type
+follow.
 
-**Banning MultiLineString and MultiPolygon is aimed at the wrong target.**
-Section 3.1 says features *"must be LINE type (MULTILINE type is not
-supported)"*. The real requirement is one traversable path per edge, so the
-topology is well-defined. The prohibition does not deliver that — a
-self-intersecting LineString or two coincident edges both pass — and it rules
-out legitimate multipart geometry for a zone with a hole. State the topological
-requirement and let the geometry type follow.
-
-**Segmentation is a mandate because geometry is identity.** Section 2.2.2
-requires splitting an edge whenever any attribute changes, because *"edges can
-only support one set of attributes along their entire length."* Splitting
-explodes feature counts, destroys identifier stability across releases — the
-same identifiers the spec has not yet defined — and turns every attribute
-change into a topology change. A spec that already requires segmentation at
-every intersection is asking publishers to re-split their network each time a
+**Segmentation is a mandate because geometry is identity.** An edge can carry one
+set of attributes along its length, so expressing variation means making more
+features. Splitting explodes feature counts, destroys identifier stability across
+releases — the same identifiers the spec has not yet defined — and turns every
+attribute change into a topology change. A spec that already requires segmentation
+at every intersection is asking publishers to re-split their network each time a
 width measurement improves.
 
-GeoJSON is not what forces this, and CurbLR is the proof: it is a GeoJSON spec,
-it describes things that vary along a street, and it does not split. A CurbLR
-feature is one located span carrying an *array* of regulations, and the spec
-says why plainly — it "prevents the need to repeat geometry and location data
-multiple times for the same street segment." Where two rules overlap in time
-and space, a `priorityCategory` on each and an ordered `priorityHierarchy` in
-the manifest decide which wins. No geometry is cut. Overture arrived at the
-same place from the other direction, with scoped properties and `between:
-[start, end]` subranges.
+GeoJSON is not what forces this, and CurbLR is the proof: it is a GeoJSON spec, it
+describes things that vary along a street, and it does not split. A CurbLR feature
+is one located span carrying an *array* of regulations, and the spec says why
+plainly — it "prevents the need to repeat geometry and location data multiple times
+for the same street segment." Where two rules overlap in time and space, a
+`priorityCategory` on each and an ordered `priorityHierarchy` in the manifest
+decide which wins. No geometry is cut. Overture arrived at the same place from the
+other direction, with scoped properties and `between: [start, end]` subranges.
 
-What GATIS has done is make geometry the identity of the attribute set. Once a
-feature can carry only one set of values, the only way to express variation is
-to make more features. Both alternatives keep one feature and move the
-variation into its properties — and, as the CDS entry below sets out, both cost
-something in return. GATIS does not appear to have chosen between them: the
-segmentation rule is stated as a consequence of how edges work, with no
-alternative considered.
+Both alternatives keep one feature and move the variation into its properties —
+and, as the CDS entry below sets out, both cost something in return. GATIS does not
+appear to have chosen between them: the segmentation rule is stated as a
+consequence of how edges work, with no alternative considered.
 
-**Everything offset from a centerline is flattened onto it.** `buffer_width`,
-`street_parking`, `street_parking_buffer`, `separation_elements`,
-`shoulder_width` and `curb_height` all describe something beside the roadway,
-and all are scalars on the road edge, because section 2.3 offers two places to
-put a thing and neither fits: a separate geometry, which duplicates the
-centerline and, by the spec's own admission, loses the relation to it; or an
-attribute on the road, which discards the offset. So a buffer has a width and
-no extent. It cannot start, stop, or change partway along.
+**Everything offset from a centerline is flattened onto it — but v1.0 opened a
+door.** `buffer_width_ft`, `street_parking`, `street_parking_buffer_ft`,
+`separation_elements`, `shoulder_width_in` and `curb_height_in` all describe
+something beside the roadway, and all are scalars on the road edge. So a buffer has
+a width and no extent: it cannot start, stop, or change partway along.
 
-CurbLR takes a third option. A CurbLR feature has its own record and its own
-attributes but no independent geometry to maintain: it is located by
-`shstRefId` plus `shstLocationStart` and `shstLocationEnd`, offsets in metres
-along a referenced street, plus `sideOfStreet`. `derivedFrom` holds the ids of
-the physical assets the span came from, so the signs and meters stay in the
-source data and the feature points back at them rather than replacing them. The
-distinction the spec leads with is the useful one: a parking sign is a physical
-geometry, the rule it conveys is a *regulatory* geometry, and the two are not
-the same shape.
+v1.0 adds `lrs_references`, *"a JSON list capturing the attributes that appear in
+the GATIS LRS extension … Either this attribute or the extension may be used."*
+That is the linear-referencing hook draft 2 had no equivalent of, and it is
+optional, which is the right shape — guiding principle 3 promises that "a text
+editor and common web-based tools that can produce a GeoJSON" are enough at Tier 1,
+and a reference that only resolved through a linear-referencing toolchain would
+break that promise for exactly the city GIS staff the specification names as its
+audience. What is missing is the extension itself: the field points at a document
+that is not in the repository, and the field's own shape is undefined, so it is
+`reference_ids` again — a named join with no schema.
 
-GATIS has no equivalent, and the field that would be the hook is a boolean.
-`road_associated` records *that* an edge runs alongside a road; nothing records
-*which* road. `street_name` is free text, and `reference_ids` points at
-external datasets rather than at another GATIS edge. Section 2.3.1 names the
-loss — *"the relation to the parallel road segment is lost, unless the parallel
-road segment ID is included as an attribute"* — and the schema does not define
-that attribute.
+Meanwhile the field that recorded an edge's relationship to a road at all,
+`road_associated`, was removed. `street_name` is free text and `reference_ids`
+points at external datasets rather than at another GATIS edge, so nothing now
+records *which* road a sidewalk runs beside.
 
-Section 9.1 lists the Curb Data Specification and not CurbLR, and CDS is worth
-reading for what it changed. Its Policy object "borrows heavily from the work
-of the CurbLR project", and it keeps the array: `curb_policy_ids` holds several
-policies per zone, so variation in time, user class and rate still costs no
-extra geometry. What it inverts is which representation is authoritative.
-`geometry` is Required and a polygon is preferred; `location_references` is
-Optional. So a CDS publisher maintains an independent polygon per curb zone,
-and the linear reference — where present — annotates it rather than defining
-it.
+Section 9.1's interoperability list named the Curb Data Specification and not
+CurbLR, and CDS is worth reading for what it changed. Its Policy object "borrows
+heavily from the work of the CurbLR project", and it keeps the array:
+`curb_policy_ids` holds several policies per zone, so variation in time, user class
+and rate still costs no extra geometry. What it inverts is which representation is
+authoritative. `geometry` is Required and a polygon is preferred;
+`location_references` is Optional. So a CDS publisher maintains an independent
+polygon per curb zone, and the linear reference — where present — annotates it
+rather than defining it.
 
-The inversion costs CDS both properties. Its first rule for a curb zone is
-GATIS's segmentation mandate in different words: a zone must "always have a
-common regulation along their entire extent", so half loading and half metered
-means two zones and two polygons. And identity rides on geometry — "a new
-`curb_zone_id` is required if this geometry changes", which its own criteria
-then soften to "SHOULD remain consistent as long as the Curb Zone's geography
-remains substantially the same". There is also a `length` field, in
-centimetres, "projected along the street centerline" and explicitly "not the
-edge length of the geographic polygon": a field added to recover what a linear
-reference answers for free.
+The inversion costs CDS both properties. Its first rule for a curb zone is GATIS's
+segmentation mandate in different words: a zone must "always have a common
+regulation along their entire extent", so half loading and half metered means two
+zones and two polygons. And identity rides on geometry — "a new `curb_zone_id` is
+required if this geometry changes", which its own criteria then soften to "SHOULD
+remain consistent as long as the Curb Zone's geography remains substantially the
+same". There is also a `length` field, in centimetres, "projected along the street
+centerline" and explicitly "not the edge length of the geographic polygon": a field
+added to recover what a linear reference answers for free.
 
-CDS documents no reason for the change, so what follows is inference. The
-likeliest one is that geometry-as-identity works in the tools its users already
-have, and a linear reference does not. A polygon opens in ArcGIS or QGIS,
-renders, edits and exports; `shstRefId` plus two offsets resolves to a place on
-a map only against a basemap, through software written for the purpose.
-CurbLR's own documentation describes that software as a prerequisite rather
-than a convenience: collect points, tag each as the beginning, middle or end of
-a regulation, run the SharedStreets CLI to snap and segment them, then run
-conversion scripts to emit the feed. Its strongest tell is that a CurbLR
-feature ships a GeoJSON geometry anyway, which the reference makes redundant
-for identity and which exists so the data can be seen.
+CDS documents no reason for the change, so what follows is inference. The likeliest
+one is that geometry-as-identity works in the tools its users already have, and a
+linear reference does not. A polygon opens in ArcGIS or QGIS, renders, edits and
+exports; `shstRefId` plus two offsets resolves to a place on a map only against a
+basemap, through software written for the purpose. CurbLR's own documentation
+describes that software as a prerequisite rather than a convenience: collect points,
+tag each as the beginning, middle or end of a regulation, run the SharedStreets CLI
+to snap and segment them, then run conversion scripts to emit the feed. Its
+strongest tell is that a CurbLR feature ships a GeoJSON geometry anyway, which the
+reference makes redundant for identity and which exists so the data can be seen.
 
-The dependency has since gone quiet. `sharedstreets-js` was last pushed in
-January 2023, the reference system in February 2023, and the builder in
-December 2020. A spec whose identifiers resolve only through a dormant
-toolchain is a different proposition from one whose features are polygons.
+The dependency has since gone quiet. `sharedstreets-js` was last pushed in January
+2023, the reference system in February 2023, and the builder in December 2020. A
+spec whose identifiers resolve only through a dormant toolchain is a different
+proposition from one whose features are polygons.
 
 Two CDS ideas are still worth taking. `location_references` is an *array*, each
-entry carrying a `source` URL naming its referencing system — SharedStreets,
-OpenLR, or a city's own — so one feature can be located in several basemaps at
-once. That is what GATIS's `reference_ids` gestures at and does not specify.
-And a Curb Object carries `linear_distance` and `perpendicular_distance`,
-offsets in centimetres along and away from the curb, the perpendicular one
-signed positive towards the sidewalk. GATIS has no way to place an object
-beside an edge at all.
+entry carrying a `source` URL naming its referencing system — SharedStreets, OpenLR,
+or a city's own — so one feature can be located in several basemaps at once. That is
+what `reference_ids` gestures at and does not specify, and what `lrs_references`
+could become. And a Curb Object carries `linear_distance` and
+`perpendicular_distance`, offsets in centimetres along and away from the curb, the
+perpendicular one signed positive towards the sidewalk. GATIS has no way to place an
+object beside an edge at all.
 
-**Left/right/both is encoded in field names.** Section 2.2.1 shows
-`sidewalk:left:presence=yes` — OSM colon-namespacing, adopted because a GeoJSON
-properties object is a flat string-to-value map with no nested scope. Two
-consequences. Field names become a grammar a validator must parse rather than a
-set it can check, where CurbLR makes `sideOfStreet` an ordinary enum and spends
-its prose on the part that is actually subtle: left and right are relative to
-the direction of digitization, so a two-way street carries two references. And
-none of these colon-namespaced fields appear anywhere in section 3.0 or the
-workbook, which means **roadway-centerline representation — blessed in section
-2.3, and what every Tier 1 publisher will use — is unspecified**. This package
-can only model parallel-feature representation, because the source specifies
-nothing else.
+**Left/right is encoded in field names, and the names exist in only one published
+artifact.** Draft 2 endorsed roadway-centerline representation and defined none of
+the fields it needs, which this review called its costliest omission for Tier 1
+publishers. v1.0 has defined them — `edges_schema.json` enumerates 292
+colon-namespaced properties, `sidewalk:left:width_in` through
+`multi_use_path:right:width_tolerance_in`, and they are internally consistent:
+exactly `{sidewalk, bikeway, multi_use_path} × {left, right} ×` that type's own
+non-forbidden fields, minus the six each type lists in
+`forbidden_field_if_allowed_on_road`.
 
-**Provenance is dataset-wide because a feature has nowhere to put it.** GeoJSON
-gives a feature no metadata slot, so everything provenance-related lives in
-`metadata.json`: one `collection_method`, one `source_dataset`, one
-`collection_period`. A real dataset blends LiDAR-derived widths with a 2019
-field survey of surface condition, and GATIS has no way to say so. `check_date`
-and `date_built` are the only per-feature temporal facts, and there is no
-per-feature `version` or `update_time` at all, so change detection between two
-releases is a geometry diff. Overture carries `version`, `update_time` and a
-`sources[]` array with per-property attribution on every feature, which is what
-lets a blended dataset be read correctly.
+They appear nowhere else. `specification_jsons` has zero colon-namespaced
+attributes; so does the attribute table on the GATIS Explorer, which is what a
+publisher actually reads. The mechanism is referenced from
+`forbidden_field_if_allowed_on_road` without the field names being given. So the
+representation is now specified for a validator and undocumented for a human, which
+is a narrower gap than draft 2's and a stranger one.
 
-**Booleans are strings.** `yes`/`no`, in the OpenStreetMap format (section 3.4).
-JSON has booleans and GeoJSON permits them; this is inherited vocabulary rather
-than a constraint, but it survives because the properties bag makes the type
-invisible until someone writes a parser. Every consumer now special-cases nine
-fields.
+The encoding itself still costs what it cost. Field names become a grammar a
+validator must parse rather than a set it can check, where CurbLR makes
+`sideOfStreet` an ordinary enum and spends its prose on the part that is actually
+subtle: left and right are relative to the direction of digitization, so a two-way
+street carries two references. GATIS says nothing about which direction defines
+left.
+
+**Per-feature provenance arrived; per-feature versioning did not.** v1.0 added
+`owner`, `maintainer`, `lifecycle_stage`, `last_inspection_date`,
+`last_inspection_type`, `maintenance_schedule` and `planned_work`, which is most of
+what draft 2 could only say once per dataset in `metadata.json`. What is still
+missing is change detection: there is no per-feature `version`, `update_time` or
+`sources[]`, so comparing two releases is a geometry diff. Overture carries all
+three on every feature, with per-property attribution, which is what lets a blended
+dataset — LiDAR-derived widths over a 2019 field survey of surface condition — be
+read correctly.
+
+**Booleans are strings.** `yes`/`no`, in the OpenStreetMap format (section 2.1.2).
+JSON has booleans and GeoJSON permits them; this is inherited vocabulary rather than
+a constraint, but it survives because the properties bag makes the type invisible
+until someone writes a parser. Every consumer now special-cases ten fields.
 
 **Objects are described in prose because nesting is free.** `reference_ids`,
-`gtfs_id` and `seasonal` are all typed `Array<Object>` with their shape given in
-a sentence. `gtfs_id` contradicts itself — typed `Array<Object>`, described as
-*"Represent as string with the format `{agency_id},{stop_id}`"*. Nothing in the
-container forces a declaration, and a validator can check none of the three.
+`sign_association`, `seasonal` and `lrs_references` are all typed `Array<Object>`
+with their shape given in a sentence or not at all. Nothing in the container forces
+a declaration, and a validator can check none of them.
 
 ## What would move the most
 
-Ordered by what it unblocks, not by effort.
+Ordered by what it unblocks, not by effort. Items 1, 2 and 5 carried over from the
+draft 2 review unchanged, which is itself the finding.
 
-1. **Specify identifiers.** Everything else compounds on it.
-2. **Specify `reference_ids`.** It is the entire interoperability story and
-   currently one sentence.
-3. **Specify roadway-centerline representation**, or withdraw the endorsement in
-   section 2.3. Tier 1 publishers have nothing to implement.
-4. **Regenerate the document from the workbook, and stop hand-pasting.** The
-   published artifact currently describes a schema that does not exist.
+1. **Specify identifiers.** Everything else compounds on it, and v1.0 shipped
+   without it. The `[NOTE: We will fill in instructions here…]` has now survived a
+   ratification vote.
+2. **Specify `reference_ids`**, and `lrs_references` with it. Between them they are
+   the entire interoperability story and currently two sentences.
+3. **Fix the JSON Schema generator.** Seven fields carry the wrong vocabulary, and
+   the schema is what a publisher validates against. Then give it the required
+   fields — a schema that requires nothing cannot express a tier.
+4. **Define `forbidden` in the prose**, and publish the colon-namespaced on-road
+   fields where a publisher will see them. Both exist in the data and in neither
+   document.
 5. **Give an edge an optional reference to another edge, with an extent.**
-   Alongside the geometry, not instead of it: guiding principle 3 promises that
-   "a text editor and common web-based tools that can produce a GeoJSON" are
-   enough at Tier 1, and a reference that only resolves through a linear
-   referencing toolchain would break that promise for exactly the city GIS
-   staff section 1.4 names as the audience. Optional, it costs those publishers
-   nothing and lets the rest retire `road_associated`, give buffers and parking
-   an extent, and stop splitting an edge every time a measurement improves.
-   CDS is the model to copy rather than CurbLR: geometry stays authoritative,
-   and `location_references` is an array whose entries each name their own
-   referencing system.
-6. **Tokenise enum values** before the first dataset ships.
-7. **Give the eighteen dimensioned fields a structural unit.**
+   `lrs_references` is the beginning of this; it needs the extension it names.
+   Optional, it costs Tier 1 publishers nothing and lets the rest replace the
+   `road_associated` that v1.0 deleted, give buffers and parking an extent, and
+   stop splitting an edge every time a measurement improves. CDS is the model to
+   copy rather than CurbLR: geometry stays authoritative, and `location_references`
+   is an array whose entries each name their own referencing system.
+6. **Tokenise enum values** before more datasets ship. The six mangled
+   `listed_values` cells are the first bill for storing tokens as display text.
+7. **Settle null versus omitted**, in one sentence. Two of the spec's own sample
+   datasets already disagree.
 8. **Separate the tier model from the field tables.** Presence becomes
    two-dimensional and the schema starts meaning one thing.

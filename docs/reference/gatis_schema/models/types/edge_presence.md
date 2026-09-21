@@ -1,6 +1,6 @@
-# FeaturePresence
+# EdgePresence
 
-Allowed values for `presence`.
+Allowed values for `presence (on edges)`.
 
 ## Values
 
@@ -12,4 +12,3 @@ Allowed values for `presence`.
 ## Used By
 
 - [`Edge`](../edge.md)
-- [`Node`](../node.md)

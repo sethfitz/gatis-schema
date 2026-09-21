@@ -19,5 +19,5 @@ makes leaving it unspecified upstream the costliest gap in the schema.
 
 - [`Edge`](models/edge.md)
 - [`Node`](models/node.md)
-- [`PedestrianZone`](models/pedestrian_zone.md)
 - [`Point`](models/point.md)
+- [`Zone`](models/zone.md)

@@ -1,6 +1,6 @@
-# SurfaceIssue
+# PointSurfaceIssue
 
-Allowed values for `surface_issue`.
+Allowed values for `surface_issue (on points)`.
 
 ## Values
 
@@ -21,5 +21,4 @@ Allowed values for `surface_issue`.
 
 ## Used By
 
-- [`Node`](../node.md)
 - [`Point`](../point.md)

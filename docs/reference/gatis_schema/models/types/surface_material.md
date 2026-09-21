@@ -13,6 +13,7 @@ Allowed values for `surface_material`.
 - `unpaved`
 - `grass_paver`
 - `paving_stones`
+- `wood`
 - `other`
 
 ## Used By

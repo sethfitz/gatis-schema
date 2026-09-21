@@ -1,6 +1,6 @@
-# RailCrossing
+# RailCrossingControl
 
-Allowed values for `rail_crossing`.
+Allowed values for `rail_crossing_control`.
 
 ## Values
 

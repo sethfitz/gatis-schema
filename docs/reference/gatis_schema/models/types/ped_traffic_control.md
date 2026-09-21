@@ -4,14 +4,11 @@ Allowed values for `ped_traffic_control`.
 
 ## Values
 
-- `uncontrolled`
-- `standard signal`
-- `flashing red signal`
-- `flashing yellow signal`
+- `no pedestrian control`
+- `pedestrian signal`
 - `pedestrian hybrid beacon / HAWK`
 - `rectangular rapid flashing beacon`
-- `yield sign`
-- `stop sign`
+- `unknown`
 
 ## Used By
 

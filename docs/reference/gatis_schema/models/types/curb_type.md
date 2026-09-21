@@ -7,7 +7,6 @@ Allowed values for `curb_type`.
 - `raised`
 - `rolled`
 - `flush`
-- `generic`
 - `driveway`
 - `other`
 
