@@ -58,6 +58,15 @@ OBJECT_ELEMENTS = {
     "seasonal": "SeasonalCondition",
 }
 
+# Cross-file foreign keys. `Reference` is declarative -- Overture does not enforce
+# referential integrity either, since a segment and its connectors ship in separate
+# partitions, exactly as GATIS edges and nodes do. The declaration is what makes the
+# relationship machine-readable; `validate_dataset` does the enforcing.
+REFERENCES: dict[tuple[str, str], tuple[str, str]] = {
+    ("edge", "from_node"): ("NodeBase", "starts_at"),
+    ("edge", "to_node"): ("NodeBase", "ends_at"),
+}
+
 # GATIS's only conditionally-required rule: each is required exactly when the other
 # is set. Emitted as an `@all_or_none` decorator on any class carrying both.
 CO_PRESENT = ("ada_compliance_date", "ada_compliant_with")
@@ -182,6 +191,13 @@ class ClassWriter:
         else:
             base = "str"
 
+        reference = REFERENCES.get((self.name, field.name))
+        if reference is not None:
+            target, role = reference
+            extra.append(
+                f"Reference(Relationship.ASSOCIATION, {target}, role=\"{role}\")"
+            )
+
         return (f"list[{base}]" if is_array else base), extra
 
     def _render_field(
@@ -218,10 +234,17 @@ class ClassWriter:
         classes: list[str] = []
         members: list[tuple[str, str]] = []
 
+        base_name = _class_name(self.name) + "Base"
+        classes.append(self._render_base(base_name))
+
         for feature_type in self.spec.presence_columns:
             class_name = _class_name(feature_type) + _class_name(self.name)
             members.append((feature_type, class_name))
-            fields = self._fields_for(feature_type)
+            fields = [
+                (field, rule)
+                for field, rule in self._fields_for(feature_type)
+                if field.name != f"{self.name}_id"
+            ]
             names = {field.name for field, _ in fields}
 
             decorators = []
@@ -234,14 +257,8 @@ class ClassWriter:
             )
             body: list[str] = [
                 *decorators,
-                f"class {class_name}(Feature):",
+                f"class {class_name}({base_name}):",
                 f'    """{_summarise(description) or feature_type}"""',
-                "",
-                "    geometry: Annotated[",
-                "        Geometry,",
-                f"        GeometryTypeConstraint("
-                f"GeometryType.{GEOMETRY_TYPE[self.name]}),",
-                "    ]",
                 "",
             ]
             for field, rule in fields:
@@ -292,6 +309,57 @@ class ClassWriter:
             ]
         )
 
+    def _render_base(self, base_name: str) -> str:
+        """The shared base: a required, aliased identifier and the geometry type.
+
+        `Identified` before `Feature` is load-bearing -- it is what makes `id`
+        required rather than inheriting `Feature`'s `Omitable[Id]`. GATIS spells
+        the identifier `<class>_id` inside `properties`, so it is aliased rather
+        than carried twice; `serialize_by_alias` keeps the GATIS spelling on the
+        way out, where the GeoJSON-canonical default would hoist a bare `id` to
+        the top level.
+        """
+        id_field = next(
+            (f for f in self.spec.fields if f.name == f"{self.name}_id"), None
+        )
+        description = _escape(
+            " ".join(id_field.description.split()) if id_field else ""
+        )
+        return "\n".join(
+            [
+                f"class {base_name}(Identified, Feature):",
+                f'    """Common base for every GATIS {self.name} type."""',
+                "",
+                "    model_config = ConfigDict(",
+                "        # Section 6.1 guarantees local extensibility: an unknown"
+                " field warns,",
+                "        # it does not fail. Extras land in `model_extra` and"
+                " Feature's",
+                "        # serializer routes them back through `properties`.",
+                '        extra="allow",',
+                "        populate_by_name=True,",
+                "        serialize_by_alias=True,",
+                "    )",
+                "",
+                "    geometry: Annotated[",
+                "        Geometry,",
+                f"        GeometryTypeConstraint("
+                f"GeometryType.{GEOMETRY_TYPE[self.name]}),",
+                "    ]",
+                "    # Redeclared from `Feature`, where it is `Omitable[Id]`, to"
+                " make it",
+                "    # mandatory. Same narrowing, and the same silencing, as"
+                " Overture's own",
+                "    # `OvertureFeature`.",
+                f'    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]',
+                f'        alias="{self.name}_id",',
+                f'        description="{description}",',
+                "    )",
+                "",
+                "",
+            ]
+        )
+
     def _imports(self) -> str:
         lines = [
             "from __future__ import annotations",
@@ -306,8 +374,8 @@ class ClassWriter:
             ")",
             "from overture.schema.system.numeric import float64, int32",
             "from overture.schema.system.optionality import Omitable",
-            "from overture.schema.system.ref import Id",
-            "from pydantic import BaseModel, Field, Tag, TypeAdapter",
+            "from overture.schema.system.ref import Id, Identified",
+            "from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter",
             "",
             "from gatis_schema.annotations import (",
             "    Aadt,",
@@ -319,6 +387,15 @@ class ClassWriter:
             "    Tier,",
             ")",
         ]
+        if any(key[0] == self.name for key in REFERENCES):
+            lines[lines.index("from overture.schema.system.ref import Id, Identified")] = (
+                "from overture.schema.system.ref import (\n"
+                "    Id,\n"
+                "    Identified,\n"
+                "    Reference,\n"
+                "    Relationship,\n"
+                ")"
+            )
         if self.uses_all_or_none:
             lines.append("from gatis_schema.constraints import all_or_none")
         lines.extend(
@@ -331,6 +408,15 @@ class ClassWriter:
                 ")",
             ]
         )
+        targets = sorted(
+            {target for (cls, _), (target, _) in REFERENCES.items() if cls == self.name}
+        )
+        if targets:
+            module = {"NodeBase": "nodes"}
+            for target in targets:
+                lines.append(
+                    f"from gatis_schema.models.{module[target]} import {target}"
+                )
         if self.enums:
             lines.append("from gatis_schema.models.enums import (")
             lines.extend(f"    {name}," for name in sorted(self.enums))
@@ -463,7 +549,7 @@ def _render_package(names: list[str]) -> str:
     exports: list[str] = []
     for name in names:
         title = _class_name(name)
-        symbols = [title, f"{title}Adapter", f"{title}Collection"]
+        symbols = [title, f"{title}Adapter", f"{title}Base", f"{title}Collection"]
         lines.append(
             f"from gatis_schema.models.{name}s import "
             + ", ".join(symbols)  # noqa: FLY002

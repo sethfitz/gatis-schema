@@ -20,8 +20,13 @@ from overture.schema.system.geometric import (
 )
 from overture.schema.system.numeric import float64, int32
 from overture.schema.system.optionality import Omitable
-from overture.schema.system.ref import Id
-from pydantic import BaseModel, Field, Tag, TypeAdapter
+from overture.schema.system.ref import (
+    Id,
+    Identified,
+    Reference,
+    Relationship,
+)
+from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter
 
 from gatis_schema.annotations import (
     Aadt,
@@ -39,6 +44,7 @@ from gatis_schema.shared import (
     ReferenceId,
     SeasonalCondition,
 )
+from gatis_schema.models.nodes import NodeBase
 from gatis_schema.models.enums import (
     AdaCompliantWith,
     AllowedUses,
@@ -58,15 +64,33 @@ from gatis_schema.models.enums import (
 )
 
 
-class RoadEdge(Feature):
-    """A public road primarily intended for automobile travel."""
+class EdgeBase(Identified, Feature):
+    """Common base for every GATIS edge type."""
+
+    model_config = ConfigDict(
+        # Section 6.1 guarantees local extensibility: an unknown field warns,
+        # it does not fail. Extras land in `model_extra` and Feature's
+        # serializer routes them back through `properties`.
+        extra="allow",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
     geometry: Annotated[
         Geometry,
         GeometryTypeConstraint(GeometryType.LINE_STRING),
     ]
+    # Redeclared from `Feature`, where it is `Omitable[Id]`, to make it
+    # mandatory. Same narrowing, and the same silencing, as Overture's own
+    # `OvertureFeature`.
+    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]
+        alias="edge_id",
+        description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]",
+    )
 
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
+
+class RoadEdge(EdgeBase):
+    """A public road primarily intended for automobile travel."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
 
@@ -74,9 +98,9 @@ class RoadEdge(Feature):
 
     edge_type: Annotated[Literal["road"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Directionality, Tier("required")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -136,15 +160,8 @@ class RoadEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class SidewalkEdge(Feature):
+class SidewalkEdge(EdgeBase):
     """A designated pedestrian path along the side of a roadway."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -156,9 +173,9 @@ class SidewalkEdge(Feature):
 
     edge_type: Annotated[Literal["sidewalk"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -220,15 +237,8 @@ class SidewalkEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class FootpathEdge(Feature):
+class FootpathEdge(EdgeBase):
     """A dedicated pedestrian path that does not fall into another category."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -240,9 +250,9 @@ class FootpathEdge(Feature):
 
     edge_type: Annotated[Literal["footpath"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -302,15 +312,8 @@ class FootpathEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class CrossingEdge(Feature):
+class CrossingEdge(EdgeBase):
     """A location where infrastructure or a designation exists to help pedestrians and/or cyclists cross traffic lanes or other areas designated for traffic."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -322,9 +325,9 @@ class CrossingEdge(Feature):
 
     edge_type: Annotated[Literal["crossing"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -396,15 +399,8 @@ class CrossingEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class TrafficIslandEdge(Feature):
+class TrafficIslandEdge(EdgeBase):
     """A median or other raised or protected area between traffic lanes on the road surface meant to provide a safe space for pedestrians to stop."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -416,9 +412,9 @@ class TrafficIslandEdge(Feature):
 
     edge_type: Annotated[Literal["traffic_island"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -478,15 +474,8 @@ class TrafficIslandEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class StepsEdge(Feature):
+class StepsEdge(EdgeBase):
     """Fixed steps or stairs that appear along a pedestrian way."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -498,9 +487,9 @@ class StepsEdge(Feature):
 
     edge_type: Annotated[Literal["steps"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -560,15 +549,8 @@ class StepsEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class EscalatorEdge(Feature):
+class EscalatorEdge(EdgeBase):
     """Escalators or any other construction of moving stairs meant to carry a pedestrian from one level of physical infrastructure to another."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -580,9 +562,9 @@ class EscalatorEdge(Feature):
 
     edge_type: Annotated[Literal["escalator"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {3: "recommended"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Directionality, Tier("required")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -635,15 +617,8 @@ class EscalatorEdge(Feature):
     tactile_marking: Annotated[Omitable[TactileMarking], Tier("optional")] = Field(description="Indicates when tactile guidestrips or other markings are present to help identify the edge of a crosswalk or traffic island, the beginning or end of steps, or the presence of other infrastructure nearby, such as bike lanes. It is recommended to segment the edge so that this field is only equal to “yes” for the segment where the detectable warning appears. Do not use this field for tactile markings on curb ramps; instead, use the detectable_warning field for curb ramps.")
 
 
-class BikewayEdge(Feature):
+class BikewayEdge(EdgeBase):
     """A designated cycling lane or path that can be on, next to or away from a road."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[YesNo, Tier("required")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -655,9 +630,9 @@ class BikewayEdge(Feature):
 
     edge_type: Annotated[Literal["bikeway"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Directionality, Tier("required")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -717,15 +692,8 @@ class BikewayEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class MultiUsePathEdge(Feature):
+class MultiUsePathEdge(EdgeBase):
     """A generic link that allows both bike and pedestrian travel."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[YesNo, Tier("required")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -737,9 +705,9 @@ class MultiUsePathEdge(Feature):
 
     edge_type: Annotated[Literal["multi_use_path"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -803,15 +771,8 @@ class MultiUsePathEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class TrailEdge(Feature):
+class TrailEdge(EdgeBase):
     """Any kind of path or trail that allows bicycle or pedestrian travel that wouldn't fall into the multi_use_path designation."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[Omitable[YesNo], Tier("optional")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -823,9 +784,9 @@ class TrailEdge(Feature):
 
     edge_type: Annotated[Literal["trail"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -889,23 +850,16 @@ class TrailEdge(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class RampEdge(Feature):
+class RampEdge(EdgeBase):
     """Indicates any type of ramp, where the footpath is built to deliberately slope up or down to improve access."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
 
     edge_type: Annotated[Literal["ramp"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 
@@ -950,15 +904,8 @@ class RampEdge(Feature):
     tactile_marking: Annotated[Omitable[TactileMarking], Tier("optional")] = Field(description="Indicates when tactile guidestrips or other markings are present to help identify the edge of a crosswalk or traffic island, the beginning or end of steps, or the presence of other infrastructure nearby, such as bike lanes. It is recommended to segment the edge so that this field is only equal to “yes” for the segment where the detectable warning appears. Do not use this field for tactile markings on curb ramps; instead, use the detectable_warning field for curb ramps.")
 
 
-class VirtualLinkEdge(Feature):
+class VirtualLinkEdge(EdgeBase):
     """Links added for topology, connectivity, or crossing reasons by the analyst."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.LINE_STRING),
-    ]
-
-    edge_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the edge. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     road_associated: Annotated[YesNo, Tier("required")] = Field(description="Specifies if the edge is adjacent or associated to a road.")
 
@@ -966,9 +913,9 @@ class VirtualLinkEdge(Feature):
 
     edge_type: Annotated[Literal["virtual_link"], Tier("required")] = Field(description="Identifies the edge type. Also used for assigning attributes that need to be filled in.")
 
-    from_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    from_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="starts_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge begins. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
-    to_node: Annotated[Omitable[Id], Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
+    to_node: Annotated[Omitable[Id], Reference(Relationship.ASSOCIATION, NodeBase, role="ends_at"), Tier("optional", {2: "required"})] = Field(description="This field is used to identify the node where an edge ends. This information is needed for routing. Value needs to be from the nodes table in the node ID field.")
 
     directionality: Annotated[Omitable[Directionality], Tier("optional")] = Field(description="Specifies the directionality of the edge. If the edge is bidirectional, choose “both.” Used to help identify when bicycle infrastructure allows traffic in both directions. If left blank, then assumes 'both'.")
 

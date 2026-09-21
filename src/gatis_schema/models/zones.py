@@ -20,8 +20,8 @@ from overture.schema.system.geometric import (
 )
 from overture.schema.system.numeric import float64, int32
 from overture.schema.system.optionality import Omitable
-from overture.schema.system.ref import Id
-from pydantic import BaseModel, Field, Tag, TypeAdapter
+from overture.schema.system.ref import Id, Identified
+from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter
 
 from gatis_schema.annotations import (
     Aadt,
@@ -43,15 +43,33 @@ from gatis_schema.models.enums import (
 )
 
 
-class PedestrianZone(Feature):
-    """Indicates a zone where pedestrians may travel freely in a range of paths they choose."""
+class ZoneBase(Identified, Feature):
+    """Common base for every GATIS zone type."""
+
+    model_config = ConfigDict(
+        # Section 6.1 guarantees local extensibility: an unknown field warns,
+        # it does not fail. Extras land in `model_extra` and Feature's
+        # serializer routes them back through `properties`.
+        extra="allow",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
     geometry: Annotated[
         Geometry,
         GeometryTypeConstraint(GeometryType.POLYGON),
     ]
+    # Redeclared from `Feature`, where it is `Omitable[Id]`, to make it
+    # mandatory. Same narrowing, and the same silencing, as Overture's own
+    # `OvertureFeature`.
+    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]
+        alias="zone_id",
+        description="A unique identifier for the zone. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]",
+    )
 
-    zone_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the zone. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
+
+class PedestrianZone(ZoneBase):
+    """Indicates a zone where pedestrians may travel freely in a range of paths they choose."""
 
     zone_type: Annotated[Literal["pedestrian"], Tier("required")] = Field(description="Indicates the type of zone.")
 

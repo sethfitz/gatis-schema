@@ -23,6 +23,9 @@ generation is not.
 - `gatis_schema.presence` -- the tier-varying presence grammar.
 - `gatis_schema.models` -- the models themselves, bootstrapped by
   `scripts/bootstrap-models` and hand-owned from there.
+- `gatis_schema.dataset` -- the five files together, and the checks that need
+  more than one of them: unique ids within a file, and `from_node`/`to_node`
+  resolving into `nodes.geojson`.
 - [`docs/spec-review.md`](docs/spec-review.md) -- defects found in the spec while
   modelling it, plus critiques from Overture's experience and from what the
   GeoJSON container has quietly decided.

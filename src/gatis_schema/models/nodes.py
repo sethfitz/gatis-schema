@@ -20,8 +20,8 @@ from overture.schema.system.geometric import (
 )
 from overture.schema.system.numeric import float64, int32
 from overture.schema.system.optionality import Omitable
-from overture.schema.system.ref import Id
-from pydantic import BaseModel, Field, Tag, TypeAdapter
+from overture.schema.system.ref import Id, Identified
+from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter
 
 from gatis_schema.annotations import (
     Aadt,
@@ -51,15 +51,33 @@ from gatis_schema.models.enums import (
 )
 
 
-class VirtualNode(Feature):
-    """Used to create nodes for routing in places where specific physical infrastructure doesn’t exist, where edges are split because attributes are different between them, or where other nodes don’t suit the purpose."""
+class NodeBase(Identified, Feature):
+    """Common base for every GATIS node type."""
+
+    model_config = ConfigDict(
+        # Section 6.1 guarantees local extensibility: an unknown field warns,
+        # it does not fail. Extras land in `model_extra` and Feature's
+        # serializer routes them back through `properties`.
+        extra="allow",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
     geometry: Annotated[
         Geometry,
         GeometryTypeConstraint(GeometryType.POINT),
     ]
+    # Redeclared from `Feature`, where it is `Omitable[Id]`, to make it
+    # mandatory. Same narrowing, and the same silencing, as Overture's own
+    # `OvertureFeature`.
+    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]
+        alias="node_id",
+        description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]",
+    )
 
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
+
+class VirtualNode(NodeBase):
+    """Used to create nodes for routing in places where specific physical infrastructure doesn’t exist, where edges are split because attributes are different between them, or where other nodes don’t suit the purpose."""
 
     node_type: Annotated[Literal["virtual"], Tier("required")] = Field(description="Indicates the type of node.")
 
@@ -71,15 +89,8 @@ class VirtualNode(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class CurbRampNode(Feature):
+class CurbRampNode(NodeBase):
     """Indicates a location where a pedestrian must make a decision about which direction to travel, most commonly in locations where a curb ramp does or should exist."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     node_type: Annotated[Literal["curb_ramp"], Tier("required")] = Field(description="Indicates the type of node.")
 
@@ -113,15 +124,8 @@ class CurbRampNode(Feature):
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
-class ElevatorNode(Feature):
+class ElevatorNode(NodeBase):
     """Elevators, funiculars, or other car- or enclosure-based constructions meant to vertically carry a pedestrian from one level of physical infrastructure to another."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     node_type: Annotated[Literal["elevator"], Tier("required")] = Field(description="Indicates the type of node.")
 
@@ -140,15 +144,8 @@ class ElevatorNode(Feature):
     status: Annotated[Omitable[Status], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Most recent operating status of the node. Whether the infrastructure is open and available for use. Default is 'open'")
 
 
-class TransitStopNode(Feature):
+class TransitStopNode(NodeBase):
     """A node indicating the location of a transit stop of any kind."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     node_type: Annotated[Literal["transit_stop"], Tier("required")] = Field(description="Indicates the type of node.")
 
@@ -157,15 +154,8 @@ class TransitStopNode(Feature):
     gtfs_id: Annotated[Omitable[list[GtfsReference]], Tier("optional", {3: "recommended"})] = Field(description="An array of objects containing keys for GTFS agency_id and stop_id from an existing GTFS dataset for this transit stop. Represent as string with the format '{agency_id},{stop_id}'. These IDs can be crosswalked with GTFS and TIDES data to obtain additional stop attributes and connect to the broader transit network. See GTFS documentation for more information.")
 
 
-class IssueNode(Feature):
+class IssueNode(NodeBase):
     """A node indicating a particular point that has an issue relevant to routing for some travelers."""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     node_type: Annotated[Literal["issue"], Tier("required")] = Field(description="Indicates the type of node.")
 
@@ -178,15 +168,8 @@ class IssueNode(Feature):
     surface_issue: Annotated[Omitable[list[SurfaceIssue]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Description of surface quality issues that may pose a challenge for travelers passing through this node.")
 
 
-class TrafficCalmingNode(Feature):
+class TrafficCalmingNode(NodeBase):
     """traffic_calming"""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     node_type: Annotated[Literal["traffic_calming"], Tier("required")] = Field(description="Indicates the type of node.")
 

@@ -20,8 +20,8 @@ from overture.schema.system.geometric import (
 )
 from overture.schema.system.numeric import float64, int32
 from overture.schema.system.optionality import Omitable
-from overture.schema.system.ref import Id
-from pydantic import BaseModel, Field, Tag, TypeAdapter
+from overture.schema.system.ref import Id, Identified
+from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter
 
 from gatis_schema.annotations import (
     Aadt,
@@ -43,15 +43,33 @@ from gatis_schema.models.enums import (
 )
 
 
-class ObjectPoint(Feature):
-    """A physical object that is likely to be of interest to travelers."""
+class PointBase(Identified, Feature):
+    """Common base for every GATIS point type."""
+
+    model_config = ConfigDict(
+        # Section 6.1 guarantees local extensibility: an unknown field warns,
+        # it does not fail. Extras land in `model_extra` and Feature's
+        # serializer routes them back through `properties`.
+        extra="allow",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
     geometry: Annotated[
         Geometry,
         GeometryTypeConstraint(GeometryType.POINT),
     ]
+    # Redeclared from `Feature`, where it is `Omitable[Id]`, to make it
+    # mandatory. Same narrowing, and the same silencing, as Overture's own
+    # `OvertureFeature`.
+    id: Annotated[Id, Tier("required")] = Field(  # type: ignore[assignment]
+        alias="point_id",
+        description="A unique identifier for the point. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]",
+    )
 
-    point_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the point. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
+
+class ObjectPoint(PointBase):
+    """A physical object that is likely to be of interest to travelers."""
 
     point_type: Annotated[Literal["object"], Tier("required")] = Field(description="Indicates the type of point.")
 
@@ -60,15 +78,8 @@ class ObjectPoint(Feature):
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
 
 
-class PointPoint(Feature):
+class PointPoint(PointBase):
     """point"""
-
-    geometry: Annotated[
-        Geometry,
-        GeometryTypeConstraint(GeometryType.POINT),
-    ]
-
-    point_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the point. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
 
     point_type: Annotated[Literal["point"], Tier("required")] = Field(description="Indicates the type of point.")
 
