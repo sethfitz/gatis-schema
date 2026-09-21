@@ -4,12 +4,13 @@ Findings from modelling the spec in Pydantic, against the snapshot in
 [`spec/`](../spec/) — `dotbts/BPA` at commit `ecc45ff8`, whose specification files
 last changed 2026-02-03. GATIS v1.0 was voted through unanimously on 2026-02-27.
 
-Four sections. **Bugs** are mechanical: each has an unambiguous fix and no design
+Five sections. **Bugs** are mechanical: each has an unambiguous fix and no design
 question attached, and they are the ones worth reporting upstream. **Modelling
 critiques** are drawn from what Overture has learned building a schema over the
 same subject matter. **GeoJSON artifacts** are where a container's limits have
-been written down as though they were design decisions. **What would move the
-most** orders the rest by what it unblocks.
+been written down as though they were design decisions. **Against the Playbook**
+reads the specification's companion prose against its machine-readable source.
+**What would move the most** orders the rest by what it unblocks.
 
 Counts are measured against the snapshot, not estimated. Sample-data counts come
 from validating the two datasets GATIS itself publishes — Austin and Newark,
@@ -79,9 +80,10 @@ and `multi_use_path` each list `road_associated` in
 constrains nothing — and the one field that recorded an edge's relationship to a
 road is gone with no replacement.
 
-**The colon-namespaced on-road fields exist in exactly one artifact.**
-`edges_schema.json` enumerates 292 of them, `sidewalk:left:width_in` through
-`multi_use_path:right:width_tolerance_in`, and they are internally consistent:
+**The colon-namespaced on-road fields exist in exactly one artifact, and a second
+colon grammar exists in none.** `edges_schema.json` enumerates 292 of the first
+kind, `sidewalk:left:width_in` through `multi_use_path:right:width_tolerance_in`,
+and they are internally consistent:
 exactly `{sidewalk, bikeway, multi_use_path} × {left, right} ×` that type's own
 non-forbidden fields, minus the six each lists in
 `forbidden_field_if_allowed_on_road`. Deriving the set from `specification_jsons`
@@ -94,6 +96,18 @@ names ever being given, and the specification never says which type does the
 carrying. It is the road, but that has to be inferred from the field's name and
 from how the sample data uses it: Austin ships `bikeway:left:bikeway_type` on
 4,003 road edges.
+
+The second grammar is two-part — `<side>:<field>`, for a property of the edge
+itself that differs between its two sides. `shoulder_width_in`'s description says
+"Left/right/both tags may be used", `markings`'s says the same, and the Playbook
+gives `left:shoulder_width_in` and `both:curb_height_in` as worked examples. No
+schema enumerates a two-part name, none of the four admits `both` as a side, and
+the four published sample files contain zero. The two fields the Playbook
+demonstrates it on cannot reach the three-part form either: `shoulder_width_in`
+and `curb_height_in` are `forbidden` on `sidewalk`, `bikeway` and
+`multi_use_path` and `optional` on `road`, so they are not among the 52 base
+fields the modifier mechanism carries. A publisher who follows the Playbook here
+emits property names no artifact defines.
 
 **Two Listed Values cells hold an editorial comment instead of values.**
 `edge.incline` carries `[JG1]Grabbed from NACTO Bike design guide`; `point_type`
@@ -157,16 +171,21 @@ a cell where a token and its definition share a field, and the separator between
 them was load-bearing. This package keeps the literal strings, because changing
 them would fork the spec.
 
-**Nine field names mean different things in different files.** `status` has three
-vocabularies — edges add "proposed and funded" and "proposed - not yet funded",
-nodes add "planned", zones add "other" — and two different stated defaults: a blank
-`status` is assumed `unknown` on an edge and `open` on a node or zone.
-`impediment`, `surface_issue`, `other_issue`, `presence`, `allowed_uses`,
-`prohibited_uses`, `surface_material` and `ada_compliant_with` all differ too.
-Five change *declared type* as well: `surface_issue` is `Text` on edges and
-`Array<Enum>` on nodes and points; `impediment` is `Array<Text>` on edges and
-points and `Array<Enum>` on nodes; `surface_material` is `Enum` on edges and
-`Text` on zones.
+**Eleven field names mean different things in different files.** Twenty-seven
+names appear in more than one of the four; eleven of those disagree — ten in
+vocabulary, seven in declared type, six in both. `status` has three vocabularies —
+edges add "proposed and funded" and "proposed - not yet funded", nodes add
+"planned", zones add "other" — and two different stated defaults: a blank `status`
+is assumed `unknown` on an edge and `open` on a node or zone. `presence`,
+`impediment`, `surface_issue`, `other_issue`, `allowed_uses`, `prohibited_uses`,
+`surface_material`, `ada_compliant_with` and `incline` are the other nine. The
+type changes: `surface_issue` is `Text` on edges and `Array<Enum>` on nodes and
+points; `impediment` is `Array<Text>` on edges and points and `Array<Enum>` on
+nodes; `other_issue` is `Text` on edges and `Enum` on nodes and points;
+`surface_material` is `Enum` on edges and `Text` on zones; `allowed_uses` and
+`prohibited_uses` are both `Array<Enum>` on edges and `Array<Text>` on zones. The
+seventh, `width_in`, changes type with no vocabulary to change: `Integer` on
+edges, `Float` on nodes.
 
 A consumer reading two GATIS files cannot treat a shared field name as a shared
 field. This package emits `EdgeStatus`, `NodeStatus` and `ZoneStatus` rather than
@@ -413,23 +432,115 @@ until someone writes a parser. Every consumer now special-cases ten fields.
 with their shape given in a sentence or not at all. Nothing in the container forces
 a declaration, and a validator can check none of them.
 
+## Against the Playbook
+
+The [GATIS Playbook](https://docs.google.com/document/d/1_3Zz1hudUCunHNpgFDY74ybvNgjttcTdQ9c9LTYm3uE/edit)
+is the specification's companion prose, linked from `introduction.html` alongside
+the Explorer and the Validator. It is 17,116 words and it is where a publisher
+goes for the *how*. Snapshot and pin in [`spec/playbook.md`](../spec/playbook.md)
+and [`spec/PLAYBOOK-MANIFEST.json`](../spec/PLAYBOOK-MANIFEST.json); refresh with
+`scripts/snapshot-playbook`. Underscores arrive escaped from the Docs export, so
+grep it through `sed 's/\\_/_/g'` or `width_in` returns nothing.
+
+Reading it against `specification/*.json` is a cheap conformance test on the
+specification itself, because the two were written by different hands from the
+same intent. Every finding below is a place they disagree.
+
+**Every field and type already has a description.** All 149 attributes and all 29
+feature types carry one; there is no gap to fill from the Playbook. Four
+descriptions carry a placeholder instead — the `[NOTE: We will fill in
+instructions here on how to generate IDs…]` on `edge_id`, `node_id`, `point_id`
+and `zone_id` — and two carry an editorial comment in `listed_values` where the
+values belong. What the Playbook offers is not missing text but *conflicting*
+text, which is why none of it belongs in this package's descriptions: encoding a
+resolution here forks the spec silently, and the eventual upstream answer may go
+the other way.
+
+**The ID placeholder has an answer, in the other document.** Assigning IDs gives
+the rule the four descriptions promise: feature IDs are assigned locally, numeric
+without leading zeros, reusing whatever the producer already issues; a consumer
+merging datasets prefixes the publisher's four-digit `publisher_id`, so
+`publisher_id` 1449 and `edge_id` 12398 join as `144912398`. The scheme depends
+on a field the specification does not have. `metadata.json` declares 34 keys and
+none is `publisher_id`; the Playbook says it "appears in the Metadata JSON file".
+
+**The Playbook quotes the edge `status` vocabulary as though every class shared
+it.** Planned and Budgeted Infrastructure says "edges and nodes have a status
+attribute with possible values 'under construction,' 'proposed and funded', and
+'proposed - not yet funded'." Nodes offer `planned` in place of both proposed
+values, and zones offer neither. A node written from the Playbook is invalid
+against the specification. This is the nine-vocabulary divergence above, met from
+the other side: the author of the user-facing guidance believed the field was one
+field, which is evidence the split is an artifact of publishing four tables rather
+than a decision anyone made.
+
+**The Playbook contradicts itself on `presence`, and the specification settles
+it.** Presence Attribute says "Edges and zones contain an attribute named
+'presence'"; Missing Infrastructure says "Edges and nodes have an attribute for
+presence" and, three sentences later, "Points and zones do not have the presence
+attribute." The second is right: `presence` is declared on edges and nodes, on
+neither points nor zones. Missing Infrastructure also settles the
+`"no | missing"` splitting bug from the other direction — its worked example is "a
+curb_ramp node with presence=no", which the node vocabulary rejects.
+
+**Two GTFS field names are wrong.** Transit (GTFS) says the `transit_stop` point
+"has attributes for agency_id and stop_id". They are `gtfs_agency_id` and
+`gtfs_stop_id`.
+
+**Measurement conventions live only in the Playbook.** `width_in` reads "Average
+or typical width of the edge. Measured in inches and rounded to the nearest inch."
+The Playbook gives it two different conventions selected by edge type: a bike
+facility is measured to the outer edge of any paint or barrier, *including* the
+paint; a sidewalk is PROWAG continuous clear width, *excluding* the curb. So the
+same field means two incompatible things and the description says neither.
+`buffer_width_ft` has the same problem in one direction — include the paint or
+barrier, not just the gap between them — against a description that reads
+"Distance between the edge of the motor vehicle travel lane and the bike lane or
+sidewalk". These are the descriptions worth augmenting, and upstream is the only
+place the augmentation is worth anything.
+
+**The specification's own pointers to the Playbook point somewhere else.** Nine
+descriptions tell the reader to see the Playbook. Three of the nine carry a URL,
+and all three resolve to the same Google Slides file — `Curb_ramp_geometry_example.pptx`,
+a PowerPoint in a contributor's personal Drive, last modified 2026-01-13. It is
+one illustration, not the Playbook. The other six name the Playbook with no
+pointer at all. `introduction.html` has the correct link, so the document a
+publisher reaches depends on which artifact they started from.
+
+**What the Playbook does not settle.** `forbidden`, `virtual_link`,
+`road_associated` and null-versus-omitted appear zero times each. `reference_ids`
+gets a much wider remit — Census Roads, ARNOLD, Overture GERS, GMNS `link_id`, the
+CDS curb zone IDs, FTGS `GEOMETRYID` — and still no field names, so a consumer
+still cannot find the identifier in one without per-source knowledge.
+
+**`road_associated`'s removal was deliberate.** Associating Bicycle, Pedestrian
+and Accessibility Features with the Roadway names `street_name`, `reference_ids`
+and the LRS extension as the replacement, and concedes the cost: "there is not a
+perfect guarantee within GATIS data that a geospatial feature missing all of these
+markers is not roadway associated," with data consumers told to buffer and infer.
+That is the gap item 5 below proposes to close, stated by the specification's own
+guidance.
+
 ## What would move the most
 
 Ordered by what it unblocks, not by effort. Items 1, 2, 5 and 8 were written
 against the previous draft and are unchanged here because the spec is: nothing in
 v1.0 touched them.
 
-1. **Specify identifiers.** Everything else compounds on it, and v1.0 shipped
-   without it. The `[NOTE: We will fill in instructions here…]` has now survived a
-   ratification vote.
+1. **Specify identifiers**, by moving the Playbook's rule into the four
+   descriptions and adding the `publisher_id` it depends on. Everything else
+   compounds on it, and v1.0 shipped without it: the
+   `[NOTE: We will fill in instructions here…]` has now survived a ratification
+   vote, while the answer sits in a document the schema does not link.
 2. **Specify `reference_ids`**, and `lrs_references` with it. Between them they are
    the entire interoperability story and currently two sentences.
 3. **Fix the JSON Schema generator, and give it the required fields.** Eighteen
    fields carry the wrong vocabulary, and the schema is what a publisher
    validates against. A schema that requires nothing cannot express a tier.
-4. **Define `forbidden` in the prose**, and publish the colon-namespaced on-road
-   fields where a publisher will see them. Both exist in the data and in neither
-   document.
+4. **Define `forbidden` in the prose**, and publish both colon grammars where a
+   publisher will see them. `forbidden` and the 292 three-part on-road fields
+   exist in the data and in neither document; the two-part `<side>:<field>` form
+   the Playbook demonstrates exists in no artifact at all.
 5. **Give an edge an optional reference to another edge, with an extent.**
    `lrs_references` is the beginning of this; it needs the extension it names.
    Optional, it costs Tier 1 publishers nothing and lets the rest replace the
@@ -445,7 +556,7 @@ v1.0 touched them.
 8. **Separate the tier model from the field tables.** Presence becomes
    two-dimensional and the schema starts meaning one thing.
 
-## Appendix: draft upstream issue
+## Appendix A: draft upstream issue — the sample datasets
 
 Staged for submission to [`dotbts/BPA`](https://github.com/dotbts/BPA). Verified
 against `main` at `ecc45ff`, which is HEAD as of 2026-09-21. The tracker carries
@@ -694,3 +805,210 @@ absolute path on a machine we do not have and at
 `austin_sample_edges.geojson`, which is not in the repository, so it cannot run
 as committed — which may be why items 1 and 2 have gone unnoticed since the
 January regeneration.
+
+## Appendix B: draft upstream issue — the Playbook and the specification
+
+Staged for submission to [`dotbts/BPA`](https://github.com/dotbts/BPA). Verified
+against `main` at `ecc45ff` and against the Playbook as of its 2026-09-15
+revision. Independent of Appendix A; neither depends on the other. Everything
+below the rule is the proposed issue text.
+
+---
+
+### Six places the Playbook and the machine-readable specification disagree
+
+The Playbook and `draft_gatis_specification/specification_jsons/` were written
+from the same intent by different hands, so reading one against the other finds
+places where they have drifted. Six below. Three are cases where a publisher who
+follows the Playbook produces data the specification rejects; the rest are
+pointers and prose that have come loose. Each notes which side we think should
+move, but that call is yours.
+
+#### 1. Following the Playbook on `status` produces an invalid node
+
+*Planned and Budgeted Infrastructure* says:
+
+> In addition to being marked with presence=no, edges and nodes have a status
+> attribute with possible values "under construction," "proposed and funded", and
+> "proposed - not yet funded."
+
+`status` has a different vocabulary in each of the three files that declare it:
+
+| file | `listed_values` |
+| --- | --- |
+| `edges.json` | `open`, `closed`, `under construction`, `proposed and funded`, `proposed - not yet funded`, `unknown` |
+| `nodes.json` | `open`, `closed`, `under construction`, `planned`, `unknown` |
+| `zones.json` | `open`, `closed`, `under construction`, `other` |
+
+Neither proposed value is available on a node, and a node has `planned` instead.
+The stated default differs too: a blank `status` is assumed `unknown` on an edge
+and `open` on a node or zone.
+
+`status` is not alone. Twenty-seven field names appear in more than one of the
+four files and eleven of them disagree: ten in vocabulary, seven in declared type,
+six in both. The others are `presence`, `impediment`, `surface_issue`,
+`other_issue`, `allowed_uses`, `prohibited_uses`, `surface_material`,
+`ada_compliant_with`, `incline` and `width_in` — the last changing type
+(`Integer` on edges, `Float` on nodes) with no vocabulary to change.
+The Playbook treating `status` as one field is the strongest evidence we have that
+the divergence is an artifact of maintaining four tables rather than a decision:
+the person writing the user-facing guidance did not know the tables disagreed.
+
+Suggested fix: converge the three vocabularies, or, where a class genuinely needs
+a different set, say so in the description of each.
+
+#### 2. The Playbook contradicts itself on which features carry `presence`
+
+*Presence Attribute*:
+
+> Edges and zones contain an attribute named "presence"
+
+*Missing Infrastructure*, two sections later:
+
+> Edges and nodes have an attribute for presence … Points and zones do not have
+> the presence attribute.
+
+The specification agrees with the second: `presence` is declared in `edges.json`
+and `nodes.json`, and in neither `points.json` nor `zones.json`. The *Presence
+Attribute* section needs the one-word fix.
+
+*Missing Infrastructure* also gives a worked example the specification rejects:
+
+> a curb\_ramp node with presence=no would mean that there is no curb ramp at this
+> location
+
+`nodes.json` publishes `presence` as `["yes", "no | missing", "unknown"]`. The
+middle entry is a spreadsheet cell holding two values that were never split on the
+pipe, so `no` is not a legal node value — 426 of Austin's curb-ramp nodes fail on
+exactly this. The Playbook is right and the artifact is wrong; splitting the cell
+fixes both.
+
+#### 3. The Playbook's left/right examples use a grammar that appears in no artifact
+
+*Left, Right and Both Tags* gives three examples:
+
+> - To mark the width of a shoulder on the right side of a road edge, use
+>   left:shoulder\_width\_in=X …
+> - To mark curb height that is the same on both sides of a raised cycleway, use
+>   both:curb\_height\_in=X on an edge of type bikeway …
+> - To mark the presence of a bikeway on the left side of a road when the bikeway
+>   centerline is not being separately mapped, use bikeway:left:presence=yes …
+
+Only the third is representable. `edges_schema.json` enumerates 292
+colon-namespaced properties and every one is three-part,
+`{sidewalk|bikeway|multi_use_path}:{left|right}:{field}`; `nodes_schema.json`,
+`points_schema.json` and `zones_schema.json` have none. No schema admits `both` as
+a side, no schema defines a two-part `<side>:<field>` name, and the four published
+sample files contain zero two-part properties.
+
+The two fields the examples demonstrate cannot reach the three-part form either.
+`shoulder_width_in` and `curb_height_in` are `forbidden` on `sidewalk`, `bikeway`
+and `multi_use_path` and `optional` on `road`, so they are not among the 52 base
+fields the modifier mechanism carries — there is no `bikeway:left:curb_height_in`
+to fall back to.
+
+This is not only the Playbook's claim. `shoulder_width_in`'s own description says
+"Left/right/both tags may be used, and the directionality is determined based on
+how the edge geometry was drawn," and `markings`'s says "Left/right/both tagging
+may be used." So the specification promises the grammar in two field descriptions
+and defines it nowhere.
+
+These look like two different mechanisms that share a punctuation mark: a
+three-part form for *a different facility carried on a road edge*, and a two-part
+form for *a property of this edge that differs side to side*. Naming both and
+enumerating the second would settle it. Separately, the first example says "on the
+right side" and then writes `left:`.
+
+#### 4. The ID rule lives in the Playbook, and depends on a field that does not exist
+
+`edge_id`, `node_id`, `point_id` and `zone_id` all carry the same description:
+
+> A unique identifier for the edge. [NOTE: We will fill in instructions here on
+> how to generate IDs, and we will also provide a data validator that may be
+> capable of validating and helping to fill in these IDs.]
+
+The Playbook's *Assigning IDs* section is that text: feature IDs assigned locally,
+numeric without leading zeros, reusing whatever the producer already issues, and a
+four-digit `publisher_id` prefixed by consumers so that `publisher_id` 1449 and
+`edge_id` 12398 join as `144912398`. Moving it into the four descriptions would
+retire a placeholder that has now survived a ratification vote.
+
+One blocker: `publisher_id` does not exist. `metadata.json` declares 34 keys and
+none is it, while the Playbook says it "appears in the Metadata JSON file." Either
+the field needs adding or the Playbook needs the future tense it uses one sentence
+earlier.
+
+#### 5. Two GTFS field names are wrong in the Playbook
+
+*Transit (GTFS)*:
+
+> In GATIS, use the transit\_stop point to integrate with GTFS and TIDES. This
+> point feature has attributes for agency\_id and stop\_id, which should both be
+> filled out.
+
+`points.json` declares them as `gtfs_agency_id` and `gtfs_stop_id`.
+
+#### 6. "See the Playbook" links point at a PowerPoint
+
+Nine field and type descriptions tell the reader to see the Playbook. Three carry
+a URL, and all three are the same Google Slides file —
+`Curb_ramp_geometry_example.pptx`, in a contributor's personal Drive, last
+modified 2026-01-13. It is one illustration rather than the Playbook, and it is
+not a durable location for a normative pointer. The other six name the Playbook
+with no link. `specification_introduction.html` has the correct URL.
+
+```
+$ jq -r '[.attributes[], (.types|to_entries[]|.value)]
+         | .[] | select(.description // "" | test("Playbook";"i"))
+         | .description | scan("https?://[^ )]+")' \
+     draft_gatis_specification/specification_jsons/{edges,nodes,points,zones}.json \
+   | sort -u
+```
+
+#### And one description gap worth closing
+
+`width_in` reads "Average or typical width of the edge. Measured in inches and
+rounded to the nearest inch." The Playbook's *Measuring Infrastructure* gives it
+two conventions chosen by edge type: a bike facility is measured to the outer edge
+of any paint or barrier and *includes* the paint, while a sidewalk is PROWAG
+continuous clear width and *excludes* the curb. Two publishers reading the
+description alone will disagree by the width of a curb. `buffer_width_ft` has the
+same gap in one direction — the Playbook says to include the paint or barrier, the
+description says "Distance between the edge of the motor vehicle travel lane and
+the bike lane or sidewalk."
+
+These belong in the field descriptions. A measurement convention that lives only
+in companion prose is one a data producer converting an existing inventory will
+never see.
+
+#### Reproducing
+
+The Playbook was read at its 2026-09-15 revision. Field-level claims come from
+`draft_gatis_specification/specification_jsons/` and
+`draft_gatis_specification/json_schemas/` at `ecc45ff`. The 426 comes from
+`austin_nodes`, where every node carrying `presence` carries `no` and every one of
+them is a `curb_ramp`.
+
+The colon-grammar counts, with the three-part form as the control so that a zero
+means absence rather than a regex that never matches:
+
+```
+$ grep -coE '"[a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z0-9_]+:[a-zA-Z0-9_]+" *:' austin_edges.geojson
+8338
+$ grep -coE '"[a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z0-9_]+" *:'              austin_edges.geojson
+0
+```
+
+
+```python
+import json, collections
+
+attrs = collections.defaultdict(dict)
+for f in ("edges", "nodes", "points", "zones"):
+    d = json.load(open(f"draft_gatis_specification/specification_jsons/{f}.json"))
+    for a in d["attributes"]:
+        attrs[a["name"]][f] = (a["type"], tuple(a["listed_values"] or ()))
+for name, per in sorted(attrs.items()):
+    if len(per) > 1 and len(set(per.values())) > 1:
+        print(name, {k: v[0] for k, v in per.items()})
+```

@@ -80,6 +80,27 @@ report, so it did not fire on counts derived from the schemas or the data and
 then copied document-to-document.
 -->
 
+## The Playbook is a second source, and descriptions are not ours to write
+
+`spec/playbook.md` is the specification's companion prose, linked from
+`introduction.html` as one of its three published artifacts and pinned by
+`spec/PLAYBOOK-MANIFEST.json`. Read it when a field's meaning is underdetermined:
+it carries the measurement conventions, the ID scheme and the left/right grammar
+that the field descriptions only gesture at.
+
+**Do not move Playbook text into a model's description.** Every one of the 149
+attributes and 29 feature types already has a description, generated from
+upstream's own structured JSON, so there is no gap to fill -- and where the
+Playbook says more, it frequently says something the specification *contradicts*.
+Writing our resolution into a description forks the spec quietly, and the
+eventual upstream answer may go the other way. File the disagreement instead:
+`docs/spec-review.md` records it and Appendix B stages it for
+[`dotbts/BPA`](https://github.com/dotbts/BPA).
+
+The one thing that does belong here is a vocabulary the spec publishes but leaves
+open -- `SuggestedValues`, per the section below. The Playbook adds no new values
+to any of them; its `bikeway_type` names are all already in `listed_values`.
+
 ## Express a rule as a declaration, not as a validator
 
 **Reaching for `@model_validator` or `@field_validator` is the reflex to
@@ -143,6 +164,7 @@ next reader can tell a considered choice from a reflex.
 | `spec/specification/` | The generation source: 1.0's own structured JSON, pinned by upstream commit in `MANIFEST.json` |
 | `spec/repairs.json` | Local corrections to upstream's mangled `listed_values`, with reasoning per entry |
 | `spec/json-schemas/` | Upstream's own validator. **Rejects every real GATIS feature** -- see below. Never cite it as evidence about the spec |
+| `spec/playbook.md` | The GATIS Playbook, the spec's companion prose, pinned separately because it lives in Google Docs. Underscores arrive escaped |
 | `src/gatis_schema/spec_source.py` | Reads the snapshot into `FieldSpec`, `FeatureType`, `PresenceRule` |
 | `src/gatis_schema/codegen.py` | Generates the models; `scripts/bootstrap-models` drives it |
 | `src/gatis_schema/models/` | Bootstrapped once, **hand-owned after** -- the bootstrap refuses to overwrite without `--force` |
@@ -157,6 +179,7 @@ uv run pytest
 uv run mypy .
 uv run ruff check . && uv run ruff format --check .
 ./scripts/snapshot-spec        # refresh spec/ from upstream
+./scripts/snapshot-playbook    # refresh spec/playbook.md from Google Docs
 ./scripts/bootstrap-models     # regenerate models (refuses to clobber)
 ./scripts/generate-reference   # rebuild docs/reference/ from the models
 ./scripts/compare-json-schema  # ours vs upstream's JSON Schema
