@@ -3,38 +3,92 @@
     {
       "feature_class": "edge",
       "field": "separation_permeable_car",
-      "values": ["hard separator", "soft separator", "none"],
+      "values": [
+        "hard separator",
+        "soft separator",
+        "none"
+      ],
       "reason": "Upstream lists three values, each followed by a definition, and the source cell hard-wraps two of them mid-parenthetical. Splitting the cell on newlines yields six fragments and two empty strings ('curbs)', 'k-rail)'). The three tokens are unambiguous; the definitions move to the field description."
     },
     {
       "feature_class": "edge",
       "field": "allowed_uses",
-      "values": ["walk", "bike", "ebike class 1", "scooter", "NEV", "motor_vehicle", "ebike class 2", "ebike class 3", "other"],
+      "values": [
+        "walk",
+        "bike",
+        "ebike class 1",
+        "scooter",
+        "NEV",
+        "motor_vehicle",
+        "ebike class 2",
+        "ebike class 3",
+        "other"
+      ],
       "reason": "The source cell runs four values together on one line: 'motor_vehicle ebike class 2 ebike class 3 other'. The first five are one per line, so the intent is nine values."
     },
     {
       "feature_class": "edge",
       "field": "prohibited_uses",
-      "values": ["walk", "bike", "ebike class 1", "scooter", "NEV", "motor_vehicle", "ebike class 2", "ebike class 3", "other"],
+      "values": [
+        "walk",
+        "bike",
+        "ebike class 1",
+        "scooter",
+        "NEV",
+        "motor_vehicle",
+        "ebike class 2",
+        "ebike class 3",
+        "other"
+      ],
       "reason": "Same run-together line as allowed_uses; the two cells are identical upstream."
     },
     {
       "feature_class": "edge",
       "field": "separation_elements",
-      "values": ["bollards", "concrete barrier", "parking", "median", "trees", "unknown"],
+      "values": [
+        "bollards",
+        "concrete barrier",
+        "parking",
+        "median",
+        "trees",
+        "unknown"
+      ],
       "reason": "The source cell runs 'trees' and 'unknown' together on one line ('trees  unknown', two spaces). Every other value is one per line."
     },
     {
       "feature_class": "edge",
       "field": "markings",
-      "values": ["green_paint", "sharrows", "edge_lines", "centerline", "ped_lane", "bike_lane"],
+      "values": [
+        "green_paint",
+        "sharrows",
+        "edge_lines",
+        "centerline",
+        "ped_lane",
+        "bike_lane"
+      ],
       "reason": "A blank line inside the source cell becomes an empty value. Dropped; the six real values are unambiguous."
     },
     {
       "feature_class": "edge",
       "field": "traffic_calming",
-      "values": ["narrowed road", "closure", "lateral shift", "raised crossing"],
+      "values": [
+        "narrowed road",
+        "closure",
+        "lateral shift",
+        "raised crossing"
+      ],
       "reason": "The source cell interleaves section headings with values: 'for road edge type:' and 'for crossing edge type:' are labels, not allowed values, and a blank line becomes an empty entry. Which heading governs which value is recoverable from the cell order; the headings themselves are dropped."
+    },
+    {
+      "feature_class": "node",
+      "field": "presence",
+      "values": [
+        "yes",
+        "no",
+        "missing",
+        "unknown"
+      ],
+      "reason": "A third split mechanism, distinct from the newline cases above: nodes.json publishes the middle value as the single entry 'no | missing', a pipe-joined pair the exporter never treated as a separator. edges.json lists the same field as four values, so the intent is unambiguous. Austin sends 'no' on 426 curb-ramp nodes, which is valid on an edge and invalid on a node purely because of this."
     }
   ]
 }

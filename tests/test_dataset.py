@@ -133,3 +133,22 @@ def test_the_gatis_identifier_spelling_survives_a_round_trip(clean: Path) -> Non
     dumped = json.loads(edge.model_dump_json())
     assert dumped["properties"]["edge_id"] == "e1"
     assert "id" not in dumped
+
+
+def test_every_published_reference_ids_encoding_validates() -> None:
+    # The four shapes the two GATIS sample datasets actually use, across 348,223
+    # features. None uses a key called `id`, which the spec's prose asks for and
+    # its schema does not enforce -- so requiring it would reject all of them.
+    from gatis_schema.shared import ReferenceId
+
+    for raw in (
+        {"source": "austin", "sidewalks_id": "94639273"},
+        {"source": "austin", "source_url": "", "CURB_RAMPS_ID": 15866993},
+        {"source": "austin", "asmp_street_network_id": "330428"},
+        {"source": "newark", "edge_id": 1070387},
+    ):
+        assert ReferenceId.model_validate(raw).model_dump(exclude_unset=True) == raw
+
+    # And the prose's own shape still types its two keys when they are present.
+    documented = ReferenceId.model_validate({"source": "osm", "id": "w123"})
+    assert documented.model_dump() == {"source": "osm", "id": "w123"}

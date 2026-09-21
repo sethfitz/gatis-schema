@@ -51,8 +51,8 @@ from gatis_schema.models.enums import (
     DetectableWarning,
     Directionality,
     EdgeAdaCompliantWith,
-    EdgePresence,
     EdgeStatus,
+    FeaturePresence,
     PedProtection,
     PedTrafficControl,
     ProhibitedUses,
@@ -668,7 +668,7 @@ class SidewalkEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -1096,7 +1096,7 @@ class CurbRampToplandingEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -1474,7 +1474,7 @@ class CurbRampRunslopeEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -1889,7 +1889,7 @@ class FootwayEdge(EdgeBase):
         )
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -2319,7 +2319,7 @@ class CrossingEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -3176,7 +3176,7 @@ class TrafficIslandEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -3585,7 +3585,7 @@ class StepsEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -3982,7 +3982,7 @@ class ElevatorEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -4349,7 +4349,7 @@ class EscalatorEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -4722,7 +4722,7 @@ class BikewayEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -5170,7 +5170,7 @@ class MultiUsePathEdge(EdgeBase):
         "or year if day or month is not available."
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
@@ -5628,7 +5628,7 @@ class TrailEdge(EdgeBase):
         )
     )
 
-    presence: Annotated[Omitable[EdgePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "

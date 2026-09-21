@@ -97,15 +97,6 @@ class EdgeAdaCompliantWith(str, DocumentedEnum):
     PROWAG = "PROWAG"
 
 
-class EdgePresence(str, DocumentedEnum):
-    """Allowed values for `presence (on edges)`."""
-
-    YES = "yes"
-    NO = "no"
-    MISSING = "missing"
-    UNKNOWN = "unknown"
-
-
 class EdgeStatus(str, DocumentedEnum):
     """Allowed values for `status (on edges)`."""
 
@@ -114,6 +105,15 @@ class EdgeStatus(str, DocumentedEnum):
     UNDER_CONSTRUCTION = "under construction"
     PROPOSED_AND_FUNDED = "proposed and funded"
     PROPOSED_NOT_YET_FUNDED = "proposed - not yet funded"
+    UNKNOWN = "unknown"
+
+
+class FeaturePresence(str, DocumentedEnum):
+    """Allowed values for `presence`."""
+
+    YES = "yes"
+    NO = "no"
+    MISSING = "missing"
     UNKNOWN = "unknown"
 
 
@@ -141,14 +141,6 @@ class NodeAdaCompliantWith(str, DocumentedEnum):
     V_2010 = "2010"
     PROWAG = "PROWAG"
     OTHER = "other"
-
-
-class NodePresence(str, DocumentedEnum):
-    """Allowed values for `presence (on nodes)`."""
-
-    YES = "yes"
-    NO_MISSING = "no | missing"
-    UNKNOWN = "unknown"
 
 
 class NodeStatus(str, DocumentedEnum):

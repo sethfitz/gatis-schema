@@ -155,13 +155,14 @@ def test_the_snapshot_reads_clean_once_repairs_are_applied(
     snapshot: SpecSnapshot,
 ) -> None:
     assert snapshot.defects == []
-    assert sorted(r.field for r in snapshot.repairs_applied) == [
-        "allowed_uses",
-        "markings",
-        "prohibited_uses",
-        "separation_elements",
-        "separation_permeable_car",
-        "traffic_calming",
+    assert sorted((r.feature_class, r.field) for r in snapshot.repairs_applied) == [
+        ("edge", "allowed_uses"),
+        ("edge", "markings"),
+        ("edge", "prohibited_uses"),
+        ("edge", "separation_elements"),
+        ("edge", "separation_permeable_car"),
+        ("edge", "traffic_calming"),
+        ("node", "presence"),
     ]
 
 
@@ -180,6 +181,12 @@ def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
     assert "" in verbatim["separation_permeable_car"]
     assert "curbs)" in verbatim["separation_permeable_car"]
     assert "trees  unknown" in verbatim["separation_elements"]
+    # A third mechanism: a pipe the exporter never treated as a separator. Only
+    # `nodes.json` has it -- `edges.json` lists the same field correctly.
+    node_verbatim = {
+        f.name: f.listed_values for f in raw.feature_classes["node"].fields
+    }
+    assert "no | missing" in node_verbatim["presence"]
 
     repaired = {
         f.name: f.listed_values
@@ -188,6 +195,23 @@ def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
     for field in ("separation_permeable_car", "separation_elements", "markings"):
         assert repaired[field] != verbatim[field], field
         assert all(value.strip() for value in repaired[field]), field
+
+
+def test_the_two_presence_vocabularies_agree_once_repaired(
+    snapshot: SpecSnapshot,
+) -> None:
+    # `presence` is published as four values on edges and three on nodes, the
+    # middle one being the unsplit pair "no | missing". Repaired, they match --
+    # which is what lets the generator emit one shared enum rather than two.
+    listed = {
+        name: next(
+            f.listed_values
+            for f in snapshot.feature_classes[name].fields
+            if f.name == "presence"
+        )
+        for name in ("edge", "node")
+    }
+    assert listed["edge"] == listed["node"] == ["yes", "no", "missing", "unknown"]
 
 
 def test_every_repair_names_a_field_that_exists(snapshot: SpecSnapshot) -> None:

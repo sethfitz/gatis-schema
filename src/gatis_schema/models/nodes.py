@@ -38,9 +38,9 @@ from gatis_schema.constraints import all_or_none, drop_null_properties
 from gatis_schema.models.enums import (
     CurbType,
     DetectableWarning,
+    FeaturePresence,
     Impediment,
     NodeAdaCompliantWith,
-    NodePresence,
     NodeStatus,
     NodeSurfaceIssue,
     OtherIssue,
@@ -137,7 +137,7 @@ class CurbRampNode(NodeBase):
         description="Indicates the type of node."
     )
 
-    presence: Annotated[Omitable[NodePresence], Tier("optional")] = Field(
+    presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(
         description="Indicates whether the piece of infrastructure exists or is "
         "present. When other attributes are provided, the existence of the "
         "infrastructure can be assumed. This attribute is useful for identifying "
