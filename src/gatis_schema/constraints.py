@@ -117,6 +117,12 @@ class ScalarOrListConstraint(FieldConstraint):
     of a crossing), provide all IDs in a list". Both forms are conformant, so
     both have to validate.
 
+    This class is the mechanism and not the list. Which columns are multi-valued
+    is `multiple` in `spec/extensions.json`, beside the transcription of the
+    column it describes and carrying the sentence that licenses it, so the claim
+    sits where a reader of the spec snapshot will find it and can be checked
+    against its own evidence. Applying it is a test, not a convention.
+
     **Why not `str | list[str]`**, which is the obvious encoding: the Overture
     codegen cannot render it. `_peel_union` accepts a multi-arm union only when
     every arm is a `BaseModel`, so a scalar/list union raises

@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterator
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
 import pytest
 from pydantic import BaseModel, ValidationError
 
+from gatis_schema.constraints import ScalarOrListConstraint, SuggestedValues
 from gatis_schema.dataset import Dataset
 from gatis_schema.models.extensions import (
     Event,
@@ -507,3 +510,109 @@ def test_an_explicit_null_reads_as_absent_on_an_extension_row() -> None:
     """As it does on a core feature, and via the same helper."""
     relation = Relation.model_validate({"relation_id": "r1", "signal_id": None})
     assert relation.model_dump(mode="json") == {"relation_id": "r1"}
+
+
+# --------------------------------------------------------------------------
+# The per-column decisions stay data
+# --------------------------------------------------------------------------
+
+
+def _annotation_parts(hint: object) -> Iterator[object]:
+    """Every piece of an annotation: metadata, union arms, the base type."""
+    if get_origin(hint) is Annotated:
+        args = get_args(hint)
+        yield from args[1:]
+        yield from _annotation_parts(args[0])
+        return
+    if isinstance(hint, type):
+        yield hint
+        return
+    for arg in get_args(hint):
+        yield from _annotation_parts(arg)
+
+
+def _by_wire_name(model: type[BaseModel]) -> dict[str, object]:
+    hints = get_type_hints(model, include_extras=True)
+    return {
+        field.alias or name: hints[name] for name, field in model.model_fields.items()
+    }
+
+
+@pytest.mark.parametrize("table", sorted(TABLES))
+def test_multi_valued_columns_come_from_the_transcription(
+    table: str, transcription: dict[str, Any]
+) -> None:
+    """Which columns may hold a list is data, not a decision spread over models.
+
+    `ScalarOrListConstraint` is the mechanism; `multiple` in
+    `spec/extensions.json` is the set it applies to. Keeping the set in the
+    model would put a claim about the specification somewhere no reader of the
+    specification snapshot can see it.
+    """
+    declared = {
+        field["name"] for field in transcription[table]["fields"] if field["multiple"]
+    }
+    annotated = {
+        name
+        for name, hint in _by_wire_name(TABLES[table]).items()
+        if any(
+            isinstance(part, ScalarOrListConstraint) for part in _annotation_parts(hint)
+        )
+    }
+    assert annotated == declared
+
+
+def test_every_multiple_quotes_the_sentence_that_licenses_it(
+    transcription: dict[str, Any],
+) -> None:
+    """The claim carries its evidence, so it cannot be asserted into existence.
+
+    Two columns are marked without a sentence of their own and say so; every
+    other one has to quote its own description verbatim.
+    """
+    quoted = 0
+    for table in TABLES:
+        for field in transcription[table]["fields"]:
+            licence = field["multiple"]
+            if not licence:
+                continue
+            if licence.startswith("No sentence of its own"):
+                continue
+            assert licence in field["description"], f"{table}.{field['name']}"
+            quoted += 1
+    assert quoted == 5
+
+
+@pytest.mark.parametrize("table", sorted(TABLES))
+def test_model_vocabularies_match_the_transcription(
+    table: str, transcription: dict[str, Any]
+) -> None:
+    """An enum member list is data too, and it was duplicated by hand.
+
+    Every `listed_values` in the transcription has to equal the vocabulary the
+    model publishes for that column, whether it reached the model as a closed
+    `DocumentedEnum` or as an open `SuggestedValues`.
+    """
+    hints = _by_wire_name(TABLES[table])
+    checked = 0
+    for field in transcription[table]["fields"]:
+        published = field["listed_values"]
+        if not published:
+            continue
+        parts = list(_annotation_parts(hints[field["name"]]))
+        suggested = next(
+            (part for part in parts if isinstance(part, SuggestedValues)), None
+        )
+        members = next(
+            (
+                part
+                for part in parts
+                if isinstance(part, type) and issubclass(part, Enum)
+            ),
+            None,
+        )
+        source = suggested.values if suggested else list(members or [])
+        actual = [getattr(value, "value", value) for value in source]
+        assert actual == published, f"{table}.{field['name']}"
+        checked += 1
+    assert checked, f"{table}: no vocabulary checked, so agreement is vacuous"

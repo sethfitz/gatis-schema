@@ -62,9 +62,13 @@ from gatis_schema.constraints import (
 )
 from gatis_schema.scalars import GatisDatetime
 
-# Seven columns across the three tables are declared as one value and documented
-# as possibly several. See `ScalarOrListConstraint` for why this is a constraint
-# rather than a `str | list[str]` union.
+# Seven columns are declared as one value and documented as possibly several.
+# *Which* seven is data: `multiple` in `spec/extensions.json` marks them and
+# quotes the sentence in each column's own description that licenses it, and
+# `test_multi_valued_columns_come_from_the_transcription` asserts this set and
+# that one agree. These aliases are only the mechanism -- see
+# `ScalarOrListConstraint` for why a constraint rather than a `str | list[str]`
+# union, which the codegen cannot render.
 TextOrList = Annotated[list[str], ScalarOrListConstraint()]
 """A `Text` column that may carry several values."""
 

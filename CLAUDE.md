@@ -111,7 +111,12 @@ transcription of that PDF.
 Two rules follow. **Change the transcription, not the model, when the PDF moves**
 -- `tests/test_extensions.py` asserts the models match it field for field and in
 order, and asserts the transcription matches the PDF's own text, so a drift on
-either link fails. **Do not add a `Tier` annotation to any of them**: the
+either link fails. **A per-column decision belongs in the transcription too**,
+not spread across annotations: the vocabularies are checked against
+`listed_values`, and which columns may hold a list is `multiple`, which carries
+the sentence from that column's description that licenses it. A class like
+`ScalarOrListConstraint` is the mechanism; the set it applies to is data, and a
+test joins them. **Do not add a `Tier` annotation to any of them**: the
 extensions sit outside the tier model, which the Playbook says outright of the
 LRS one, and the PDF gives one Required/Optional flag per field rather than the
 four-slot presence rule a core field gets.
