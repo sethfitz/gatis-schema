@@ -23,8 +23,10 @@ from gatis_schema.presence import Presence, PresenceRule
 class Unit:
     """A unit fixed by the schema for every value in this field.
 
-    GATIS states all of these in prose only, and does not use one unit throughout:
-    widths are inches, buffers and lengths are feet, slopes are percent.
+    v1.0 carries most of these in the field name (`width_in`, `buffer_width_ft`),
+    which is what makes them machine-readable at all. The units are not uniform --
+    widths are inches, buffers and lengths are feet, slopes are percent -- and the
+    slopes and `traffic_volume` are still stated in prose only.
     """
 
     symbol: str
@@ -88,6 +90,7 @@ InchesFloat = Annotated[float64, Unit("in", "inches")]
 Feet = Annotated[float64, Unit("ft", "feet")]
 Percent = Annotated[float64, Unit("%", "percent")]
 Mph = Annotated[int32, Unit("mph", "miles per hour")]
+Seconds = Annotated[int32, Unit("s", "seconds")]
 Aadt = Annotated[int32, Unit("AADT", "annual average daily traffic")]
 
 

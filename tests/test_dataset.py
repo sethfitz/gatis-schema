@@ -16,7 +16,7 @@ def _node(node_id: str, lon: float) -> dict[str, object]:
     return {
         "type": "Feature",
         "geometry": {"type": "Point", "coordinates": [lon, 45.52]},
-        "properties": {"node_id": node_id, "node_type": "virtual"},
+        "properties": {"node_id": node_id, "node_type": "generic"},
     }
 
 
@@ -32,7 +32,6 @@ def _edge(
         "properties": {
             "edge_id": edge_id,
             "edge_type": "sidewalk",
-            "road_associated": "yes",
             "from_node": from_node,
             "to_node": to_node,
             **extra,
@@ -99,6 +98,32 @@ def test_unknown_fields_are_kept_rather_than_dropped(tmp_path: Path) -> None:
     edge = Dataset.load(directory).edges.features[0]  # type: ignore[union-attr]
     assert edge.model_extra == {"local_vendor_field": "kept"}
     assert "local_vendor_field" in json.loads(edge.model_dump_json())["properties"]
+
+
+def test_an_explicit_null_property_reads_as_absent(tmp_path: Path) -> None:
+    # Esri-derived GATIS exports write every unset field as an explicit null rather
+    # than omitting it -- the two published sample datasets average 57% null slots
+    # per feature -- and upstream's own JSON Schema permits null on most fields.
+    directory = _write(
+        tmp_path, edges=[_edge("e1", "n1", "n2", width_in=None, surface_material=None)]
+    )
+    edge = Dataset.load(directory).edges.features[0]  # type: ignore[union-attr]
+    # Absent, not null: Overture's `Omitable` sentinel, and dropped on the way out.
+    assert "width_in" not in edge.model_fields_set
+    properties = json.loads(edge.model_dump_json())["properties"]
+    assert "width_in" not in properties
+    assert "surface_material" not in properties
+
+
+def test_a_null_does_not_satisfy_a_required_field(tmp_path: Path) -> None:
+    # Control for the above, in the other direction: dropping nulls must not turn a
+    # required field into an optional one. `edge_type` is required from tier 1.
+    directory = _write(tmp_path, edges=[_edge("e1", "n1", "n2")])
+    raw = json.loads((directory / "edges.geojson").read_text())
+    raw["features"][0]["properties"]["edge_type"] = None
+    (directory / "edges.geojson").write_text(json.dumps(raw))
+    with pytest.raises(Exception, match=r"edge_type|union_tag"):
+        Dataset.load(directory)
 
 
 def test_the_gatis_identifier_spelling_survives_a_round_trip(clean: Path) -> None:

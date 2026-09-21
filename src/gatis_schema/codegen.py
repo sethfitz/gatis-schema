@@ -22,6 +22,7 @@ import keyword
 import re
 import subprocess
 import textwrap
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -42,14 +43,20 @@ GEOMETRY_TYPE = {
     "zone": "POLYGON",
 }
 
-# Units are stated only in field descriptions upstream. Read them once, here, so no
-# consumer has to parse English. Mechanism follows Overture bead bd-uzbn option (b):
-# annotate the primitive, leave the declared type alone.
+# v1.0 carries the unit in the field NAME -- `width_in`, `buffer_width_ft`,
+# `posted_speed_limit_mph`, `crossing_time_sec`. That is a suffix match rather than
+# a prose match, so it is read first and cannot drift with an edited description.
+UNIT_SUFFIXES: dict[str, str] = {
+    "in": "Inches",
+    "ft": "Feet",
+    "mph": "Mph",
+    "sec": "Seconds",
+}
+
+# Dimensioned fields v1.0 left un-suffixed. Slopes and traffic volume carry their
+# unit in prose only, so these still have to be read out of English.
 UNIT_PATTERNS: tuple[tuple[str, str], ...] = (
-    (r"nearest inch|in inches|measured in inches", "Inches"),
-    (r"in feet|nearest half foot", "Feet"),
-    (r"percentage of the slope", "Percent"),
-    (r"miles per hour", "Mph"),
+    (r"percentage of the slope|percent grade|expressed as a percent", "Percent"),
     (r"annual average daily traffic", "Aadt"),
 )
 
@@ -78,9 +85,6 @@ CO_PRESENT = ("ada_compliance_date", "ada_compliant_with")
 # descriptors of document section 3.3.
 ENUM_RENAMES = {"Presence": "FeaturePresence"}
 
-# A Listed Values cell holding a cross-reference or an editorial note, not values.
-_NOT_VALUES = re.compile(r"^\s*[\[(]")
-
 
 @dataclass(frozen=True, slots=True)
 class EnumValue:
@@ -98,27 +102,19 @@ class EnumValue:
         return f"{name}_" if keyword.iskeyword(name.lower()) else name
 
 
-def parse_listed_values(cell: str) -> list[EnumValue]:
-    """Parse a Listed Values cell into its allowed values.
+def parse_listed_values(listed: Sequence[str]) -> list[EnumValue]:
+    """The allowed values of an enumerated field.
 
-    Upstream has no canonical token spelling -- values are display text ("under
-    construction", "Buffered Bike Lane") and sometimes carry a definition after a
-    colon. The literal string is kept: normalising here would fork the spec, since
-    the display text is what appears in published data.
+    v1.0 publishes `listed_values` as an array, so there is nothing to split. What
+    remains is that several entries carry a definition after a colon, and that
+    upstream has no canonical token spelling -- values are display text ("under
+    construction", "Buffered Bike Lane"). The literal string is kept: normalising
+    here would fork the spec, since the display text is what published data uses.
     """
-    if not cell.strip() or _NOT_VALUES.match(cell):
-        return []
-
-    # Newlines and pipes are the outer separator. Fall back to commas only when
-    # neither appears, so a definition containing commas survives intact.
-    chunks = [c for c in re.split(r"[\n|]", cell) if c.strip()]
-    if len(chunks) == 1:
-        chunks = cell.split(",")
-
     values: list[EnumValue] = []
     seen: set[str] = set()
-    for chunk in chunks:
-        value, _, description = chunk.strip().partition(":")
+    for entry in listed:
+        value, _, description = entry.strip().partition(":")
         value = " ".join(value.split())
         if not value or value.lower() in seen:
             continue
@@ -128,22 +124,77 @@ def parse_listed_values(cell: str) -> list[EnumValue]:
 
 
 def unit_alias(field: FieldSpec) -> str | None:
-    for pattern, alias in UNIT_PATTERNS:
-        if re.search(pattern, field.description, re.I):
-            # Float-typed inch fields exist upstream (node.width); keep the width.
-            if alias == "Inches" and field.type == "Float":
-                return "InchesFloat"
-            return alias
-    return None
+    """The unit annotation for a dimensioned field, or None.
+
+    Name suffix wins: v1.0 made it machine-readable and prose did not keep up.
+    """
+    _, _, suffix = field.name.rpartition("_")
+    alias = UNIT_SUFFIXES.get(suffix)
+    if alias is None:
+        for pattern, candidate in UNIT_PATTERNS:
+            if re.search(pattern, field.description, re.I):
+                alias = candidate
+                break
+    if alias is None:
+        return None
+    # A Float-typed inch field keeps the fractional width (upstream mixes both).
+    if alias == "Inches" and field.type == "Float":
+        return "InchesFloat"
+    return alias
+
+
+def enum_names(snapshot: SpecSnapshot) -> dict[tuple[str, str], str]:
+    """Pick a Python class name for every enumerated field, avoiding collisions.
+
+    Nine field names carry a DIFFERENT vocabulary on different feature classes --
+    `status` has three (edges add "proposed and funded", nodes "planned", zones
+    "other"), and `impediment`, `surface_issue`, `other_issue`, `presence`,
+    `allowed_uses`, `prohibited_uses`, `surface_material` and `ada_compliant_with`
+    all disagree too. Naming an enum after its field alone would let one class's
+    values silently overwrite another's, so a field whose vocabularies differ is
+    qualified by feature class (`EdgeStatus`, `NodeStatus`, `ZoneStatus`) and one
+    that agrees everywhere keeps the short shared name.
+
+    This is an upstream defect surfaced rather than absorbed: the same field name
+    means different things depending on which file it appears in.
+    """
+    seen: dict[str, dict[str, tuple[str, ...]]] = {}
+    for class_name, spec in snapshot.feature_classes.items():
+        for field in spec.fields:
+            # The discriminator becomes a `Literal`, never an enum class.
+            if field.name == f"{class_name}_type":
+                continue
+            values = parse_listed_values(field.listed_values)
+            if values and _is_enum(field):
+                base = _class_name(field.name)
+                seen.setdefault(base, {})[class_name] = tuple(v.value for v in values)
+
+    names: dict[tuple[str, str], str] = {}
+    for base, per_class in seen.items():
+        collides = len(set(per_class.values())) > 1
+        for class_name in per_class:
+            chosen = _class_name(class_name) + base if collides else base
+            names[(class_name, _field_from(base))] = ENUM_RENAMES.get(chosen, chosen)
+    return names
+
+
+def _field_from(class_name: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
 
 
 class ClassWriter:
     """Renders one feature class into a module."""
 
-    def __init__(self, spec: FeatureClassSpec, snapshot: SpecSnapshot) -> None:
+    def __init__(
+        self,
+        spec: FeatureClassSpec,
+        snapshot: SpecSnapshot,
+        enum_names: dict[tuple[str, str], str] | None = None,
+    ) -> None:
         self.spec = spec
         self.snapshot = snapshot
         self.name = spec.name
+        self.enum_names = enum_names if enum_names is not None else {}
         self.enums: dict[str, list[EnumValue]] = {}
         self.uses_all_or_none = False
 
@@ -166,11 +217,12 @@ class ClassWriter:
 
         if field.name == f"{self.name}_type":
             base = f'Literal["{feature_type}"]'
-        elif inner == "Enum" or (inner == "Text" and field.valid == "Valid"):
+        elif inner == "Enum":
             values = parse_listed_values(field.listed_values)
             if values:
-                base = _class_name(field.name)
-                base = ENUM_RENAMES.get(base, base)
+                base = self.enum_names.get((self.name, field.name)) or ENUM_RENAMES.get(
+                    _class_name(field.name), _class_name(field.name)
+                )
                 self.enums[base] = values
             else:
                 base = "str"
@@ -184,6 +236,8 @@ class ClassWriter:
             base = "GatisDatetime"
         elif inner == "ID":
             base = "Id"
+        elif inner == "URL":
+            base = "AnyUrl"
         elif inner in {"Float", "Integer"}:
             base = unit_alias(field) or ("float64" if inner == "Float" else "int32")
             if re.search(r"cannot be negative", field.description, re.I):
@@ -214,7 +268,10 @@ class ClassWriter:
         annotation = f"Annotated[{inner}, {', '.join(metadata)}]"
 
         description = " ".join(field.description.split())
-        if field.valid == "Recommended":
+        # A `Text` field with listed values is advisory in v1.0 -- the vocabulary is
+        # published but the type is open, so the values belong in the description
+        # rather than in a closed enum.
+        if field.listed_values and not _is_enum(field):
             suggested = parse_listed_values(field.listed_values)
             if suggested:
                 values = "; ".join(v.value for v in suggested)
@@ -242,7 +299,12 @@ class ClassWriter:
         base_name = _class_name(self.name) + "Base"
         classes.append(self._render_base(base_name))
 
-        for feature_type in self.spec.presence_columns:
+        # Declared types, not presence columns: v1.0 removed `virtual_link` from
+        # `edges.json`'s `types` but left its presence column on all 78 attributes.
+        # Generating from the columns would put a type back into the discriminated
+        # union that the spec no longer allows. `fields_without_types` reports the
+        # orphan instead.
+        for feature_type in self.spec.type_names:
             class_name = _class_name(feature_type) + _class_name(self.name)
             members.append((feature_type, class_name))
             fields = [
@@ -349,6 +411,14 @@ class ClassWriter:
                 f"        GeometryTypeConstraint("
                 f"GeometryType.{GEOMETRY_TYPE[self.name]}),",
                 "    ]",
+                "    # An explicit `null` property means absent. See"
+                " `drop_null_properties`;",
+                "    # real GATIS data is overwhelmingly null-valued rather than"
+                " sparse.",
+                '    _drop_nulls = model_validator(mode="before")(',
+                "        staticmethod(drop_null_properties)",
+                "    )",
+                "",
                 "    # Redeclared from `Feature`, where it is `Omitable[Id]`, to"
                 " make it",
                 "    # mandatory. Same narrowing, and the same silencing, as"
@@ -379,7 +449,15 @@ class ClassWriter:
             "from overture.schema.system.numeric import float64, int32",
             "from overture.schema.system.optionality import Omitable",
             "from overture.schema.system.ref import Id, Identified",
-            "from pydantic import BaseModel, ConfigDict, Field, Tag, TypeAdapter",
+            "from pydantic import (",
+            "    AnyUrl,",
+            "    BaseModel,",
+            "    ConfigDict,",
+            "    Field,",
+            "    Tag,",
+            "    TypeAdapter,",
+            "    model_validator,",
+            ")",
             "",
             "from gatis_schema.annotations import (",
             "    Aadt,",
@@ -388,6 +466,7 @@ class ClassWriter:
             "    InchesFloat,",
             "    Mph,",
             "    Percent,",
+            "    Seconds,",
             "    Tier,",
             ")",
         ]
@@ -402,8 +481,11 @@ class ClassWriter:
                 "    Relationship,\n"
                 ")"
             )
-        if self.uses_all_or_none:
-            lines.append("from gatis_schema.constraints import all_or_none")
+        lines.append(
+            "from gatis_schema.constraints import all_or_none, drop_null_properties"
+            if self.uses_all_or_none
+            else "from gatis_schema.constraints import drop_null_properties"
+        )
         lines.extend(
             [
                 "from gatis_schema.scalars import GatisDate, GatisDatetime, YesNo",
@@ -428,6 +510,12 @@ class ClassWriter:
             lines.extend(f"    {name}," for name in sorted(self.enums))
             lines.append(")")
         return "\n".join(lines)
+
+
+def _is_enum(field: FieldSpec) -> bool:
+    declared = field.type or "Text"
+    inner = declared[declared.index("<") + 1 : -1] if "<" in declared else declared
+    return inner == "Enum"
 
 
 def _tier_src(rule: PresenceRule) -> str:
@@ -475,10 +563,13 @@ def _docstring(text: str, indent: str = "    ") -> list[str]:
     flat = _escape(" ".join(text.split()))
     if not flat:
         return []
-    body = 88 - len(indent)
-    if len(flat) <= body - 6:
+    # The one-line form spends six columns on the two triple quotes.
+    body = 88 - len(indent) - 6
+    if len(flat) <= body:
         return [f'{indent}"""{flat}"""']
-    # The opening line carries the three quote characters too.
+    # Wrapping to that same width guarantees at least two content lines. It has to:
+    # `ruff format` pulls a lone closing `"""` back up onto a single content line,
+    # which would reinstate the overflow this branch exists to avoid.
     lines = textwrap.wrap(
         flat, width=body, initial_indent="   ", break_long_words=False
     )
@@ -510,11 +601,11 @@ def _header(name: str, snapshot: SpecSnapshot) -> str:
     return (
         f'"""GATIS {name} models.\n\n'
         "BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot\n"
-        f"(workbook Drive revision {snapshot.workbook_version}) on "
+        f"(dotbts/BPA@{snapshot.spec_version[:8]}) on "
         f"{dt.date.today().isoformat()}.\n\n"
         "Hand-edits are expected and are not overwritten: the bootstrap refuses to\n"
-        "rewrite an existing file without `--force`. Refine freely -- the workbook\n"
-        "cannot express half of what these models should say.\n"
+        "rewrite an existing file without `--force`. Refine freely -- the published\n"
+        "spec cannot express half of what these models should say.\n"
         '"""\n'
     )
 
@@ -534,8 +625,9 @@ def generate(
         raise ValueError(f"snapshot has unresolved defects:\n{details}")
 
     out_dir.mkdir(parents=True, exist_ok=True)
+    names = enum_names(snapshot)
     writers = {
-        name: ClassWriter(spec, snapshot)
+        name: ClassWriter(spec, snapshot, names)
         for name, spec in snapshot.feature_classes.items()
     }
     sources = {f"{name}s.py": writer.render() for name, writer in writers.items()}
@@ -573,8 +665,8 @@ def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> 
     parts = [
         '"""Enumerated values.\n\n'
         "BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot\n"
-        f"(workbook Drive revision {snapshot.workbook_version}).\n\n"
-        "Each member's value is the literal display string the workbook lists. GATIS\n"
+        f"(dotbts/BPA@{snapshot.spec_version[:8]}).\n\n"
+        "Each member's value is the literal display string the spec lists. GATIS\n"
         "defines no canonical token spelling, so normalising here would fork the "
         "spec.\n"
         '"""\n',
@@ -606,7 +698,12 @@ def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> 
 def _field_of(enum_name: str) -> str:
     """The GATIS field an enum was generated for, from its class name."""
     field = re.sub(r"(?<!^)(?=[A-Z])", "_", enum_name).lower()
-    return "presence" if field == "feature_presence" else field
+    if field == "feature_presence":
+        return "presence"
+    for prefix in ("edge_", "node_", "point_", "zone_"):
+        if field.startswith(prefix) and field != f"{prefix.rstrip('_')}_type":
+            return f"{field[len(prefix) :]} (on {prefix.rstrip('_')}s)"
+    return field
 
 
 def _render_package(names: list[str]) -> str:

@@ -1,11 +1,11 @@
 """GATIS zone models.
 
 BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot
-(workbook Drive revision 3542) on 2026-09-20.
+(dotbts/BPA@ecc45ff8) on 2026-09-21.
 
 Hand-edits are expected and are not overwritten: the bootstrap refuses to
-rewrite an existing file without `--force`. Refine freely -- the workbook
-cannot express half of what these models should say.
+rewrite an existing file without `--force`. Refine freely -- the published
+spec cannot express half of what these models should say.
 """
 
 from __future__ import annotations
@@ -20,14 +20,24 @@ from overture.schema.system.geometric import (
 )
 from overture.schema.system.optionality import Omitable
 from overture.schema.system.ref import Id, Identified
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    Tag,
+    TypeAdapter,
+    model_validator,
+)
 
 from gatis_schema.annotations import (
     Tier,
 )
+from gatis_schema.constraints import drop_null_properties
 from gatis_schema.models.enums import (
-    Status,
+    TrafficCalmingType,
+    ZoneStatus,
 )
+from gatis_schema.scalars import GatisDate
 from gatis_schema.shared import (
     ReferenceId,
 )
@@ -49,6 +59,10 @@ class ZoneBase(Identified, Feature):
         Geometry,
         GeometryTypeConstraint(GeometryType.POLYGON),
     ]
+    # An explicit `null` property means absent. See `drop_null_properties`;
+    # real GATIS data is overwhelmingly null-valued rather than sparse.
+    _drop_nulls = model_validator(mode="before")(staticmethod(drop_null_properties))
+
     # Redeclared from `Feature`, where it is `Omitable[Id]`, to make it
     # mandatory. Same narrowing, and the same silencing, as Overture's own
     # `OvertureFeature`.
@@ -61,46 +75,142 @@ class ZoneBase(Identified, Feature):
     )
 
 
-class PedestrianZone(ZoneBase):
-    """Indicates a zone where pedestrians may travel freely in a range of paths they
+class OpenZone(ZoneBase):
+    """Indicates a zone where travelers may travel freely in a range of paths they
     choose.
     """
 
-    zone_type: Annotated[Literal["pedestrian"], Tier("required")] = Field(
+    zone_type: Annotated[Literal["open"], Tier("required")] = Field(
         description="Indicates the type of zone."
     )
 
     surface_material: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
         Field(
             description="Specifies the surface type. Select only one. Where the "
-            "surface material changes, create a new zone."
+            "surface material changes, create a new zone. Recommended values: asphalt; "
+            "concrete; gravel; grass; dirt; paved; unpaved; grass paver; paving "
+            "stones; other."
         )
     )
 
     facility_name: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = (
         Field(
             description="Common or formal name for the zone. Can also include "
-            "descriptions of a portion of a larger pedestrian zone if the zone is "
-            "being segmented."
+            "descriptions of a portion of a larger open zone (like a park or a plaza) "
+            "if the zone is being segmented."
         )
     )
 
-    status: Annotated[Omitable[Status], Tier("optional")] = Field(
+    status: Annotated[Omitable[ZoneStatus], Tier("optional")] = Field(
         description="Most recent operating status of the zone. Whether the "
-        "infrastructure is open and available for use. Default is 'open'"
+        "infrastructure is open and available for use. If blank, the assumed value "
+        "is 'open.'"
     )
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(
         description="Can be used to add reference IDs to other datasources such as "
-        "OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should "
-        "be an array of JSONs with the source name and ID pair. Each JSON should "
+        "OSM, Overture, ARNOLD, HMPS, TIGER, Census road network, etc.). Should be "
+        "an array of JSONs with the source name and ID pair. Each JSON should "
         "contain an ID field and source field at minimum. Can add other attributes "
         "such as the beginning and ending milepost from a linear referencing "
         "system."
     )
 
+    prohibited_uses: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        description="Specifies which types of users are legally prohibited from "
+        "using the facility, based on the laws, policy, or signage on a facility "
+        "(ex. “E-bikes prohibited on this trail”). Can provide one or multiple in "
+        "list form. Recommended values: walk; bike; ebike class 1; ebike class 2; "
+        "ebike class 3; scooter; NEV; motor_vehicle; other."
+    )
 
-Zone = PedestrianZone
+    allowed_uses: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        description="Specifies exceptions to the usually prohibited users. "
+        "Intended for designating whether bikes are allowed to use sidewalks, "
+        "footways, and crossings for routing purposes. Recommended values: walk; "
+        "bike; ebike class 1; ebike class 2; ebike class 3; scooter; NEV; "
+        "motor_vehicle; other."
+    )
+
+    last_inspection_date: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        description="The date that this infrastructure was last inspected. Report "
+        "in RFC 3339 format containing day, month and year, or just month and year "
+        "or year if day or month is not available."
+    )
+
+    date_built: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        description="Indicates when the facility was officially opened for use. If "
+        "the facility has had a major remodeling where the structure, shape or "
+        "another fundamental aspect was changed, the date of remodeling can be "
+        "placed here. Report in RFC 3339 format containing day, month and year, or "
+        "just month and year or year if day or month is not available."
+    )
+
+
+class TrafficCalmingZone(ZoneBase):
+    """Used to identify where traffic calming features are located where these
+    features are an area (versus a point).
+    """
+
+    zone_type: Annotated[Literal["traffic_calming"], Tier("required")] = Field(
+        description="Indicates the type of zone."
+    )
+
+    surface_material: Annotated[Omitable[str], Tier("optional")] = Field(
+        description="Specifies the surface type. Select only one. Where the "
+        "surface material changes, create a new zone. Recommended values: asphalt; "
+        "concrete; gravel; grass; dirt; paved; unpaved; grass paver; paving "
+        "stones; other."
+    )
+
+    status: Annotated[Omitable[ZoneStatus], Tier("optional")] = Field(
+        description="Most recent operating status of the zone. Whether the "
+        "infrastructure is open and available for use. If blank, the assumed value "
+        "is 'open.'"
+    )
+
+    reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(
+        description="Can be used to add reference IDs to other datasources such as "
+        "OSM, Overture, ARNOLD, HMPS, TIGER, Census road network, etc.). Should be "
+        "an array of JSONs with the source name and ID pair. Each JSON should "
+        "contain an ID field and source field at minimum. Can add other attributes "
+        "such as the beginning and ending milepost from a linear referencing "
+        "system."
+    )
+
+    last_inspection_date: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        description="The date that this infrastructure was last inspected. Report "
+        "in RFC 3339 format containing day, month and year, or just month and year "
+        "or year if day or month is not available."
+    )
+
+    date_built: Annotated[Omitable[GatisDate], Tier("recommended")] = Field(
+        description="Indicates when the facility was officially opened for use. If "
+        "the facility has had a major remodeling where the structure, shape or "
+        "another fundamental aspect was changed, the date of remodeling can be "
+        "placed here. Report in RFC 3339 format containing day, month and year, or "
+        "just month and year or year if day or month is not available."
+    )
+
+    traffic_calming_type: Annotated[TrafficCalmingType, Tier("required")] = Field(
+        description="The type of traffic calming measure that is present in a "
+        "traffic_calming zone. Recommended values are from "
+        "https://www.ite.org/technical-resources/traffic-calming/traffic-calming- "
+        "measures/ and https://wiki.openstreetmap.org/wiki/Key:traffic_calming."
+    )
+
+
+Zone = Annotated[
+    Annotated[OpenZone, Tag("open")]
+    | Annotated[TrafficCalmingZone, Tag("traffic_calming")],
+    Field(
+        discriminator=Feature.field_discriminator(
+            "zone_type",
+            OpenZone,
+            TrafficCalmingZone,
+        )
+    ),
+]
 """Any zone, discriminated on `zone_type`."""
 
 ZoneAdapter: TypeAdapter[Zone] = TypeAdapter(Zone)

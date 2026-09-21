@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 from overture.schema.system._json_schema import (
     get_static_json_schema_extra,
@@ -66,3 +67,33 @@ def all_or_none(
 ) -> Callable[[type[BaseModel]], type[BaseModel]]:
     """Decorate a model so the named optional fields are all set or all absent."""
     return AllOrNoneConstraint(*field_names).decorate
+
+
+def drop_null_properties(data: Any) -> Any:
+    """Treat an explicit JSON `null` as an absent property.
+
+    GATIS says nothing about null-vs-omitted: `properties` is GeoJSON's untyped bag
+    and the spec never distinguishes "known empty" from "not collected". Real data
+    settles it in one direction -- Esri-derived exports write every unset field as
+    an explicit null, and the two published sample datasets average 57% null slots
+    per feature. Upstream's own JSON Schema permits null on 159 of 370 edge fields
+    via `oneOf [..., {"type": "null"}]`, so rejecting it here would make these
+    models stricter than the spec's own validator on the spec's own sample data.
+
+    Nothing is lost by collapsing them, because GATIS assigns no meaning to the
+    difference: `status` says a blank is assumed `open` (or `unknown`, depending on
+    the feature class) whether it arrived as null or never arrived at all.
+    """
+    if not isinstance(data, dict):
+        return data
+    properties = data.get("properties")
+    if isinstance(properties, dict):
+        data = {
+            **data,
+            "properties": {k: v for k, v in properties.items() if v is not None},
+        }
+    return {
+        k: v
+        for k, v in data.items()
+        if v is not None or k in {"geometry", "properties"}
+    }
