@@ -294,9 +294,37 @@ GATIS has no equivalent, and the field that would be the hook is a boolean.
 external datasets rather than at another GATIS edge. Section 2.3.1 names the
 loss — *"the relation to the parallel road segment is lost, unless the parallel
 road segment ID is included as an attribute"* — and the schema does not define
-that attribute. Section 9.1 lists the Curb Data Specification among related
-standards; CurbLR, which solves the representation problem rather than the
-policy one, is absent.
+that attribute.
+
+Section 9.1 lists the Curb Data Specification and not CurbLR, and CDS is worth
+reading for what it changed. Its Policy object "borrows heavily from the work
+of the CurbLR project", and it keeps the array: `curb_policy_ids` holds several
+policies per zone, so variation in time, user class and rate still costs no
+extra geometry. What it inverts is which representation is authoritative.
+`geometry` is Required and a polygon is preferred; `location_references` is
+Optional. So a CDS publisher maintains an independent polygon per curb zone,
+and the linear reference — where present — annotates it rather than defining
+it.
+
+The inversion costs CDS the two things worth having here. Its first rule for a
+curb zone is GATIS's segmentation mandate in different words: a zone must
+"always have a common regulation along their entire extent", so half loading
+and half metered means two zones and two polygons. And identity rides on
+geometry — "a new `curb_zone_id` is required if this geometry changes", which
+its own criteria then soften to "SHOULD remain consistent as long as the Curb
+Zone's geography remains substantially the same". There is also a `length`
+field, in centimetres, "projected along the street centerline" and explicitly
+"not the edge length of the geographic polygon": a field added to recover what
+a linear reference answers for free.
+
+Two CDS ideas are still worth taking. `location_references` is an *array*, each
+entry carrying a `source` URL naming its referencing system — SharedStreets,
+OpenLR, or a city's own — so one feature can be located in several basemaps at
+once. That is what GATIS's `reference_ids` gestures at and does not specify.
+And a Curb Object carries `linear_distance` and `perpendicular_distance`,
+offsets in centimetres along and away from the curb, the perpendicular one
+signed positive towards the sidewalk. GATIS has no way to place an object
+beside an edge at all.
 
 **Left/right/both is encoded in field names.** Section 2.2.1 shows
 `sidewalk:left:presence=yes` — OSM colon-namespacing, adopted because a GeoJSON
@@ -348,8 +376,9 @@ Ordered by what it unblocks, not by effort.
 5. **Give an edge a way to reference another edge, with an extent.** A
    reference plus start and end offsets plus a side would retire
    `road_associated`, carry the buffers and parking that are currently scalars
-   with no extent, and remove most of the reason to split an edge at all. CurbLR
-   is the worked example, in GeoJSON.
+   with no extent, and remove most of the reason to split an edge at all.
+   CurbLR is the worked example, in GeoJSON; take CDS's array of references,
+   each naming its own system, rather than CurbLR's single one.
 6. **Tokenise enum values** before the first dataset ships.
 7. **Give the eighteen dimensioned fields a structural unit.**
 8. **Separate the tier model from the field tables.** Presence becomes
