@@ -6,33 +6,13 @@ primitives, JSON Schema behaviour and codegen portability.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 from overture.schema.system.field_constraint import PatternConstraint
-from pydantic import BeforeValidator, PlainSerializer
 
-# GATIS booleans are OSM-style strings on the wire (document section 3.4, citing
-# the OpenStreetMap boolean format). Parsed to `bool` in Python and written back as
-# "yes"/"no", so a round-trip preserves the spec's encoding.
-_TRUE = {"yes", "true", "1"}
-_FALSE = {"no", "false", "0"}
+from gatis_schema.constraints import YesNoConstraint
 
-
-def _parse_yes_no(value: Any) -> Any:
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token in _TRUE:
-            return True
-        if token in _FALSE:
-            return False
-    return value
-
-
-YesNo = Annotated[
-    bool,
-    BeforeValidator(_parse_yes_no),
-    PlainSerializer(lambda v: "yes" if v else "no", return_type=str),
-]
+YesNo = Annotated[bool, YesNoConstraint()]
 """An OSM-format boolean: `"yes"` or `"no"` on the wire, `bool` in Python."""
 
 

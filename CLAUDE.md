@@ -119,6 +119,11 @@ equivalent is `PatternConstraint` and friends from
 `overture.schema.system.field_constraint`, which is why `GatisDate` is an
 annotated `str` rather than a validator that parses dates.
 
+**A wire encoding is a declaration too.** `YesNoConstraint` owns GATIS's
+`"yes"`/`"no"` booleans -- the parse, the serialisation and the emitted
+`{"type": "string", "enum": ["yes", "no"]}` -- where a `BeforeValidator` plus
+`PlainSerializer` would coerce for importers and tell the schema nothing.
+
 **A declaration need not be a rule.** Where the spec names values but leaves
 the type open -- `listed_values` on a `Text` field -- use `SuggestedValues`,
 not a sentence in the description. It rejects nothing (`FieldConstraint.validate`

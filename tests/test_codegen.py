@@ -479,3 +479,85 @@ def test_an_open_vocabulary_reaches_the_json_schema() -> None:
     ]
     # A field with a closed vocabulary gets an enum, not examples.
     assert "examples" not in crossing["properties"]["surface_material"]
+
+
+def test_a_boolean_field_declares_the_string_encoding_it_actually_uses() -> None:
+    # GATIS booleans are OSM-style strings on the wire. The models emitted
+    # `{"type": "boolean"}`, which rejects every published value -- Newark
+    # carries "no" 3,855 times and "yes" 17 -- while Python accepted them
+    # because the coercion ran first. Invisible from inside the package, and
+    # the reason the encoding is declared rather than left to a validator.
+    import json
+    import subprocess
+
+    emitted = json.loads(
+        subprocess.run(
+            ["overture-schema", "json-schema", "--type", "gatis_edge"],
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+    )
+    bridge = emitted["$defs"]["RoadEdge"]["properties"]["properties"]["properties"][
+        "bridge"
+    ]
+    assert bridge["type"] == "string"
+    assert bridge["enum"] == ["yes", "no"]
+
+
+def test_the_boolean_encoding_matches_upstreams_own_schema() -> None:
+    # The one place upstream's JSON Schema is worth citing. Its enums are
+    # unreliable for `Array<Enum>` fields (a generator loop-variable bug), but
+    # a scalar `Boolean` is outside that fault, and this is the only
+    # machine-readable statement upstream makes about the wire encoding.
+    import json
+    import subprocess
+    from pathlib import Path
+
+    spec = Path(__file__).resolve().parent.parent / "spec" / "json-schemas"
+    theirs = json.loads((spec / "edges_schema.json").read_text())
+    their_bridge = theirs["properties"]["features"]["items"]["properties"][
+        "properties"
+    ]["properties"]["bridge"]
+    their_values = next(
+        arm["enum"] for arm in their_bridge["oneOf"] if arm.get("type") == "string"
+    )
+
+    emitted = json.loads(
+        subprocess.run(
+            ["overture-schema", "json-schema", "--type", "gatis_edge"],
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+    )
+    ours = emitted["$defs"]["RoadEdge"]["properties"]["properties"]["properties"][
+        "bridge"
+    ]
+    assert ours["enum"] == their_values
+
+
+def test_a_boolean_still_round_trips_through_python_as_bool() -> None:
+    # The reason this is a constraint rather than `Literal["yes", "no"]`:
+    # callers keep a real bool. Asserted in both directions, because a
+    # constraint that only parsed would serialise back as `true`.
+    import json
+
+    from gatis_schema.models import EdgeAdapter
+    from gatis_schema.models.edges import RoadEdge
+
+    feature = {
+        "type": "Feature",
+        "geometry": {"type": "LineString", "coordinates": [[0, 0], [1, 1]]},
+        "properties": {
+            "edge_id": "r1",
+            "edge_type": "road",
+            "street_name": "Delaware Ave",
+            "directionality": "both",
+            "bridge": "yes",
+        },
+    }
+    edge = EdgeAdapter.validate_json(json.dumps(feature))
+    assert isinstance(edge, RoadEdge)
+    assert edge.model_dump(exclude_unset=True)["bridge"] is True
+    assert json.loads(edge.model_dump_json())["properties"]["bridge"] == "yes"

@@ -209,6 +209,20 @@ def main() -> int:
                 print(f"     upstream: {theirs_enum}")
             elif ours_enum and not theirs_enum:
                 print(f"  enum only ours: {name} ({len(ours_enum)} values)")
+            elif theirs_enum and not ours_enum and name != f"{feature_class}_type":
+                # The direction that was silently skipped, and the one that
+                # matters most: upstream constrains the field and we do not, so
+                # our schema is the looser of the two. Ten Boolean fields sat
+                # here unreported -- upstream said `["yes", "no"]`, ours said
+                # `{"type": "boolean"}`, which rejects every published value.
+                #
+                # The discriminator is exempt because upstream's enum there is
+                # the corrupt spreadsheet cross-reference ("(Same as Edge
+                # Types)"); ours is a `Literal` per arm, which is correct and
+                # which `enum_of` cannot see. See upstream-gatis-sources.md.
+                findings += 1
+                print(f"  enum only upstream: {name}")
+                print(f"     upstream: {theirs_enum}")
 
         if feature_class == "edge":
             _report_on_road_constraint(our_schema, their_schema, arms)

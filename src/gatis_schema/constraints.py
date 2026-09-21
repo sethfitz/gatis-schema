@@ -11,14 +11,79 @@ from overture.schema.system._json_schema import (
     put_not,
     required_non_null,
 )
-from overture.schema.system.field_constraint import StringConstraint
+from overture.schema.system.field_constraint import FieldConstraint, StringConstraint
 from overture.schema.system.model_constraint import (
     ModelConstraint,
     OptionalFieldGroupConstraint,
     apply_alias,
 )
-from pydantic import BaseModel, ConfigDict, GetJsonSchemaHandler
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic_core import core_schema
+
+# GATIS booleans are OSM-style strings on the wire: section 3.4 cites the
+# OpenStreetMap boolean format, and `listed_values` is ["yes", "no"]. The other
+# OSM spellings are accepted defensively rather than in response to data --
+# neither published sample carries anything but "yes", "no" and null.
+_TRUE = {"yes", "true", "1"}
+_FALSE = {"no", "false", "0"}
+
+
+def _parse_yes_no(value: Any) -> Any:
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in _TRUE:
+            return True
+        if token in _FALSE:
+            return False
+    return value
+
+
+class YesNoConstraint(FieldConstraint):
+    """A GATIS boolean: `"yes"`/`"no"` on the wire, `bool` in Python.
+
+    **Why not `Literal["yes", "no"]`**, which would be wire-accurate with no
+    code at all: the value is a boolean, and a Literal hands every caller a
+    string instead, pushing `== "yes"` into each one and giving up use in a
+    boolean context. Keeping the concept in Python and the encoding on the
+    wire is the split the rest of this package already makes -- it is why
+    `GatisDate` is a constrained `str` and not a `date`.
+
+    **Why not a bare `BeforeValidator` plus `PlainSerializer`**, which is what
+    this replaces: those are anonymous plumbing. They coerce for whoever
+    imports this package and say nothing to anyone who does not, so the
+    emitted schema declared `{"type": "boolean"}` -- rejecting all 7,745
+    boolean values across the two published samples, and agreeing with neither
+    the spec nor upstream's own JSON Schema. A constraint states the encoding
+    once, to both audiences.
+    """
+
+    def __get_pydantic_core_schema__(
+        self, source: type[Any], handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(
+            _parse_yes_no,
+            handler(source),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda value: "yes" if value else "no",
+                return_schema=core_schema.str_schema(),
+                # JSON only: in Python the value is a `bool` and `model_dump`
+                # should say so. The wire encoding belongs on the wire.
+                when_used="json",
+            ),
+        )
+
+    def __get_pydantic_json_schema__(
+        self, schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> dict[str, Any]:
+        """Declare the wire encoding, not the Python type.
+
+        `handler` describes the validated result -- a boolean -- which is the
+        one thing no GATIS file ever contains.
+        """
+        emitted = handler(schema)
+        emitted["type"] = "string"
+        emitted["enum"] = ["yes", "no"]
+        return emitted
 
 
 class SuggestedValues(StringConstraint):
