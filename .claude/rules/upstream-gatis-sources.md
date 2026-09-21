@@ -34,9 +34,32 @@ in `points_schema.json`, `accessibility_features` carries it too. Verified
 2026-09-21 in the three files that have an `Array<Enum>` field at all; `zones`
 has none, so it cannot show the bug either way.
 
-Never take an enum from the JSON Schema. Its scalar types, `required` lists and
-nullability are sound and are the only machine-readable statement upstream makes
-about null.
+**It also rejects every real GATIS feature, as shipped.** The discriminator's
+enum is a spreadsheet cross-reference that was exported literally:
+`edge_type` permits exactly `"(Same as Edge Types)"` and `node_type` exactly
+`"(Same as Node Types)"`. So `edge_type: "road"` fails and the cross-reference
+string passes. Measured against both published sample datasets: 0 of 351,693
+features validate.
+
+Two more faults matter if you ever repair it enough to run:
+
+- **It requires nothing.** The `properties` object carries no `required` list
+  at all, so every `required` presence rule in 1.0 is absent from it. It cannot
+  catch Austin's 9,929 roads missing `directionality`.
+- **`oneOf` plus an unasserted `format` inverts the date fields.** 21 edge
+  fields are `oneOf [{"type":"string","format":"date"}, <YYYY-MM pattern>,
+  <YYYY pattern>, null]`. `format` is annotation-only by default, so the first
+  branch matches *any* string: `"banana"` validates, and `"2007-01"` and
+  `"2007"` are **rejected** because they match two branches and `oneOf` demands
+  exactly one. The spec's own permitted truncations fail while junk passes.
+  Turning format assertion on fixes both, and it is off by default in every
+  major implementation.
+
+So: never take an enum, a required rule, or a date verdict from the JSON
+Schema, and never cite it as evidence about what the spec permits. Its scalar
+`type` keywords and its `null` branches are the sound part, and the null
+branches remain the only machine-readable statement upstream makes about
+whether an absent field may be written as `null`.
 
 `specification_jsons` is the artifact to trust, not an artifact that is correct.
 Its `listed_values` are mangled for at least eight fields, by two separate
@@ -48,9 +71,9 @@ class you care about: 1.0 gives one field name different vocabularies across
 edges, nodes and zones, sometimes on purpose.
 
 **The Google Sheet `1qs0x58V-Gcikm70AKxsXxKH7D4TL6z8FlBgf4P4kqJQ` is Draft #2**,
-which upstream's README labels as such. Draft #3 used a different sheet. It is
-superseded; `spec/` still pins it. Do not read it to answer a question about
-current GATIS.
+which upstream's README labels as such. Draft #3 used a different sheet. Both
+are superseded and neither is pinned here any more. Do not read either to
+answer a question about current GATIS.
 
 ## Reading it without Drive access
 
@@ -81,8 +104,10 @@ maps. The datasets themselves:
   edges file is 280 MB and is the full dataset, not the clipped sample the map
   shows.
 
-Both are newer than what `spec/` pins, so they can carry 1.0 vocabulary the
-models here do not know. Neither file declares a spec version.
+Neither file declares a spec version, and both predate the commit `spec/`
+pins, so they can carry vocabulary 1.0 has since renamed. Check
+`spec/MANIFEST.json` for what is actually pinned rather than assuming either
+direction.
 
 An `osm/` conversion notebook exists with no committed output, and
 `seattle/` has a notebook and no data.

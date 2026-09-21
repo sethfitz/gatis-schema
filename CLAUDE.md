@@ -104,7 +104,7 @@ next reader can tell a considered choice from a reflex.
 | --- | --- |
 | `spec/specification/` | The generation source: 1.0's own structured JSON, pinned by upstream commit in `MANIFEST.json` |
 | `spec/repairs.json` | Local corrections to upstream's mangled `listed_values`, with reasoning per entry |
-| `spec/json-schemas/` | Upstream's own validator. Sound on types, **broken on every `Array<Enum>`** |
+| `spec/json-schemas/` | Upstream's own validator. **Rejects every real GATIS feature** -- see below. Never cite it as evidence about the spec |
 | `src/gatis_schema/spec_source.py` | Reads the snapshot into `FieldSpec`, `FeatureType`, `PresenceRule` |
 | `src/gatis_schema/codegen.py` | Generates the models; `scripts/bootstrap-models` drives it |
 | `src/gatis_schema/models/` | Bootstrapped once, **hand-owned after** -- the bootstrap refuses to overwrite without `--force` |
