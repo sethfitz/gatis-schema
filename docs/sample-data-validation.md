@@ -258,9 +258,11 @@ and unrepresentable, not on how often it appears.
 ### Newark's bikeway layer is topologically disconnected
 
 All 33 Newark `bikeway`, `crossing` and `traffic_island` edges carry null
-`from_node` and `to_node`. Only the road and multi-use-path edges have
-endpoints, so the bikeway and crossing layer cannot be routed and
-`Dataset.check_integrity` has nothing to resolve for it. While explicit nulls
+`from_node` and `to_node`, so the bikeway and crossing layer cannot be routed
+and `Dataset.check_integrity` has nothing to resolve for it. Ten `road` and
+three `multi_use_path` edges lack endpoints too -- 46 in all -- and for those
+five types 1.0 makes both fields `required` from Tier 2, so 34 of the 46 are
+presence violations at Newark's Tier 3 rather than an absent optional. While explicit nulls
 were rejected this was 21 more rows in the null pile; dropping nulls is what
 makes it visible as a structural property of the dataset.
 

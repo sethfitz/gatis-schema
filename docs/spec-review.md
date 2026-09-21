@@ -28,8 +28,11 @@ vocabulary.** Each one carries the *last* such field's enum. In
 `prohibited_uses` offers "leading pedestrian interval" and does not offer "bike".
 In `nodes_schema.json`, `impediment` and `rail_crossing_control` carry
 `surface_issue`'s list; in `points_schema.json`, `accessibility_features` does.
-Seven fields, three files, one loop-variable bug. `zones_schema.json` has no
-`Array<Enum>` field and so cannot exhibit it. A publisher validating against the
+The twelve on-road modifier forms of `allowed_uses` and `prohibited_uses`,
+`sidewalk:left:prohibited_uses` through `multi_use_path:right:allowed_uses`,
+carry `ped_protection`'s list too. Eighteen fields, three files, one
+loop-variable bug. `zones_schema.json` has no `Array<Enum>` field and so cannot
+exhibit it. A publisher validating against the
 shipped schema is validating against the wrong vocabulary and will be told so by
 neither artifact.
 
@@ -485,22 +488,28 @@ same file, as the keys of `.types`.
 
 #### 2. Every `Array<Enum>` field is given the last one's vocabulary
 
-In the JSON Schemas only; `specification_jsons` has the right values, so this
-is isolated to the schema generator and looks like a loop variable leaking.
+In the JSON Schemas only: each field carries its own values in
+`specification_jsons`, mangled in the separate ways item 3 describes but never
+another field's. So this one is isolated to the schema generator and looks like
+a loop variable leaking.
 
 ```
 $ jq -c '.properties.features.items.properties.properties.properties
-         .prohibited_uses.items.enum[0:3]' json_schemas/edges_schema.json
+         .prohibited_uses.items.enum[0:3]' \
+    draft_gatis_specification/json_schemas/edges_schema.json
 ["scramble / all pedestrian interval","leading pedestrian interval",
  "no right on red for motor vehicles"]
 ```
 
-`prohibited_uses` offers pedestrian signal-timing values. Six fields are
-affected: `prohibited_uses`, `allowed_uses` and `cross_vehicle_traffic_control`
-in `edges_schema.json` all carry `ped_protection`'s list; `impediment` and
-`rail_crossing_control` in `nodes_schema.json` and `accessibility_features` in
-`points_schema.json` all carry `surface_issue`'s. `zones_schema.json` declares
-no `Array<Enum>` field, so it is unaffected rather than fixed.
+`prohibited_uses` offers pedestrian signal-timing values. Eighteen fields are
+affected, not three: in `edges_schema.json`, `prohibited_uses`, `allowed_uses`
+and `cross_vehicle_traffic_control` carry `ped_protection`'s list, and so do
+the twelve on-road modifier forms of the first two,
+`sidewalk:left:prohibited_uses` through `multi_use_path:right:allowed_uses`. In
+`nodes_schema.json`, `impediment` and `rail_crossing_control` carry
+`surface_issue`'s, as does `accessibility_features` in `points_schema.json`.
+`zones_schema.json` declares no `Array<Enum>` field, so it is unaffected rather
+than fixed.
 
 #### 3. Two `listed_values` splitting faults
 
@@ -525,8 +534,10 @@ pair rather than a different vocabulary, on the strength of that asymmetry.
 Not confirmed against the source cell, which we cannot see.
 
 The general fix is to store enum values as tokens and render display text
-separately. Seven cells are affected today; the cost grows with every dataset
-published against them.
+separately. Seven cells are affected today — `separation_permeable_car`,
+`separation_elements`, `markings`, `traffic_calming`, `prohibited_uses` and
+`allowed_uses` on edges, and `presence` on nodes — and the cost grows with
+every dataset published against them.
 
 #### 4. `additionalProperties: false` contradicts the specification's own text
 
@@ -561,15 +572,20 @@ date rule the spec states; 88% of that column is a null that validates. The
 `date_built` values are all midnight at the same offset with 42 distinct values
 across 73,482 features, so the real precision is the year.
 
-Separately, all 33 `bikeway`, `crossing` and `traffic_island` edges in
-`newark_edges` carry null `from_node` and `to_node`, so that layer is
-topologically disconnected. Both fields are optional for those types, so the
-file conforms.
+Separately, 46 `newark_edges` carry null `from_node` and `to_node`: every
+`bikeway` (21), `crossing` (9) and `traffic_island` (3) edge in the file, plus
+10 `road` and 3 `multi_use_path` edges. The bikeway and crossing layer is
+therefore topologically disconnected. Both fields are `required` from Tier 2
+for `road`, `bikeway`, `multi_use_path`, `trail` and `ramp`, and Newark is
+published as Tier 3, so 34 of the 46 are presence violations; the 12 on
+`crossing` and `traffic_island` edges are conformant, since those types only
+recommend endpoints.
 
 #### 6. Four values publishers used that the vocabularies do not offer
 
-All on one separated bike lane on Delaware Avenue in `newark_edges`, so this is
-one design case rather than a distribution. Three name real devices:
+All on one facility in `newark_edges` — 14 bikeway and 9 crossing edges on
+Delaware Avenue — so this is one design case rather than a distribution. Three
+name real devices:
 
 - `separation_permeable_car: "mountable"` (14). The vocabulary is a binary —
   hard means a separator motor vehicles cannot bypass, soft means one they can.
@@ -635,7 +651,10 @@ from jsonschema import Draft202012Validator
 
 schema = json.load(open("draft_gatis_specification/json_schemas/edges_schema.json"))
 data = json.load(open("<austin edges>.geojson"))
-v = Draft202012Validator(schema["properties"]["features"]["items"])
+v = Draft202012Validator(
+    schema["properties"]["features"]["items"],
+    format_checker=Draft202012Validator.FORMAT_CHECKER,
+)
 print(
     sum(1 for f in data["features"] if not list(v.iter_errors(f))),
     "/",
@@ -643,8 +662,16 @@ print(
 )
 ```
 
-`validator/draft_gatis_validator.ipynb` does the same over the whole
-collection. It points at an absolute path on a machine we do not have and at
+The format checker is load-bearing. 21 edge fields are `oneOf` a
+`{"type": "string", "format": "date"}` branch and `YYYY-MM` and `YYYY`
+patterns, and `format` is annotation-only unless asserted — so with it off the
+first branch matches any string, `"banana"` validates, and the spec's own
+permitted truncations are rejected for matching two branches.
+`draft_gatis_specification/validator/draft_gatis_validator.ipynb` passes one,
+so this is a trap only for readers who write their own.
+
+That notebook does the same check over the whole collection. It points at an
+absolute path on a machine we do not have and at
 `austin_sample_edges.geojson`, which is not in the repository, so it cannot run
 as committed — which may be why items 1 and 2 have gone unnoticed since the
 January regeneration.
