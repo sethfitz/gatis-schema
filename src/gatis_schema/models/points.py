@@ -35,7 +35,10 @@ from gatis_schema.annotations import (
     Seconds,
     Tier,
 )
-from gatis_schema.constraints import all_or_none, drop_null_properties
+from gatis_schema.constraints import (
+    all_or_none,
+    drop_null_properties,
+)
 from gatis_schema.models.enums import (
     AccessibilityFeatures,
     Button,

@@ -32,7 +32,9 @@ from pydantic import (
 from gatis_schema.annotations import (
     Tier,
 )
-from gatis_schema.constraints import drop_null_properties
+from gatis_schema.constraints import (
+    drop_null_properties,
+)
 from gatis_schema.models.enums import (
     TrafficCalmingType,
     ZoneStatus,

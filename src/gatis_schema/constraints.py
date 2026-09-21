@@ -97,3 +97,34 @@ def drop_null_properties(data: Any) -> Any:
         for k, v in data.items()
         if v is not None or k in {"geometry", "properties"}
     }
+
+
+def reject_forbidden_on_road(names: frozenset[str]) -> Callable[[Any], Any]:
+    """Refuse the colon-namespaced attributes a type may not carry in on-road form.
+
+    v1.0 gives each `allowed_on_road` type a `forbidden_field_if_allowed_on_road`
+    list -- `edge_id`, `edge_type`, `street_name`, `from_node`, `to_node`, `bridge`
+    -- because those describe the road itself, not the facility beside it. Leaving
+    them out of the model is not the same as rejecting them: `extra="allow"` means
+    `bikeway:left:edge_id` validates silently, so a publisher doing the one thing
+    the spec explicitly forbids here gets no signal at all.
+
+    Section 6.1's guarantee is about fields nobody has heard of. This is a field
+    the spec has heard of and ruled out, which is a different diagnostic.
+    """
+
+    def check(data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        properties = data.get("properties")
+        present = sorted(
+            names & set(properties if isinstance(properties, dict) else data)
+        )
+        if present:
+            raise ValueError(
+                "forbidden in the on-road modifier form, because it describes the "
+                f"road rather than the facility beside it: {', '.join(present)}"
+            )
+        return data
+
+    return check

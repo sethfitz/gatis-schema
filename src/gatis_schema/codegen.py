@@ -312,6 +312,7 @@ class ClassWriter:
         validator calls the features clean.
         """
         lines: list[str] = []
+        self.forbidden_on_road: list[str] = []
         for feature_type in self.spec.type_names:
             declaration = next(
                 (t for t in self.spec.types if t.name == feature_type), None
@@ -319,7 +320,13 @@ class ClassWriter:
             if declaration is None or not declaration.allowed_on_road:
                 continue
             forbidden = set(declaration.forbidden_on_road)
+            known = set(self.spec.field_names)
             for side in ("left", "right"):
+                self.forbidden_on_road.extend(
+                    f"{feature_type}:{side}:{name}"
+                    for name in declaration.forbidden_on_road
+                    if name in known
+                )
                 for field, _ in self._fields_for(feature_type):
                     if field.name in forbidden:
                         continue
@@ -345,6 +352,11 @@ class ClassWriter:
                 " carried as",
                 "    # prefixed attributes rather than as their own features. See"
                 " section 2.2.",
+                "",
+                '    _reject_forbidden_on_road = model_validator(mode="before")(',
+                f"        staticmethod(reject_forbidden_on_road({base_name.upper()}"
+                "_FORBIDDEN))",
+                "    )",
                 "",
                 *lines,
             ]
@@ -391,7 +403,19 @@ class ClassWriter:
             for field, rule in fields:
                 body.extend(self._render_field(field, rule, feature_type))
             if self.name == "edge" and feature_type == ON_ROAD_CARRIER:
-                body.extend(self._render_on_road(class_name))
+                on_road = self._render_on_road(class_name)
+                if on_road:
+                    classes.append(
+                        f"{class_name.upper()}_FORBIDDEN = frozenset({{\n"
+                        + "".join(
+                            f'    "{alias}",\n'
+                            for alias in sorted(self.forbidden_on_road)
+                        )
+                        + "})\n"
+                    )
+                    # The constant has to precede the class that references it.
+                    classes.insert(-1, classes.pop())
+                body.extend(on_road)
             body.append("")
             classes.append("\n".join(body))
 
@@ -544,9 +568,16 @@ class ClassWriter:
                 ")"
             )
         lines.append(
-            "from gatis_schema.constraints import all_or_none, drop_null_properties"
+            "from gatis_schema.constraints import (\n"
+            "    all_or_none,\n"
+            "    drop_null_properties,\n"
+            "    reject_forbidden_on_road,\n"
+            ")"
             if self.uses_all_or_none
-            else "from gatis_schema.constraints import drop_null_properties"
+            else "from gatis_schema.constraints import (\n"
+            "    drop_null_properties,\n"
+            "    reject_forbidden_on_road,\n"
+            ")"
         )
         lines.extend(
             [

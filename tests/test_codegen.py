@@ -224,3 +224,72 @@ def test_an_on_road_modifier_rejects_a_bad_value() -> None:
         )
         with pytest.raises(Exception, match=r"bikeway:left:directionality|sideways"):
             Dataset.load(directory)
+
+
+def test_the_forbidden_on_road_set_holds_names_not_characters() -> None:
+    # `frozenset("a", "b")` is a TypeError, but `frozenset("abc")` is
+    # {'a','b','c'} -- silently. The generator emits a set literal, so a
+    # one-element list cannot splat into characters; this fails if it ever goes
+    # back to passing the names as arguments, which would import cleanly, pass
+    # every other test, and reject nothing. Caught by gatis-schema-50.
+    from gatis_schema.models.edges import ROADEDGE_FORBIDDEN
+
+    assert len(ROADEDGE_FORBIDDEN) == 36
+    assert all(len(alias) > 1 and alias.count(":") == 2 for alias in ROADEDGE_FORBIDDEN)
+    assert "bikeway:left:edge_id" in ROADEDGE_FORBIDDEN
+
+
+def test_a_forbidden_on_road_attribute_is_rejected() -> None:
+    # v1.0 forbids these in the modifier form because they describe the road, not
+    # the facility beside it. Leaving them out of the model is not the same as
+    # rejecting them: under `extra="allow"` they validated silently.
+    import json
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    import pytest
+
+    from gatis_schema.dataset import Dataset
+    from gatis_schema.models.edges import RoadEdge
+
+    def load(extra: dict[str, object]) -> RoadEdge:
+        properties: dict[str, object] = {
+            "edge_id": "r1",
+            "edge_type": "road",
+            "street_name": "Delaware Ave",
+            "directionality": "both",
+            **extra,
+        }
+        feature = {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[-97.7, 30.3], [-97.6, 30.3]],
+            },
+            "properties": properties,
+        }
+        with TemporaryDirectory() as directory:
+            Path(directory, "edges.geojson").write_text(
+                json.dumps({"type": "FeatureCollection", "features": [feature]})
+            )
+            loaded = Dataset.load(directory).edges.features[0]  # type: ignore[union-attr]
+        assert isinstance(loaded, RoadEdge)
+        return loaded
+
+    # The fixture validates bare. Without this the negative cases below would fail
+    # for the wrong reason and still look like a pass.
+    assert load({}) is not None
+
+    for alias in ("bikeway:left:edge_id", "sidewalk:right:street_name"):
+        with pytest.raises(Exception, match="forbidden in the on-road modifier form"):
+            load({alias: "x"})
+
+    # Controls: a legal modifier still validates, and an unknown key -- including
+    # one shaped like a modifier -- is still an extra rather than a rejection.
+    assert load({"bikeway:left:width_in": 72}).model_extra == {}
+    assert load({"city_asset_tag": "A-1723"}).model_extra == {
+        "city_asset_tag": "A-1723"
+    }
+    assert load({"bikeway:left:not_a_field": "x"}).model_extra == {
+        "bikeway:left:not_a_field": "x"
+    }

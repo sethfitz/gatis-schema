@@ -34,7 +34,10 @@ from gatis_schema.annotations import (
     Percent,
     Tier,
 )
-from gatis_schema.constraints import all_or_none, drop_null_properties
+from gatis_schema.constraints import (
+    all_or_none,
+    drop_null_properties,
+)
 from gatis_schema.models.enums import (
     CurbType,
     DetectableWarning,

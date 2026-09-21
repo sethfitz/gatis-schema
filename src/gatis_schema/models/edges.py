@@ -43,7 +43,11 @@ from gatis_schema.annotations import (
     Mph,
     Tier,
 )
-from gatis_schema.constraints import all_or_none, drop_null_properties
+from gatis_schema.constraints import (
+    all_or_none,
+    drop_null_properties,
+    reject_forbidden_on_road,
+)
 from gatis_schema.models.enums import (
     AllowedUses,
     BikewayGradeSeparation,
@@ -67,6 +71,47 @@ from gatis_schema.scalars import GatisDate, YesNo
 from gatis_schema.shared import (
     ReferenceId,
     SeasonalCondition,
+)
+
+ROADEDGE_FORBIDDEN = frozenset(
+    {
+        "bikeway:left:bridge",
+        "bikeway:left:edge_id",
+        "bikeway:left:edge_type",
+        "bikeway:left:from_node",
+        "bikeway:left:street_name",
+        "bikeway:left:to_node",
+        "bikeway:right:bridge",
+        "bikeway:right:edge_id",
+        "bikeway:right:edge_type",
+        "bikeway:right:from_node",
+        "bikeway:right:street_name",
+        "bikeway:right:to_node",
+        "multi_use_path:left:bridge",
+        "multi_use_path:left:edge_id",
+        "multi_use_path:left:edge_type",
+        "multi_use_path:left:from_node",
+        "multi_use_path:left:street_name",
+        "multi_use_path:left:to_node",
+        "multi_use_path:right:bridge",
+        "multi_use_path:right:edge_id",
+        "multi_use_path:right:edge_type",
+        "multi_use_path:right:from_node",
+        "multi_use_path:right:street_name",
+        "multi_use_path:right:to_node",
+        "sidewalk:left:bridge",
+        "sidewalk:left:edge_id",
+        "sidewalk:left:edge_type",
+        "sidewalk:left:from_node",
+        "sidewalk:left:street_name",
+        "sidewalk:left:to_node",
+        "sidewalk:right:bridge",
+        "sidewalk:right:edge_id",
+        "sidewalk:right:edge_type",
+        "sidewalk:right:from_node",
+        "sidewalk:right:street_name",
+        "sidewalk:right:to_node",
+    }
 )
 
 
@@ -510,6 +555,10 @@ class RoadEdge(EdgeBase):
 
     # The on-road modifier form: this road's parallel facilities, carried as
     # prefixed attributes rather than as their own features. See section 2.2.
+
+    _reject_forbidden_on_road = model_validator(mode="before")(
+        staticmethod(reject_forbidden_on_road(ROADEDGE_FORBIDDEN))
+    )
 
     sidewalk_left_reference_ids: Annotated[
         Omitable[list[ReferenceId]], Tier("optional")
