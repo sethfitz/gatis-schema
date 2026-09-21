@@ -49,6 +49,17 @@ class CrossVehicleTrafficControl(str, DocumentedEnum):
     STOP_SIGN = "stop sign"
 
 
+class CurbType(str, DocumentedEnum):
+    """Allowed values for `curb_type`."""
+
+    RAISED = "raised"
+    ROLLED = "rolled"
+    FLUSH = "flush"
+    GENERIC = "generic"
+    DRIVEWAY = "driveway"
+    OTHER = "other"
+
+
 class DetectableWarning(str, DocumentedEnum):
     """Allowed values for `detectable_warning`."""
 

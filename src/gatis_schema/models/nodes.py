@@ -41,6 +41,7 @@ from gatis_schema.shared import (
 )
 from gatis_schema.models.enums import (
     AdaCompliantWith,
+    CurbType,
     DetectableWarning,
     FeaturePresence,
     Impediment,
@@ -59,19 +60,14 @@ class VirtualNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["virtual"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
-    curb_type: Annotated[Literal["virtual"], Tier("optional", {3: "recommended"})] = Field(description="The type of curb that is present, if there is not a curb ramp.")
-    """The type of curb that is present, if there is not a curb ramp."""
+    curb_type: Annotated[Omitable[CurbType], Tier("optional", {3: "recommended"})] = Field(description="The type of curb that is present, if there is not a curb ramp.")
 
     rail_crossing: Annotated[Omitable[list[RailCrossing]], Tier("optional", {3: "recommended"})] = Field(description="Describes the pedestrian traffic warnings and controls in the approach to the rail crossing. The nodes mark the location of the controls on each side of the tracks. Mark the crossing itself as a virtual link (edge).")
-    """Describes the pedestrian traffic warnings and controls in the approach to the rail crossing."""
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
@@ -84,52 +80,36 @@ class CurbRampNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["curb_ramp"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(description="Indicates whether the piece of infrastructure exists or is present. When other attributes are provided, the existence of the infrastructure can be assumed. This attribute is useful for identifying where a curb ramp or other infrastructure might be missing or where its presence is unknown. Conditionally required if no other identifying attributes provided.")
-    """Indicates whether the piece of infrastructure exists or is present."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     date_built: Annotated[Omitable[GatisDate], Tier("optional", {2: "recommended"})] = Field(description="When the facility was officially opened for use. If the facility has had a major remodeling where the structure, shape or another fundamental aspect was changed, the date of remodeling can be placed here. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """When the facility was officially opened for use."""
 
     check_date: Annotated[Omitable[GatisDate], Tier("optional", {2: "recommended"})] = Field(description="The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """The date that this infrastructure was last inspected."""
 
     ada_compliance_date: Annotated[Omitable[GatisDate], Tier("conditionally_required")] = Field(description="Indicates the date when ADA compliance was assessed. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available. This field is conditionally required if 'ada_compliant_with' is filled out.")
-    """Indicates the date when ADA compliance was assessed."""
 
     ada_compliant_with: Annotated[Omitable[AdaCompliantWith], Tier("conditionally_required")] = Field(description="If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment. Also fill out 'ada_compliance_date.' If no ADA assessment is being reported, leave blank.")
-    """If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment."""
 
     incline: Annotated[Omitable[Percent], Tier("optional", {3: "required"})] = Field(description="Indicates the incline or running slope of the ramp, following the possible directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision.")
-    """Indicates the incline or running slope of the ramp, following the possible directions of travel."""
 
     cross_slope: Annotated[Omitable[Percent], Field(ge=0), Tier("optional", {3: "required"})] = Field(description="Indicates the cross slope of the ramp, which runs perpendicular to the incline / directions of travel. Reported as a decimal number describing the percentage of the slope, with two points of precision. Cannot be negative.")
-    """Indicates the cross slope of the ramp, which runs perpendicular to the incline / directions of travel."""
 
     width: Annotated[Omitable[InchesFloat], Tier("optional", {3: "required"})] = Field(description="Indicates the minimum width of the ramp, measured between the handrails if handrails are provided. Reported as a whole number rounded to the nearest inch. Note that it is assumed that 80' of height clearance is available for the full width given in this field.")
-    """Indicates the minimum width of the ramp, measured between the handrails if handrails are provided."""
 
-    ramp_type: Annotated[Literal["curb_ramp"], Tier("optional", {3: "recommended"})] = Field(description="Indicates the orientation of the ramp in relation to the pedestrian direction of travel at the location. Where a double curb ramp exists, map each ramp as a separate curb_ramp node.")
-    """Indicates the orientation of the ramp in relation to the pedestrian direction of travel at the location."""
+    ramp_type: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(description="Indicates the orientation of the ramp in relation to the pedestrian direction of travel at the location. Where a double curb ramp exists, map each ramp as a separate curb_ramp node. Recommended values: diagonal; parallel; perpendicular; unknown.")
 
     detectable_warning: Annotated[Omitable[DetectableWarning], Tier("optional", {3: "required"})] = Field(description="Describes whether tactile paving is present, and whether or not it has a constrasting color (which should meet ADA guidelines for the amount of contrast).")
-    """Describes whether tactile paving is present, and whether or not it has a constrasting color (which should meet ADA guidelines for the amount of contrast)."""
 
     impediment: Annotated[Omitable[list[Impediment]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Identifies the presence of an object that may pose a challenge for travelers passing through this node. Mark a node with this attribute only if the impediment is close enough to the footpath/pedestrian way or bike path to potentially pose a challenge. If left blank, the assumed value for this attribute is “unknown.”")
-    """Identifies the presence of an object that may pose a challenge for travelers passing through this node."""
 
     surface_issue: Annotated[Omitable[list[SurfaceIssue]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Description of surface quality issues that may pose a challenge for travelers passing through this node.")
-    """Description of surface quality issues that may pose a challenge for travelers passing through this node."""
 
     status: Annotated[Omitable[Status], Tier("optional", {2: "recommended", 3: "required"})] = Field(description="Most recent operating status of the node. Whether the infrastructure is open and available for use. Default is 'open'")
-    """Most recent operating status of the node."""
 
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
@@ -142,31 +122,22 @@ class ElevatorNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["elevator"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(description="Indicates whether the piece of infrastructure exists or is present. When other attributes are provided, the existence of the infrastructure can be assumed. This attribute is useful for identifying where a curb ramp or other infrastructure might be missing or where its presence is unknown. Conditionally required if no other identifying attributes provided.")
-    """Indicates whether the piece of infrastructure exists or is present."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     date_built: Annotated[Omitable[GatisDate], Tier("optional", {3: "recommended"})] = Field(description="When the facility was officially opened for use. If the facility has had a major remodeling where the structure, shape or another fundamental aspect was changed, the date of remodeling can be placed here. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """When the facility was officially opened for use."""
 
     check_date: Annotated[Omitable[GatisDate], Tier("optional", {3: "recommended"})] = Field(description="The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """The date that this infrastructure was last inspected."""
 
     ada_compliance_date: Annotated[Omitable[GatisDate], Tier("conditionally_required")] = Field(description="Indicates the date when ADA compliance was assessed. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available. This field is conditionally required if 'ada_compliant_with' is filled out.")
-    """Indicates the date when ADA compliance was assessed."""
 
     ada_compliant_with: Annotated[Omitable[AdaCompliantWith], Tier("conditionally_required")] = Field(description="If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment. Also fill out 'ada_compliance_date.' If no ADA assessment is being reported, leave blank.")
-    """If this infrastructure has been assessed for ADA compliance, the specific ADA guidelines or standards used in the assessment."""
 
     status: Annotated[Omitable[Status], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Most recent operating status of the node. Whether the infrastructure is open and available for use. Default is 'open'")
-    """Most recent operating status of the node."""
 
 
 class TransitStopNode(Feature):
@@ -178,16 +149,12 @@ class TransitStopNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["transit_stop"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     gtfs_id: Annotated[Omitable[list[GtfsReference]], Tier("optional", {3: "recommended"})] = Field(description="An array of objects containing keys for GTFS agency_id and stop_id from an existing GTFS dataset for this transit stop. Represent as string with the format '{agency_id},{stop_id}'. These IDs can be crosswalked with GTFS and TIDES data to obtain additional stop attributes and connect to the broader transit network. See GTFS documentation for more information.")
-    """An array of objects containing keys for GTFS agency_id and stop_id from an existing GTFS dataset for this transit stop."""
 
 
 class IssueNode(Feature):
@@ -199,22 +166,16 @@ class IssueNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["issue"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     check_date: Annotated[Omitable[GatisDate], Tier("optional", {3: "recommended"})] = Field(description="The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """The date that this infrastructure was last inspected."""
 
     impediment: Annotated[Omitable[list[Impediment]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Identifies the presence of an object that may pose a challenge for travelers passing through this node. Mark a node with this attribute only if the impediment is close enough to the footpath/pedestrian way or bike path to potentially pose a challenge. If left blank, the assumed value for this attribute is “unknown.”")
-    """Identifies the presence of an object that may pose a challenge for travelers passing through this node."""
 
     surface_issue: Annotated[Omitable[list[SurfaceIssue]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Description of surface quality issues that may pose a challenge for travelers passing through this node.")
-    """Description of surface quality issues that may pose a challenge for travelers passing through this node."""
 
 
 class TrafficCalmingNode(Feature):
@@ -226,28 +187,20 @@ class TrafficCalmingNode(Feature):
     ]
 
     node_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the node. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the node."""
 
     node_type: Annotated[Literal["traffic_calming"], Tier("required")] = Field(description="Indicates the type of node.")
-    """Indicates the type of node."""
 
     presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = Field(description="Indicates whether the piece of infrastructure exists or is present. When other attributes are provided, the existence of the infrastructure can be assumed. This attribute is useful for identifying where a curb ramp or other infrastructure might be missing or where its presence is unknown. Conditionally required if no other identifying attributes provided.")
-    """Indicates whether the piece of infrastructure exists or is present."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     date_built: Annotated[Omitable[GatisDate], Tier("optional", {3: "recommended"})] = Field(description="When the facility was officially opened for use. If the facility has had a major remodeling where the structure, shape or another fundamental aspect was changed, the date of remodeling can be placed here. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """When the facility was officially opened for use."""
 
     check_date: Annotated[Omitable[GatisDate], Tier("optional", {3: "recommended"})] = Field(description="The date that this infrastructure was last inspected. Report in RFC 3339 format containing day, month and year, or just month and year or year if day or month is not available.")
-    """The date that this infrastructure was last inspected."""
 
-    traffic_calming_type: Annotated[Literal["traffic_calming"], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Used to identify traffic calming features on a road or crossing. Used when it makes more sense to model the traffic calming feature as a node instead of an edge. Recommended values are from https://www.ite.org/pub/?id=2a60c136-b1c0-b231-0522-ccbd075cac84 and https://wiki.openstreetmap.org/wiki/Key:traffic_calming")
-    """Used to identify traffic calming features on a road or crossing."""
+    traffic_calming_type: Annotated[Omitable[str], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Used to identify traffic calming features on a road or crossing. Used when it makes more sense to model the traffic calming feature as a node instead of an edge. Recommended values are from https://www.ite.org/pub/?id=2a60c136-b1c0-b231-0522-ccbd075cac84 and https://wiki.openstreetmap.org/wiki/Key:traffic_calming")
 
     status: Annotated[Omitable[Status], Tier("optional")] = Field(description="Most recent operating status of the node. Whether the infrastructure is open and available for use. Default is 'open'")
-    """Most recent operating status of the node."""
 
 
 Node = Annotated[

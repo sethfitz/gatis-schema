@@ -52,16 +52,12 @@ class ObjectPoint(Feature):
     ]
 
     point_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the point. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the point."""
 
     point_type: Annotated[Literal["object"], Tier("required")] = Field(description="Indicates the type of point.")
-    """Indicates the type of point."""
 
-    object_type: Annotated[Literal["object"], Tier("optional", {3: "recommended"})] = Field(description="Used to indicate objects that appear near the sidewalk or street space that, depending on the traveler, may be an amenity or an obstruction. Buffers around these points can be used to factor them into routing algorithms. If an object is on the pedestrian way, consider marking it with an issue node instead.")
-    """Used to indicate objects that appear near the sidewalk or street space that, depending on the traveler, may be an amenity or an obstruction."""
+    object_type: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(description="Used to indicate objects that appear near the sidewalk or street space that, depending on the traveler, may be an amenity or an obstruction. Buffers around these points can be used to factor them into routing algorithms. If an object is on the pedestrian way, consider marking it with an issue node instead. Recommended values: bench; lighting; waste basket; accessible restroom; inaccessible restroom; water fountain; parklet / kiosk; pet station; transit stop.")
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
 
 class PointPoint(Feature):
@@ -73,31 +69,22 @@ class PointPoint(Feature):
     ]
 
     point_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the point. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the point."""
 
     point_type: Annotated[Literal["point"], Tier("required")] = Field(description="Indicates the type of point.")
-    """Indicates the type of point."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
     sign_verbiage: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(description="Provides the text that appears on the sign. Include only the visible text, and do not wrap it in quotation marks or other punctuation.")
-    """Provides the text that appears on the sign."""
 
     sign_auditory: Annotated[Omitable[YesNo], Tier("optional", {3: "recommended"})] = Field(description="Indicates whether the sign_verbiage or another similar message is available in an auditory format at the sign location.")
-    """Indicates whether the sign_verbiage or another similar message is available in an auditory format at the sign location."""
 
     sign_association: Annotated[Omitable[list[dict[str, object]]], Tier("optional")] = Field(description="Indicates the GATIS ID of any infrastructure this sign refers to. For example, if a sign tells pedestrians that state law requires vehicles to yield to them in the crosswalk, this attribute can be used to indicate the GATIS ID of the specific crosswalk or crosswalks.")
-    """Indicates the GATIS ID of any infrastructure this sign refers to."""
 
     sign_designation: Annotated[Omitable[str], Tier("optional")] = Field(description="Indicates the type of sign as described within the MUTCD, within the 'Sign Designation' field (https://mutcd.fhwa.dot.gov/kno-shs_2024-release-status/index.htm).")
-    """Indicates the type of sign as described within the MUTCD, within the 'Sign Designation' field (https://mutcd.fhwa.dot.gov/kno-shs_2024-release-status/index.htm)."""
 
     sign_name: Annotated[Omitable[str], Tier("optional")] = Field(description="Indicates the type of sign as described within the MUTCD, within the 'Sign Name' field (https://mutcd.fhwa.dot.gov/kno-shs_2024-release-status/index.htm).")
-    """Indicates the type of sign as described within the MUTCD, within the 'Sign Name' field (https://mutcd.fhwa.dot.gov/kno-shs_2024-release-status/index.htm)."""
 
     surface_issue: Annotated[Omitable[list[SurfaceIssue]], Tier("optional", {3: "recommended", 4: "required"})] = Field(description="Identifies the type of damage or surface quality issue that may pose a challenge for travelers.")
-    """Identifies the type of damage or surface quality issue that may pose a challenge for travelers."""
 
 
 Point = Annotated[

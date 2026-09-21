@@ -52,22 +52,16 @@ class PedestrianZone(Feature):
     ]
 
     zone_id: Annotated[Id, Tier("required")] = Field(description="A unique identifier for the zone. [NOTE: We will fill in instructions here on how to generate IDs, and we will also provide a data validator that may be capable of validating and helping to fill in these IDs.]")
-    """A unique identifier for the zone."""
 
     zone_type: Annotated[Literal["pedestrian"], Tier("required")] = Field(description="Indicates the type of zone.")
-    """Indicates the type of zone."""
 
     surface_material: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(description="Specifies the surface type. Select only one. Where the surface material changes, create a new zone.")
-    """Specifies the surface type."""
 
     facility_name: Annotated[Omitable[str], Tier("optional", {3: "recommended"})] = Field(description="Common or formal name for the zone. Can also include descriptions of a portion of a larger pedestrian zone if the zone is being segmented.")
-    """Common or formal name for the zone."""
 
     status: Annotated[Omitable[Status], Tier("optional")] = Field(description="Most recent operating status of the zone. Whether the infrastructure is open and available for use. Default is 'open'")
-    """Most recent operating status of the zone."""
 
     reference_ids: Annotated[Omitable[list[ReferenceId]], Tier("optional")] = Field(description="Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.). Should be an array of JSONs with the source name and ID pair. Each JSON should contain an ID field and source field at minimum. Can add other attributes such as the beginning and ending milepost from a linear referencing system.")
-    """Can be used to add reference IDs to other datasources such as OSM, OpenLR, ARNOLD, HMPS, TIGER, Census road network, OSM, etc.)."""
 
 
 Zone = PedestrianZone

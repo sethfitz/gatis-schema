@@ -153,7 +153,7 @@ class ClassWriter:
         is_array = declared.startswith(("Array<", "List<"))
         inner = declared[declared.index("<") + 1 : -1] if is_array else declared
 
-        if field.name.endswith("_type"):
+        if field.name == f"{self.name}_type":
             base = f'Literal["{feature_type}"]'
         elif inner == "Enum" or (inner == "Text" and field.valid == "Valid"):
             values = parse_listed_values(field.listed_values)
@@ -188,7 +188,7 @@ class ClassWriter:
         self, field: FieldSpec, rule: PresenceRule, feature_type: str
     ) -> list[str]:
         base, extra = self._base_type(field, feature_type)
-        discriminator = field.name.endswith("_type")
+        discriminator = field.name == f"{self.name}_type"
         required = discriminator or rule.at(1) is Presence.REQUIRED
 
         inner = base if required else f"Omitable[{base}]"
@@ -196,16 +196,21 @@ class ClassWriter:
         annotation = f"Annotated[{inner}, {', '.join(metadata)}]"
 
         description = _escape(" ".join(field.description.split()))
+        if field.valid == "Recommended":
+            suggested = parse_listed_values(field.listed_values)
+            if suggested:
+                values = _escape("; ".join(v.value for v in suggested))
+                description = (
+                    f"{description} Recommended values: {values}." if description
+                    else f"Recommended values: {values}."
+                )
         assignment = f' = Field(description="{description}")' if description else ""
         if discriminator and not description:
             assignment = ""
 
-        lines = [f"    {field.name}: {annotation}{assignment}"]
-        summary = _summarise(field.description)
-        if summary:
-            lines.append(f'    """{summary}"""')
-        lines.append("")
-        return lines
+        # No field docstring: `Field(description=...)` already carries the text,
+        # and a docstring beside it is the same sentence truncated.
+        return [f"    {field.name}: {annotation}{assignment}", ""]
 
     # -- module ---------------------------------------------------------------
 
