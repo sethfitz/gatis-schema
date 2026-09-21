@@ -210,11 +210,8 @@ def main() -> int:
             elif ours_enum and not theirs_enum:
                 print(f"  enum only ours: {name} ({len(ours_enum)} values)")
             elif theirs_enum and not ours_enum and name != f"{feature_class}_type":
-                # The direction that was silently skipped, and the one that
-                # matters most: upstream constrains the field and we do not, so
-                # our schema is the looser of the two. Ten Boolean fields sat
-                # here unreported -- upstream said `["yes", "no"]`, ours said
-                # `{"type": "boolean"}`, which rejects every published value.
+                # The direction that matters most: upstream constrains the
+                # field and we do not, so our schema is the looser of the two.
                 #
                 # The discriminator is exempt because upstream's enum there is
                 # the corrupt spreadsheet cross-reference ("(Same as Edge

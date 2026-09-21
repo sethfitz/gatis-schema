@@ -100,7 +100,7 @@ class SuggestedValues(StringConstraint):
     listed value?" -- and the three fields where that question bites hardest
     (`bikeway_type`, `ramp_type`, `visual_markings`) are all in this bucket.
     Austin's published conversion answers "no" on 6,717 crossings, and neither
-    the models nor a reader of the JSON Schema could previously tell.
+    the models nor a reader of the JSON Schema says so.
 
     Reaching both audiences is the reason this is a constraint and not a lookup
     table in this package: `field_vocabularies` reads it from Python, and
@@ -238,7 +238,7 @@ class ForbiddenOnRoadConstraint(ModelConstraint):
     defined in the system package and not for a third-party subclass --
     `codegen/pyspark/constraint_dispatch.py` matches a closed set of vendor types
     and raises `TypeError` on ours, with no registry to opt into.
-    `AllOrNoneConstraint` above has the same limitation. Upstream `bd-ic2h`.
+    `AllOrNoneConstraint` above has the same limitation. Overture `bd-ic2h`.
 
     The names are aliases rather than field names -- they are deliberately not
     declared on the model -- so this subclasses `ModelConstraint` directly rather

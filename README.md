@@ -87,7 +87,7 @@ JSON Schema hook, so the rule reaches whoever reads the schema instead. Both rul
 here are constraints -- `all_or_none` for the ADA pair, `forbidden_on_road` for the
 attributes a parallel facility may not carry. The PySpark codegen target renders
 neither, since it dispatches over a closed set of the system's own constraint types
-(upstream `bd-ic2h`), so the schema hook is the portability actually on offer.
+(Overture `bd-ic2h`), so the schema hook is the portability actually on offer.
 `CLAUDE.md` has the reasoning.
 
 **A road edge carries its parallel facilities as prefixed attributes.** v1.0 marks

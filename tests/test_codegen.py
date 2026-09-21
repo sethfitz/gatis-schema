@@ -91,7 +91,7 @@ def test_tier_presence_survives_into_the_models() -> None:
 def test_generated_source_fits_the_line_budget() -> None:
     # `ruff format` does not reflow docstrings or split a string literal, so every
     # break has to come from the generator. A single overflowing line fails the
-    # repo's own lint, which is how this was found.
+    # repo's own lint.
     from pathlib import Path
 
     models = Path(__file__).resolve().parents[1] / "src" / "gatis_schema" / "models"
@@ -134,9 +134,9 @@ def test_the_on_road_modifier_fields_match_upstreams_schema_exactly() -> None:
 
 
 def test_an_on_road_modifier_is_typed_rather_than_an_extra() -> None:
-    # The bug this replaced: the values round-tripped through `model_extra`, so a
-    # conforming bikeway on a roadway centerline was indistinguishable from a local
-    # extension nobody has heard of, and its enum never validated.
+    # Undeclared, these values round-trip through `model_extra`: a conforming
+    # bikeway on a roadway centerline is then indistinguishable from a local
+    # extension nobody has heard of, and its enum never validates.
     import json
     from pathlib import Path
     from tempfile import TemporaryDirectory
@@ -197,7 +197,7 @@ def test_an_unknown_field_is_still_an_extra() -> None:
 
 def test_an_on_road_modifier_rejects_a_bad_value() -> None:
     # The other half of the control. Typing these fields is only worth anything if
-    # a wrong value now fails where it previously landed in `model_extra` unread.
+    # a wrong value fails rather than landing in `model_extra` unread.
     import json
     from pathlib import Path
     from tempfile import TemporaryDirectory
@@ -234,7 +234,7 @@ def test_the_forbidden_on_road_set_holds_names_not_characters() -> None:
     # {'a','b','c'} -- silently. The generator emits a set literal, so a
     # one-element list cannot splat into characters; this fails if it ever goes
     # back to passing the names as arguments, which would import cleanly, pass
-    # every other test, and reject nothing. Caught by gatis-schema-50.
+    # every other test, and reject nothing.
     from gatis_schema.models.edges import ROADEDGE_FORBIDDEN
 
     assert len(ROADEDGE_FORBIDDEN) == 36
@@ -245,7 +245,7 @@ def test_the_forbidden_on_road_set_holds_names_not_characters() -> None:
 def test_a_forbidden_on_road_attribute_is_rejected() -> None:
     # v1.0 forbids these in the modifier form because they describe the road, not
     # the facility beside it. Leaving them out of the model is not the same as
-    # rejecting them: under `extra="allow"` they validated silently.
+    # rejecting them: under `extra="allow"` they validate silently.
     import json
     from pathlib import Path
     from tempfile import TemporaryDirectory
@@ -482,11 +482,12 @@ def test_an_open_vocabulary_reaches_the_json_schema() -> None:
 
 
 def test_a_boolean_field_declares_the_string_encoding_it_actually_uses() -> None:
-    # GATIS booleans are OSM-style strings on the wire. The models emitted
-    # `{"type": "boolean"}`, which rejects every published value -- Newark
-    # carries "no" 3,855 times and "yes" 17 -- while Python accepted them
-    # because the coercion ran first. Invisible from inside the package, and
-    # the reason the encoding is declared rather than left to a validator.
+    # GATIS booleans are OSM-style strings on the wire, so a schema saying
+    # `{"type": "boolean"}` rejects every published value -- Newark carries
+    # "no" 3,855 times and "yes" 17 -- while Python accepts them anyway,
+    # because the coercion runs first. That asymmetry is invisible from inside
+    # the package, which is why the encoding is declared rather than left to a
+    # validator.
     import json
     import subprocess
 

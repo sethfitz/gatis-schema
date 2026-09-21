@@ -35,8 +35,8 @@ GeoJSON envelope when Pydantic is in JSON mode, so `validate_python(feature)`
 validates the envelope as if it were the model and reports every field missing.
 
 ```python
-NodeAdapter.validate_json(json.dumps(feature))   # correct
-NodeAdapter.validate_python(feature)             # every field reads missing
+NodeAdapter.validate_json(json.dumps(feature))  # correct
+NodeAdapter.validate_python(feature)  # every field reads missing
 ```
 
 The rest -- why optional-field errors arrive twice, why paths read
@@ -101,6 +101,26 @@ The one thing that does belong here is a vocabulary the spec publishes but leave
 open -- `SuggestedValues`, per the section below. The Playbook adds no new values
 to any of them; its `bikeway_type` names are all already in `listed_values`.
 
+## The extension tables are hand-written, and transcribed
+
+`lrs.json`, `events.json` and `relations.json` are declared in section 2.1 and
+published only as field tables in a PDF, so `codegen` has nothing to read and
+`models/extensions.py` is written out by hand from `spec/extensions.json`, a
+transcription of that PDF.
+
+Two rules follow. **Change the transcription, not the model, when the PDF moves**
+-- `tests/test_extensions.py` asserts the models match it field for field and in
+order, and asserts the transcription matches the PDF's own text, so a drift on
+either link fails. **Do not add a `Tier` annotation to any of them**: the
+extensions sit outside the tier model, which the Playbook says outright of the
+LRS one, and the PDF gives one Required/Optional flag per field rather than the
+four-slot presence rule a core field gets.
+
+They are not Overture `Feature`s -- the three files are plain JSON, not GeoJSON
+-- which also means `scripts/generate-reference` does not cover them. That
+generator discovers feature types; a `BaseModel` is invisible to it whatever tag
+it is given. The module docstring is the reference for these three.
+
 ## Express a rule as a declaration, not as a validator
 
 **Reaching for `@model_validator` or `@field_validator` is the reflex to
@@ -149,7 +169,7 @@ unknown field to warn rather than fail.
 **Two limits, so nobody discovers them the hard way.** The JSON Schema hook works
 for a third-party constraint; the PySpark codegen target does not -- it
 dispatches over a closed set of the system's own constraint types and raises
-`TypeError` on ours, with no registry to opt into (upstream `bd-ic2h`). That
+`TypeError` on ours, with no registry to opt into (Overture `bd-ic2h`). That
 target is unusable for these models regardless: it raises on `Tier` before
 reaching any constraint, so do not read a PySpark failure as a verdict on
 whichever constraint you just added. And
@@ -170,6 +190,9 @@ next reader can tell a considered choice from a reflex.
 | `spec/repairs.json` | Local corrections to upstream's mangled `listed_values`, with reasoning per entry |
 | `spec/json-schemas/` | Upstream's own validator. **Rejects every real GATIS feature** -- see below. Never cite it as evidence about the spec |
 | `spec/playbook.md` | The GATIS Playbook, the spec's companion prose, pinned separately because it lives in Google Docs. Underscores arrive escaped |
+| `spec/extensions.pdf` | Upstream's field tables for `lrs.json`, `events.json` and `relations.json`, plus a `pdftotext` extraction. The only place they are published |
+| `spec/extensions.json` | **A local transcription** of that PDF, not upstream. The source `models/extensions.py` is tested against |
+| `src/gatis_schema/models/extensions.py` | The three extension tables. Hand-written, not bootstrapped -- codegen has no structured source to read |
 | `src/gatis_schema/spec_source.py` | Reads the snapshot into `FieldSpec`, `FeatureType`, `PresenceRule` |
 | `src/gatis_schema/codegen.py` | Generates the models; `scripts/bootstrap-models` drives it |
 | `src/gatis_schema/models/` | Bootstrapped once, **hand-owned after** -- the bootstrap refuses to overwrite without `--force` |

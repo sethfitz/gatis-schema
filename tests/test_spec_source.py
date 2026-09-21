@@ -76,9 +76,8 @@ def test_id_and_type_are_required_from_tier_1(snapshot: SpecSnapshot) -> None:
 
 
 def test_every_declared_type_has_fields(snapshot: SpecSnapshot) -> None:
-    # Draft 2 declared `elevator` as an edge type with no presence column, so the
-    # spec gave it no fields at all -- not even `edge_id`. v1.0 fixed that; this
-    # fails if it regresses.
+    # A type declared with no presence column gets no fields at all -- not even
+    # `edge_id`. v1.0 has none; this fails if upstream reintroduces one.
     for name, spec in snapshot.feature_classes.items():
         assert spec.types_without_fields == [], name
 
@@ -123,9 +122,9 @@ def test_forbidden_never_varies_by_tier(snapshot: SpecSnapshot) -> None:
 
 
 def test_conditionally_required_is_gone(snapshot: SpecSnapshot) -> None:
-    # Draft 2 used `conditionally_required` for the ADA pair. v1.0 dropped the
-    # descriptor entirely (upstream "update tables to drop conditionals"), so the
-    # vocabulary is four values and `Presence` has no member for it.
+    # v1.0 dropped the `conditionally_required` descriptor entirely (upstream
+    # "update tables to drop conditionals"), so the vocabulary is four values
+    # and `Presence` has no member for it.
     assert not hasattr(Presence, "CONDITIONALLY_REQUIRED")
     seen = {
         rule.at(tier).value
@@ -138,15 +137,14 @@ def test_conditionally_required_is_gone(snapshot: SpecSnapshot) -> None:
 
 
 def test_field_names_carry_no_stray_whitespace(snapshot: SpecSnapshot) -> None:
-    # Draft 2 stored three Edges_Fields names with a trailing space.
     for spec in snapshot.feature_classes.values():
         for field_name in spec.field_names:
             assert field_name == field_name.strip()
 
 
 def test_no_duplicate_field_rows(snapshot: SpecSnapshot) -> None:
-    # Draft 2's Points_Fields listed `impediment` and `surface_issue` twice, with
-    # value sets that disagreed. v1.0 publishes each attribute once.
+    # A duplicated attribute row carries two value sets that can disagree, and
+    # nothing says which wins. v1.0 publishes each attribute once.
     for name, spec in snapshot.feature_classes.items():
         assert spec.duplicate_field_names == [], name
 
@@ -172,9 +170,7 @@ def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
     # clean. A repair whose values already matched upstream would pass the
     # assertion above while changing nothing, so assert the difference, not just
     # the application -- and assert it for EVERY repair, driven off repairs.json
-    # rather than a hand-kept list, so a new entry cannot land uncovered. Three
-    # of the seven were spot-checked here once; the other four were applied and
-    # never proven to do anything.
+    # rather than a hand-kept list, so a new entry cannot land uncovered.
     spec = SpecReader().spec_dir
     shutil.copytree(spec, tmp_path / "spec")
     (tmp_path / "spec" / "repairs.json").unlink()
