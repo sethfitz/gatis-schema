@@ -120,9 +120,17 @@ class ForbiddenOnRoadConstraint(ModelConstraint):
     so the prohibition is the absence from an enumerated set, with no code
     anywhere. That encoding is unavailable to us, because closing the property set
     would turn every local extension into a failure. A `ModelConstraint` is the
-    equivalent that survives: unlike a `@model_validator` it carries JSON Schema
-    hooks and crosses the Overture system's other codegen targets, so the rule
-    reaches a consumer who reads the schema rather than importing the package.
+    nearest equivalent: unlike a `@model_validator` it carries a JSON Schema hook,
+    so the rule reaches a consumer who reads the schema rather than importing this
+    package -- which is the half that matters, since the schema is what a
+    downstream validator consumes.
+
+    What it does NOT buy, contrary to what `ModelConstraint`'s own docstring
+    suggests: portability to the other codegen targets. That holds for constraints
+    defined in the system package and not for a third-party subclass --
+    `codegen/pyspark/constraint_dispatch.py` matches a closed set of vendor types
+    and raises `TypeError` on ours, with no registry to opt into.
+    `AllOrNoneConstraint` above has the same limitation. Upstream `bd-ic2h`.
 
     The names are aliases rather than field names -- they are deliberately not
     declared on the model -- so this subclasses `ModelConstraint` directly rather
