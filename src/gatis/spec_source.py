@@ -16,7 +16,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from gatis_schema.presence import PresenceRule
+from gatis.presence import PresenceRule
 
 SPEC_DIR = Path(__file__).resolve().parents[2] / "spec"
 

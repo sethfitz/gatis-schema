@@ -23,7 +23,7 @@ from collections.abc import Iterable
 from overture.schema.system.discovery import ModelKey
 from pydantic import BaseModel
 
-from gatis_schema.models.extensions import Event, ExtensionRow, LrsCrosswalk, Relation
+from gatis.models.extensions import Event, ExtensionRow, LrsCrosswalk, Relation
 
 EXTENSION_TAG = "gatis:extension"
 """Carried by every row model of an extension table."""

@@ -19,9 +19,9 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from gatis_schema.constraints import ScalarOrListConstraint, SuggestedValues
-from gatis_schema.dataset import Dataset
-from gatis_schema.models.extensions import (
+from gatis.constraints import ScalarOrListConstraint, SuggestedValues
+from gatis.dataset import Dataset
+from gatis.models.extensions import (
     Event,
     EventAdapter,
     EventFeatureType,
@@ -30,7 +30,7 @@ from gatis_schema.models.extensions import (
     LrsSide,
     Relation,
 )
-from gatis_schema.spec_source import SPEC_DIR
+from gatis.spec_source import SPEC_DIR
 
 TABLES: dict[str, type[BaseModel]] = {
     "lrs": LrsCrosswalk,
@@ -369,7 +369,7 @@ def test_every_extension_row_is_registered_and_tagged() -> None:
     """
     from overture.schema.system.discovery import discover_models
 
-    from gatis_schema.tag_providers import EXTENSION_TAG
+    from gatis.tag_providers import EXTENSION_TAG
 
     discovered = {key.name: key.tags for key in discover_models()}
     expected = {
@@ -424,7 +424,7 @@ def test_the_reference_generator_renders_all_seven_models(tmp_path: Path) -> Non
     )
     assert result.returncode == 0, result.stderr
 
-    models = tmp_path / "gatis_schema" / "models"
+    models = tmp_path / "gatis" / "models"
     rendered = {path.stem for path in models.glob("*.md")}
     assert {"lrs_crosswalk", "event", "relation"} <= rendered
     assert {"edge", "node", "point", "zone"} <= rendered

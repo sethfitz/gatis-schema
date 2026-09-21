@@ -7,7 +7,7 @@ from typing import Annotated
 from overture.schema.system.optionality import Omitable
 from pydantic import BaseModel, ConfigDict, Field
 
-from gatis_schema.constraints import SuggestedValues
+from gatis.constraints import SuggestedValues
 
 
 class ReferenceId(BaseModel):

@@ -10,7 +10,7 @@ from typing import Annotated
 
 from overture.schema.system.field_constraint import PatternConstraint
 
-from gatis_schema.constraints import YesNoConstraint
+from gatis.constraints import YesNoConstraint
 
 YesNo = Annotated[bool, YesNoConstraint()]
 """An OSM-format boolean: `"yes"` or `"no"` on the wire, `bool` in Python."""

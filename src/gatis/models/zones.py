@@ -1,6 +1,6 @@
 """GATIS zone models.
 
-BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot
+BOOTSTRAPPED by `gatis.codegen` from the pinned spec snapshot
 (dotbts/BPA@ecc45ff8) on 2026-09-21.
 
 Hand-edits are expected and are not overwritten: the bootstrap refuses to
@@ -29,19 +29,19 @@ from pydantic import (
     model_validator,
 )
 
-from gatis_schema.annotations import (
+from gatis.annotations import (
     Tier,
 )
-from gatis_schema.constraints import (
+from gatis.constraints import (
     SuggestedValues,
     drop_null_properties,
 )
-from gatis_schema.models.enums import (
+from gatis.models.enums import (
     TrafficCalmingType,
     ZoneStatus,
 )
-from gatis_schema.scalars import GatisDate
-from gatis_schema.shared import (
+from gatis.scalars import GatisDate
+from gatis.shared import (
     ReferenceId,
 )
 

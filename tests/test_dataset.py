@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gatis_schema.dataset import Dataset
+from gatis.dataset import Dataset
 
 NODE_IDS = ("n1", "n2")
 
@@ -139,7 +139,7 @@ def test_every_published_reference_ids_encoding_validates() -> None:
     # The four shapes the two GATIS sample datasets actually use, across 348,223
     # features. None uses a key called `id`, which the spec's prose asks for and
     # its schema does not enforce -- so requiring it would reject all of them.
-    from gatis_schema.shared import ReferenceId
+    from gatis.shared import ReferenceId
 
     for raw in (
         {"source": "austin", "sidewalks_id": "94639273"},

@@ -5,7 +5,7 @@ and `relations.json` alongside the five core files, and upstream publishes no
 structured JSON, no JSON Schema and no Explorer table for any of them -- their
 field tables exist only in `documents/drafts/GATIS Extensions and Tables.pdf`,
 which the Explorer links from the same row of buttons as the core tables. So
-`gatis_schema.codegen` has nothing to read and these models are written out.
+`gatis.codegen` has nothing to read and these models are written out.
 
 The source of truth for them is [`spec/extensions.json`](../../../spec/extensions.json),
 a hand transcription of that PDF kept beside it and verified against it.
@@ -40,8 +40,8 @@ specification tells a publisher to write is a wish rather than a model. See
 declared as one value and documented as possibly several.
 
 All three are registered under `overture.models` in `pyproject.toml` and tagged
-`gatis:extension` by `gatis_schema.tag_providers`, so `scripts/generate-reference`
-renders them alongside the four core classes.
+`gatis:extension` by `gatis.tag_providers`, so `scripts/generate-reference` renders
+them alongside the four core classes.
 """
 
 from __future__ import annotations
@@ -55,12 +55,12 @@ from overture.schema.system.optionality import Omitable
 from overture.schema.system.ref import Id
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from gatis_schema.constraints import (
+from gatis.constraints import (
     ScalarOrListConstraint,
     SuggestedValues,
     drop_null_properties,
 )
-from gatis_schema.scalars import GatisDatetime
+from gatis.scalars import GatisDatetime
 
 # Seven columns are declared as one value and documented as possibly several.
 # *Which* seven is data: `multiple` in `spec/extensions.json` marks them and

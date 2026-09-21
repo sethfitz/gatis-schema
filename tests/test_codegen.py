@@ -7,9 +7,9 @@ from collections.abc import Mapping
 import pydantic
 import pytest
 
-from gatis_schema.codegen import enum_names, parse_listed_values
-from gatis_schema.models import enums
-from gatis_schema.spec_source import SpecReader, SpecSnapshot
+from gatis.codegen import enum_names, parse_listed_values
+from gatis.models import enums
+from gatis.spec_source import SpecReader, SpecSnapshot
 
 
 @pytest.fixture(scope="module")
@@ -69,8 +69,8 @@ def test_every_generated_enum_name_is_reachable(snapshot: SpecSnapshot) -> None:
 
 
 def test_units_are_annotated_from_the_field_name() -> None:
-    from gatis_schema.annotations import field_units
-    from gatis_schema.models.edges import RoadEdge, SidewalkEdge
+    from gatis.annotations import field_units
+    from gatis.models.edges import RoadEdge, SidewalkEdge
 
     units = field_units(SidewalkEdge)
     assert units["width_in"].symbol == "in"
@@ -81,8 +81,8 @@ def test_units_are_annotated_from_the_field_name() -> None:
 
 
 def test_tier_presence_survives_into_the_models() -> None:
-    from gatis_schema.annotations import field_tiers
-    from gatis_schema.models.edges import SidewalkEdge
+    from gatis.annotations import field_tiers
+    from gatis.models.edges import SidewalkEdge
 
     tiers = field_tiers(SidewalkEdge)
     assert tiers["width_in"].at(1).value == "optional"
@@ -96,7 +96,7 @@ def test_generated_source_fits_the_line_budget() -> None:
     # repo's own lint.
     from pathlib import Path
 
-    models = Path(__file__).resolve().parents[1] / "src" / "gatis_schema" / "models"
+    models = Path(__file__).resolve().parents[1] / "src" / "gatis" / "models"
     long_lines = [
         f"{path.name}:{number}"
         for path in sorted(models.glob("*.py"))
@@ -117,8 +117,8 @@ def test_the_on_road_modifier_fields_match_upstreams_schema_exactly() -> None:
     import json
     from pathlib import Path
 
-    from gatis_schema.models.edges import RoadEdge
-    from gatis_schema.spec_source import SPEC_DIR
+    from gatis.models.edges import RoadEdge
+    from gatis.spec_source import SPEC_DIR
 
     ours = {
         field.alias
@@ -143,10 +143,10 @@ def test_an_on_road_modifier_is_typed_rather_than_an_extra() -> None:
     from pathlib import Path
     from tempfile import TemporaryDirectory
 
-    from gatis_schema.annotations import field_units
-    from gatis_schema.dataset import Dataset
-    from gatis_schema.models.edges import RoadEdge
-    from gatis_schema.models.enums import Directionality
+    from gatis.annotations import field_units
+    from gatis.dataset import Dataset
+    from gatis.models.edges import RoadEdge
+    from gatis.models.enums import Directionality
 
     feature = {
         "type": "Feature",
@@ -192,7 +192,7 @@ def test_an_on_road_modifier_is_typed_rather_than_an_extra() -> None:
 def test_an_unknown_field_is_still_an_extra() -> None:
     # Control: modelling 292 new names must not turn `extra="allow"` off, or a real
     # local extension would start failing instead of warning (section 6.1).
-    from gatis_schema.models.edges import RoadEdge
+    from gatis.models.edges import RoadEdge
 
     assert RoadEdge.model_config["extra"] == "allow"
 
@@ -206,7 +206,7 @@ def test_an_on_road_modifier_rejects_a_bad_value() -> None:
 
     import pytest
 
-    from gatis_schema.dataset import Dataset
+    from gatis.dataset import Dataset
 
     feature = {
         "type": "Feature",
@@ -237,7 +237,7 @@ def test_the_forbidden_on_road_set_holds_names_not_characters() -> None:
     # one-element list cannot splat into characters; this fails if it ever goes
     # back to passing the names as arguments, which would import cleanly, pass
     # every other test, and reject nothing.
-    from gatis_schema.models.edges import ROADEDGE_FORBIDDEN
+    from gatis.models.edges import ROADEDGE_FORBIDDEN
 
     assert len(ROADEDGE_FORBIDDEN) == 36
     assert all(len(alias) > 1 and alias.count(":") == 2 for alias in ROADEDGE_FORBIDDEN)
@@ -254,8 +254,8 @@ def test_a_forbidden_on_road_attribute_is_rejected() -> None:
 
     import pytest
 
-    from gatis_schema.dataset import Dataset
-    from gatis_schema.models.edges import RoadEdge
+    from gatis.dataset import Dataset
+    from gatis.models.edges import RoadEdge
 
     def load(extra: dict[str, object]) -> RoadEdge:
         properties: dict[str, object] = {
@@ -354,8 +354,8 @@ def test_an_open_vocabulary_is_declared_but_not_enforced() -> None:
     # transformation can ask, not that validation starts refusing.
     import json
 
-    from gatis_schema.models import EdgeAdapter
-    from gatis_schema.models.edges import CrossingEdge
+    from gatis.models import EdgeAdapter
+    from gatis.models.edges import CrossingEdge
 
     feature = {
         "type": "Feature",
@@ -382,7 +382,7 @@ def test_a_closed_vocabulary_is_still_enforced() -> None:
 
     import pydantic
 
-    from gatis_schema.models import EdgeAdapter
+    from gatis.models import EdgeAdapter
 
     feature = {
         "type": "Feature",
@@ -400,8 +400,8 @@ def test_a_closed_vocabulary_is_still_enforced() -> None:
 def test_an_open_vocabulary_is_introspectable(snapshot: SpecSnapshot) -> None:
     # The half that serves a transformation author: reachable as data from the
     # model, without reading the spec snapshot or parsing a description string.
-    from gatis_schema.annotations import field_vocabularies
-    from gatis_schema.models.edges import CrossingEdge
+    from gatis.annotations import field_vocabularies
+    from gatis.models.edges import CrossingEdge
 
     vocabularies = field_vocabularies(CrossingEdge)
     published = next(
@@ -416,8 +416,8 @@ def test_an_open_vocabulary_is_introspectable(snapshot: SpecSnapshot) -> None:
 def test_a_closed_vocabulary_is_not_declared_twice() -> None:
     # An `Enum` field's values are already in the enum class. Annotating those
     # too would put the same list in two places and leave neither canonical.
-    from gatis_schema.annotations import field_vocabularies
-    from gatis_schema.models.edges import CrossingEdge
+    from gatis.annotations import field_vocabularies
+    from gatis.models.edges import CrossingEdge
 
     assert "surface_material" not in field_vocabularies(CrossingEdge)
 
@@ -428,8 +428,8 @@ def test_every_open_vocabulary_in_the_spec_reaches_a_model(
     # The count that catches a codegen path firing for some fields and not
     # others. Twelve edge fields publish a vocabulary on an open type; a partial
     # rollout would still pass every single-field assertion above.
-    from gatis_schema.annotations import field_vocabularies
-    from gatis_schema.models import edges as edge_models
+    from gatis.annotations import field_vocabularies
+    from gatis.models import edges as edge_models
 
     # `Text` specifically: a Boolean's values are carried by `YesNo`, and the
     # one Float with `listed_values` has a stray Word comment in the cell.
@@ -546,8 +546,8 @@ def test_a_boolean_still_round_trips_through_python_as_bool() -> None:
     # constraint that only parsed would serialise back as `true`.
     import json
 
-    from gatis_schema.models import EdgeAdapter
-    from gatis_schema.models.edges import RoadEdge
+    from gatis.models import EdgeAdapter
+    from gatis.models.edges import RoadEdge
 
     feature = {
         "type": "Feature",

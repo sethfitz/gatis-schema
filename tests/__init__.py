@@ -1,1 +1,1 @@
-"""Tests for gatis-schema."""
+"""Tests for gatis."""

@@ -16,8 +16,8 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 from overture.schema.system.numeric import float64, int32
 from pydantic import BaseModel
 
-from gatis_schema.constraints import SuggestedValues
-from gatis_schema.presence import Presence, PresenceRule
+from gatis.constraints import SuggestedValues
+from gatis.presence import Presence, PresenceRule
 
 
 @dataclass(frozen=True, slots=True)

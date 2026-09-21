@@ -11,9 +11,9 @@ Underlying type: `string`
 
 ## Used By
 
-- [`Edge`](../../../../gatis_schema/models/edge.md)
-- [`Event`](../../../../gatis_schema/models/event.md)
-- [`Node`](../../../../gatis_schema/models/node.md)
-- [`Point`](../../../../gatis_schema/models/point.md)
-- [`Relation`](../../../../gatis_schema/models/relation.md)
-- [`Zone`](../../../../gatis_schema/models/zone.md)
+- [`Edge`](../../../../gatis/models/edge.md)
+- [`Event`](../../../../gatis/models/event.md)
+- [`Node`](../../../../gatis/models/node.md)
+- [`Point`](../../../../gatis/models/point.md)
+- [`Relation`](../../../../gatis/models/relation.md)
+- [`Zone`](../../../../gatis/models/zone.md)

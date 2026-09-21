@@ -1,4 +1,4 @@
-# gatis-schema
+# GATIS
 
 Pydantic models for the [General Active Transportation Infrastructure
 Specification](https://github.com/dotbts/BPA) (GATIS) v1.0, generated from a pinned
@@ -20,14 +20,14 @@ snapshot pinned to what upstream calls Draft #2.
 - `spec/` -- pinned snapshot of `dotbts/BPA`, refreshed by `scripts/snapshot-spec`.
   See [`spec/README.md`](spec/README.md) for provenance and the upstream defects it
   records.
-- `gatis_schema.spec_source` -- reads that snapshot into typed records
-  (`FieldSpec`, `FeatureType`, `PresenceRule`).
-- `gatis_schema.presence` -- the tier-varying presence grammar.
-- `gatis_schema.models` -- the models themselves, bootstrapped by
+- `gatis.spec_source` -- reads that snapshot into typed records (`FieldSpec`,
+  `FeatureType`, `PresenceRule`).
+- `gatis.presence` -- the tier-varying presence grammar.
+- `gatis.models` -- the models themselves, bootstrapped by
   `scripts/bootstrap-models` and hand-owned from there.
-- `gatis_schema.dataset` -- the five files together, and the checks that need
-  more than one of them: unique ids within a file, and `from_node`/`to_node`
-  resolving into `nodes.geojson`.
+- `gatis.dataset` -- the five files together, and the checks that need more than
+  one of them: unique ids within a file, and `from_node`/`to_node` resolving
+  into `nodes.geojson`.
 - `scripts/compare-json-schema` -- our generated JSON Schema against the one
   upstream ships. Two renderings of one spec; where they disagree, one is wrong.
 - [`docs/spec-review.md`](docs/spec-review.md) -- defects found in the spec while
@@ -65,8 +65,8 @@ with a runtime matrix.
 carry the unit as a suffix, which is what makes it machine-readable at all --
 draft 2 stated every one of them in prose only. They are not uniform (widths are
 inches, buffers are feet), so a consumer converting GATIS to another schema still
-needs to read the suffix. `gatis_schema.annotations` lifts it into a `Unit`
-annotation. The slopes and `traffic_volume` are still prose-only.
+needs to read the suffix. `gatis.annotations` lifts it into a `Unit` annotation.
+The slopes and `traffic_volume` are still prose-only.
 
 **Booleans are OSM-style `"yes"`/`"no"` strings**, not JSON booleans.
 

@@ -1,6 +1,6 @@
 """GATIS edge models.
 
-BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot
+BOOTSTRAPPED by `gatis.codegen` from the pinned spec snapshot
 (dotbts/BPA@ecc45ff8) on 2026-09-21.
 
 Hand-edits are expected and are not overwritten: the bootstrap refuses to
@@ -35,7 +35,7 @@ from pydantic import (
     model_validator,
 )
 
-from gatis_schema.annotations import (
+from gatis.annotations import (
     Aadt,
     Feet,
     Inches,
@@ -43,13 +43,13 @@ from gatis_schema.annotations import (
     Mph,
     Tier,
 )
-from gatis_schema.constraints import (
+from gatis.constraints import (
     SuggestedValues,
     all_or_none,
     drop_null_properties,
     forbidden_on_road,
 )
-from gatis_schema.models.enums import (
+from gatis.models.enums import (
     AllowedUses,
     BikewayGradeSeparation,
     CrossVehicleTrafficControl,
@@ -67,9 +67,9 @@ from gatis_schema.models.enums import (
     TactileMarking,
     VehicleTrafficControl,
 )
-from gatis_schema.models.nodes import NodeBase
-from gatis_schema.scalars import GatisDate, YesNo
-from gatis_schema.shared import (
+from gatis.models.nodes import NodeBase
+from gatis.scalars import GatisDate, YesNo
+from gatis.shared import (
     ReferenceId,
     SeasonalCondition,
 )

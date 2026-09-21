@@ -1,4 +1,4 @@
-# gatis-schema
+# GATIS
 
 Pydantic models for GATIS, built on `overture-schema-system`. Read
 [`README.md`](README.md) first for what the package is and why the models are
@@ -123,12 +123,12 @@ four-slot presence rule a core field gets.
 
 They are not Overture `Feature`s -- the three files are plain JSON, not GeoJSON
 -- so the system's own tag provider does not tag them `feature` and a
-`--tag feature` run drops them. `gatis_schema.tag_providers` supplies
-`gatis:extension` and `gatis:table=<name>` instead, the three rows are
-registered under `overture.models` in `pyproject.toml`, and
-`scripts/generate-reference` asks for both tags. **Registering a new model means
-editing three places**: the entry point, the tag provider if it needs a tag the
-system will not infer, and the script's tag list.
+`--tag feature` run drops them. `gatis.tag_providers` supplies `gatis:extension`
+and `gatis:table=<name>` instead, the three rows are registered under
+`overture.models` in `pyproject.toml`, and `scripts/generate-reference` asks for
+both tags. **Registering a new model means editing three places**: the entry
+point, the tag provider if it needs a tag the system will not infer, and the
+script's tag list.
 
 One constraint exists because of that pipeline. A field typed `str | list[str]`
 raises `UnsupportedUnionError` in the codegen -- a multi-arm union renders only
@@ -144,14 +144,14 @@ into `docs/reference/` and the generated output differs on every run.
 **Reaching for `@model_validator` or `@field_validator` is the reflex to
 interrupt here.** It is the right tool in an ordinary Pydantic codebase and the
 wrong one in this package, because a validator runs only for a caller who
-imports `gatis_schema`. Most consumers of this work will never import it -- they
-will read the JSON Schema. A rule written as a Python function is invisible to
-all of them, and nothing about the code says so.
+imports `gatis`. Most consumers of this work will never import it -- they will
+read the JSON Schema. A rule written as a Python function is invisible to all of
+them, and nothing about the code says so.
 
 The alternative is an Overture `ModelConstraint` (see
-[`src/gatis_schema/constraints.py`](src/gatis_schema/constraints.py)). Subclass
-it, implement `validate_instance` for the Python side and `edit_config` for the
-schema side, and the same rule reaches both. `AllOrNoneConstraint` and
+[`src/gatis/constraints.py`](src/gatis/constraints.py)). Subclass it, implement
+`validate_instance` for the Python side and `edit_config` for the schema side,
+and the same rule reaches both. `AllOrNoneConstraint` and
 `ForbiddenOnRoadConstraint` are the two worked examples; the field-level
 equivalent is `PatternConstraint` and friends from
 `overture.schema.system.field_constraint`, which is why `GatisDate` is an
@@ -210,12 +210,22 @@ next reader can tell a considered choice from a reflex.
 | `spec/playbook.md` | The GATIS Playbook, the spec's companion prose, pinned separately because it lives in Google Docs. Underscores arrive escaped |
 | `spec/extensions.pdf` | Upstream's field tables for `lrs.json`, `events.json` and `relations.json`, plus a `pdftotext` extraction. The only place they are published |
 | `spec/extensions.json` | **A local transcription** of that PDF, not upstream. The source `models/extensions.py` is tested against |
-| `src/gatis_schema/models/extensions.py` | The three extension tables. Hand-written, not bootstrapped -- codegen has no structured source to read |
-| `src/gatis_schema/spec_source.py` | Reads the snapshot into `FieldSpec`, `FeatureType`, `PresenceRule` |
-| `src/gatis_schema/codegen.py` | Generates the models; `scripts/bootstrap-models` drives it |
-| `src/gatis_schema/models/` | Bootstrapped once, **hand-owned after** -- the bootstrap refuses to overwrite without `--force` |
-| `src/gatis_schema/dataset.py` | The five files together; checks needing more than one of them |
+| `src/gatis/models/extensions.py` | The three extension tables. Hand-written, not bootstrapped -- codegen has no structured source to read |
+| `src/gatis/spec_source.py` | Reads the snapshot into `FieldSpec`, `FeatureType`, `PresenceRule` |
+| `src/gatis/codegen.py` | Generates the models; `scripts/bootstrap-models` drives it |
+| `src/gatis/models/` | Bootstrapped once, **hand-owned after** -- the bootstrap refuses to overwrite without `--force` |
+| `src/gatis/dataset.py` | The five files together; checks needing more than one of them |
+| `docs/reference/` | **Generated, never hand-edited.** `scripts/generate-reference` wipes and rewrites it; run that instead of editing |
 | `docs/spec-review.md` | Defects found in the spec while modelling it |
+
+<!--
+The "never hand-edited" is load-bearing because a sed sweep looks equivalent and
+is not: some of docs/reference/ is derived from the package name rather than
+written anywhere. `_category_.json`'s `label` is the package name title-cased, so
+the 2026-09-21 `gatis_schema` -> `gatis` rename left `"Gatis Schema"` behind and
+no grep for the old name could find it. Overture's markdown generator exposes no
+override for that label.
+-->
 
 ## Commands
 

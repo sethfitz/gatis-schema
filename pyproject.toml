@@ -1,5 +1,5 @@
 [project]
-name = "gatis-schema"
+name = "gatis"
 dynamic = ["version"]
 description = "Pydantic models for the General Active Transportation Infrastructure Specification (GATIS), generated from the upstream spec workbook"
 readme = "README.md"
@@ -20,19 +20,19 @@ dependencies = [
 #
 # The three extension tables are rows of a plain JSON file rather than GeoJSON
 # features, so the system's own tag provider does not tag them `feature` and a
-# `--tag feature` run drops them. `gatis_schema.tag_providers` gives them
+# `--tag feature` run drops them. `gatis.tag_providers` gives them
 # `gatis:extension` instead; `scripts/generate-reference` asks for both tags.
 [project.entry-points."overture.models"]
-gatis_node = "gatis_schema.models:Node"
-gatis_edge = "gatis_schema.models:Edge"
-gatis_point = "gatis_schema.models:Point"
-gatis_zone = "gatis_schema.models:Zone"
-gatis_lrs_crosswalk = "gatis_schema.models:LrsCrosswalk"
-gatis_event = "gatis_schema.models:Event"
-gatis_relation = "gatis_schema.models:Relation"
+gatis_node = "gatis.models:Node"
+gatis_edge = "gatis.models:Edge"
+gatis_point = "gatis.models:Point"
+gatis_zone = "gatis.models:Zone"
+gatis_lrs_crosswalk = "gatis.models:LrsCrosswalk"
+gatis_event = "gatis.models:Event"
+gatis_relation = "gatis.models:Relation"
 
 [project.entry-points."overture.tag_providers"]
-gatis = "gatis_schema.tag_providers:gatis_provider"
+gatis = "gatis.tag_providers:gatis_provider"
 
 [build-system]
 requires = ["hatchling"]
@@ -54,15 +54,15 @@ dev = [
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gatis_schema"]
+packages = ["src/gatis"]
 
 [tool.hatch.build]
 include = [
-    "src/gatis_schema/py.typed",  # Include type marker in distribution
+    "src/gatis/py.typed",  # Include type marker in distribution
 ]
 
 [tool.hatch.version]
-path = "src/gatis_schema/__init__.py"  # Hatch reads __version__ from here
+path = "src/gatis/__init__.py"  # Hatch reads __version__ from here
 
 
 # Per-package mypy configuration
@@ -91,7 +91,7 @@ ignore = ["RUF002", "RUF003"]
 [tool.ruff.lint.per-file-ignores]
 # `(str, DocumentedEnum)` is the Overture system's own idiom, and StrEnum is not
 # a drop-in for it. Presence matches the generated enums deliberately.
-"src/gatis_schema/presence.py" = ["UP042"]
+"src/gatis/presence.py" = ["UP042"]
 
 [tool.ruff.format]
 docstring-code-format = true

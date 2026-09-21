@@ -1,11 +1,12 @@
 """Bootstrap the Pydantic models from the vendored spec snapshot.
 
 The output is a STARTING POINT, not a build artifact. `scripts/bootstrap-models`
-writes it once; from then on the models under `gatis_schema/models/` are hand-owned
-source, refined in ways the workbook cannot express -- real descriptions, tighter
-constraints, the relationships the spec only implies. Re-running the bootstrap
-refuses to overwrite without `--force`; `--into` writes elsewhere so a fresh
-snapshot can be diffed against the hand-edited models instead of clobbering them.
+writes it once; from then on the models under `gatis/models/` are hand-owned
+source, refined in ways the workbook cannot express -- real descriptions,
+tighter constraints, the relationships the spec only implies. Re-running the
+bootstrap refuses to overwrite without `--force`; `--into` writes elsewhere so a
+fresh snapshot can be diffed against the hand-edited models instead of
+clobbering them.
 
 Shape of the output, and why. Presence is `(feature class x feature type x field x
 tier)`, and `forbidden` never varies by tier -- the field *partition* is fixed and
@@ -26,8 +27,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from gatis_schema.presence import Presence, PresenceRule
-from gatis_schema.spec_source import (
+from gatis.presence import Presence, PresenceRule
+from gatis.spec_source import (
     FeatureClassSpec,
     FieldSpec,
     SpecReader,
@@ -556,7 +557,7 @@ class ClassWriter:
             "    model_validator,",
             ")",
             "",
-            "from gatis_schema.annotations import (",
+            "from gatis.annotations import (",
             "    Aadt,",
             "    Feet,",
             "    Inches,",
@@ -586,14 +587,14 @@ class ClassWriter:
         if self.uses_suggested_values:
             helpers.append("SuggestedValues")
         lines.append(
-            "from gatis_schema.constraints import (\n"
+            "from gatis.constraints import (\n"
             + "".join(f"    {helper},\n" for helper in sorted(helpers))
             + ")"
         )
         lines.extend(
             [
-                "from gatis_schema.scalars import GatisDate, GatisDatetime, YesNo",
-                "from gatis_schema.shared import (",
+                "from gatis.scalars import GatisDate, GatisDatetime, YesNo",
+                "from gatis.shared import (",
                 "    GtfsReference,",
                 "    ReferenceId,",
                 "    SeasonalCondition,",
@@ -606,11 +607,9 @@ class ClassWriter:
         if targets:
             module = {"NodeBase": "nodes"}
             for target in targets:
-                lines.append(
-                    f"from gatis_schema.models.{module[target]} import {target}"
-                )
+                lines.append(f"from gatis.models.{module[target]} import {target}")
         if self.enums:
-            lines.append("from gatis_schema.models.enums import (")
+            lines.append("from gatis.models.enums import (")
             lines.extend(f"    {name}," for name in sorted(self.enums))
             lines.append(")")
         return "\n".join(lines)
@@ -721,7 +720,7 @@ def _summarise(text: str) -> str:
 def _header(name: str, snapshot: SpecSnapshot) -> str:
     return (
         f'"""GATIS {name} models.\n\n'
-        "BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot\n"
+        "BOOTSTRAPPED by `gatis.codegen` from the pinned spec snapshot\n"
         f"(dotbts/BPA@{snapshot.spec_version[:8]}) on "
         f"{dt.date.today().isoformat()}.\n\n"
         "Hand-edits are expected and are not overwritten: the bootstrap refuses to\n"
@@ -785,7 +784,7 @@ def _format(paths: list[Path]) -> None:
 def _render_enums(enums: dict[str, list[EnumValue]], snapshot: SpecSnapshot) -> str:
     parts = [
         '"""Enumerated values.\n\n'
-        "BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot\n"
+        "BOOTSTRAPPED by `gatis.codegen` from the pinned spec snapshot\n"
         f"(dotbts/BPA@{snapshot.spec_version[:8]}).\n\n"
         "Each member's value is the literal display string the spec lists. GATIS\n"
         "defines no canonical token spelling, so normalising here would fork the "
@@ -829,8 +828,7 @@ def _field_of(enum_name: str) -> str:
 
 def _render_package(names: list[str]) -> str:
     lines = [
-        '"""GATIS models, bootstrapped by `gatis_schema.codegen` then '
-        'hand-refined."""\n',
+        '"""GATIS models, bootstrapped by `gatis.codegen` then hand-refined."""\n',
         "from __future__ import annotations",
         "",
     ]
@@ -838,7 +836,7 @@ def _render_package(names: list[str]) -> str:
     for name in names:
         title = _class_name(name)
         symbols = [title, f"{title}Adapter", f"{title}Base", f"{title}Collection"]
-        lines.append(f"from gatis_schema.models.{name}s import " + ", ".join(symbols))
+        lines.append(f"from gatis.models.{name}s import " + ", ".join(symbols))
         exports.extend(symbols)
     lines.extend(["", "__all__ = ["])
     lines.extend(f'    "{symbol}",' for symbol in sorted(exports))

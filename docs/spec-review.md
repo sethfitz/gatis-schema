@@ -315,7 +315,7 @@ The declaration is for downstream tooling; enforcement is a dataset-level step.
 What GATIS is missing is the *declaration* — nothing machine-readable says
 `from_node` points at `nodes.node_id`, only the prose "using the node_id attribute
 on the nodes table." This package declares it with an Overture `Reference` and
-implements the check in `gatis_schema.dataset`.
+implements the check in `gatis.dataset`.
 
 The cost is already visible. All 33 of Newark's bikeway, crossing and
 traffic-island edges carry a null `from_node` and a null `to_node`, so that layer

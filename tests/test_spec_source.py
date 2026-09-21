@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from gatis_schema import FEATURE_CLASSES, TIERS, Presence, PresenceRule, SpecReader
-from gatis_schema.spec_source import SpecSnapshot
+from gatis import FEATURE_CLASSES, TIERS, Presence, PresenceRule, SpecReader
+from gatis.spec_source import SpecSnapshot
 
 
 @pytest.fixture(scope="module")
@@ -305,8 +305,8 @@ def test_seasonal_condition_still_matches_the_mangled_cell() -> None:
     # recovers that, so the split is a judgement this package makes and nothing
     # else re-checks. Pin it: if upstream repairs or re-mangles the cell, this
     # fails rather than leaving the hand-written values quietly wrong.
-    from gatis_schema.annotations import field_vocabularies
-    from gatis_schema.shared import SeasonalCondition
+    from gatis.annotations import field_vocabularies
+    from gatis.shared import SeasonalCondition
 
     published = next(
         field

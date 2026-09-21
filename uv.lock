@@ -111,7 +111,7 @@ wheels = [
 ]
 
 [[package]]
-name = "gatis-schema"
+name = "gatis"
 source = { editable = "." }
 dependencies = [
     { name = "overture-schema-system" },

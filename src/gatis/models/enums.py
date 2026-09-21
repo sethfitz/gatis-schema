@@ -1,6 +1,6 @@
 """Enumerated values.
 
-BOOTSTRAPPED by `gatis_schema.codegen` from the pinned spec snapshot
+BOOTSTRAPPED by `gatis.codegen` from the pinned spec snapshot
 (dotbts/BPA@ecc45ff8).
 
 Each member's value is the literal display string the spec lists. GATIS

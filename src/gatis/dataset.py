@@ -20,7 +20,7 @@ from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
-from gatis_schema.models import (
+from gatis.models import (
     EdgeCollection,
     Event,
     EventAdapter,
