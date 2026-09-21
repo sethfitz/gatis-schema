@@ -45,12 +45,13 @@ null on 159 of 370 edge fields through `oneOf [..., {"type": "null"}]`, so the
 spec's own validator accepts what our models reject -- on data the spec's own
 authors published.
 
-The asymmetry decides it. Accepting null costs a distinction GATIS never drew:
+The asymmetry decided it. Accepting null costs a distinction GATIS never drew:
 `status` says outright that a blank is assumed `open` or `unknown` depending on
 feature class, so there is no "known empty" versus "unknown" semantics being
 discarded. Rejecting null costs the ability to read either published dataset.
-`Omitable[T]` should accept null and mean absent, and the gap should go upstream
-as a defect report.
+The models now drop null-valued properties before validation, so a null means
+absent. The specification gap is untouched by that and is still worth reporting
+upstream.
 
 ## `reference_ids` is the most-violated field and constrains nothing
 
@@ -132,9 +133,10 @@ The models were generated from Draft #2 (workbook Drive revision 3542,
 2026-01-30) when this run started. GATIS 1.0 was voted through 2026-02-27, and
 the sample datasets were refreshed 2026-04-17 and 2026-06-01 -- both after that
 snapshot. Three classes of failure were our models being out of date, and all
-three are gone now that they track 1.0. They are recorded because the same trap
-is still live for anyone reading GATIS data: it is what a stale model looks like
-from the inside, and it is indistinguishable from bad data until you check.
+three are gone now that the models track the spec pinned in
+`spec/MANIFEST.json`. They are recorded because the same trap is still live for
+anyone reading GATIS data: it is what a stale model looks like from the inside,
+and it is indistinguishable from bad data until you check.
 
 - `vehicle_traffic_control` and `ped_traffic_control` were renamed. 1.0 has
   `traffic signal` and `pedestrian signal`; Draft #2 had `standard signal`.

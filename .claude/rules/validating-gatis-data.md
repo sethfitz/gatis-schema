@@ -139,9 +139,11 @@ modifier and a genuinely unknown key both still behave.
 
 ## Before calling a mismatch a data defect
 
-The models track 1.0 and no GATIS file declares its version, so a failing enum
-value may be data written against an older draft rather than data that is
-wrong. Check the value against 1.0's `listed_values` -- see
+A failing enum value may be data written against an older draft rather than
+data that is wrong -- no GATIS file declares its version. Which spec the models
+track is pinned in `spec/MANIFEST.json`, which is the one place that cannot go
+stale; do not trust a version named in prose, here or elsewhere. Check the
+value against the pinned spec's `listed_values` -- see
 [`upstream-gatis-sources.md`](upstream-gatis-sources.md) -- and check the
 field's `presence` for that feature type at the dataset's tier before calling a
 required field missing.
