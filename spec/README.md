@@ -25,27 +25,27 @@ belongs. Both artifacts are CC0 1.0.
 
 ## Why a repository and not a Google Sheet
 
-Until 2026-09-21 this snapshot was a Drive export of the
-`Draft_GATIS_Specification` workbook. Upstream's README calls that sheet **Draft
-#2**; draft #3 moved to a different sheet, and v1.0 was voted through on
-2026-02-27. The snapshot was two drafts behind, and the export path could not have
-noticed -- the sheet still existed and still had the same revision history.
+A Drive export cannot tell you the sheet it reads has been superseded. Upstream's
+README calls `Draft_GATIS_Specification` **Draft #2**; draft #3 moved to a
+different sheet and v1.0 was voted through on 2026-02-27, and through all of it
+that first sheet still exists with the same revision history. A commit in
+`dotbts/BPA` makes the version a property of the snapshot rather than an
+assumption about a link.
 
-v1.0 also publishes what the workbook only implied. `specification/*.json` carries
-the `(feature type x field x tier)` presence matrix as structured JSON:
+## The presence matrix
+
+`specification/*.json` carries `(feature type x field x tier)` as structured JSON:
 
 ```json
 "width_in": { "type": "Integer", "presence": {
     "sidewalk": ["optional", "required", null, null] } }
 ```
 
-Four slots, one per tier, `null` meaning unchanged from the tier before. That
-retired the workbook exporter, the packed-presence-cell parser, and most of the
-defect list this file used to carry -- trailing-space field names, duplicated
-`Points_Fields` rows, the `mutli_use_path` misspelling and `elevator` having no
-fields at all are all fixed upstream.
+Four slots, one per tier, `null` meaning unchanged from the tier before. That is
+the whole matrix in machine-readable form, and it is why `spec_source` reads these
+files and nothing else.
 
-## What v1.0 still gets wrong
+## What v1.0 gets wrong
 
 Each is pinned by a test in `tests/`, so an upstream fix shows up as a failure
 rather than going unnoticed.
@@ -55,35 +55,40 @@ rather than going unnoticed.
   `allowed_uses`, `prohibited_uses` and `cross_vehicle_traffic_control` the
   pedestrian-signal-timing list belonging to `ped_protection`; `nodes` gives
   `impediment` and `rail_crossing_control` the `surface_issue` list; `points`
-  gives it to `accessibility_features`. Seven fields across three files.
-  `specification_jsons` is the artifact to trust. `scripts/compare-json-schema`
+  gives it to `accessibility_features`. `specification_jsons` is the artifact to
+  trust. `scripts/compare-json-schema`
   reports the difference.
 - **Upstream's JSON Schema declares no required fields at all**, on any of the
   four files, so it cannot check presence -- which is most of what the spec says.
-- **`edges.json` carries a `virtual_link` presence column for a type it no longer
-  declares**, on all 78 attributes. Generating from the presence columns would put
-  a type back into the union that v1.0 removed, so generation reads
-  `types` instead and `fields_without_types` reports the orphan.
+- **`edges.json` carries a `virtual_link` presence column for a type it does not
+  declare**, on every attribute. Generating from the presence columns would put a
+  type into the union that `types` does not list, so generation reads `types`
+  instead and `fields_without_types` reports the orphan.
 - **Three edge types forbid a field that does not exist.** `sidewalk`, `bikeway`
   and `multi_use_path` list `road_associated` in
-  `forbidden_field_if_allowed_on_road`; v1.0 removed the attribute.
-- **Eleven field names mean something different depending on the file.** Of the
-  27 names that appear in more than one of the four, eleven disagree: ten in
-  vocabulary, seven in declared type, six in both. `status` has three vocabularies
-  (`edges` adds "proposed and funded", `nodes` "planned", `zones` "other"); the
-  rest are `presence`, `impediment`, `surface_issue`, `other_issue`,
-  `allowed_uses`, `prohibited_uses`, `surface_material`, `ada_compliant_with`,
-  `incline` and `width_in`. `surface_issue` is `Text` on edges and `Array<Enum>` on
-  nodes and points; `width_in` is `Integer` on edges and `Float` on nodes.
-- **Six `listed_values` arrays do not survive publication.** v1.0 splits a
-  spreadsheet cell on newlines, so a hard-wrapped definition fragments
-  (`separation_permeable_car` becomes six entries including `"curbs)"` and two
-  empty strings), a blank line becomes an empty value (`markings`), a
-  run-together line stays fused (`separation_elements`'s `"trees  unknown"`,
-  `allowed_uses`'s `"motor_vehicle ebike class 2 ebike class 3 other"`), and
-  `traffic_calming` interleaves section headings with values. Corrected in
+  `forbidden_field_if_allowed_on_road`; no file declares an attribute by that name.
+- **A field name can mean something different depending on the file.** Of the
+  names appearing in more than one of the four, these disagree in vocabulary, in
+  declared type, or in both: `status`, `presence`, `impediment`, `surface_issue`,
+  `other_issue`, `allowed_uses`, `prohibited_uses`, `surface_material`,
+  `ada_compliant_with` and `width_in`. `status` has three vocabularies (`edges`
+  adds the two `proposed` values, `nodes` `planned`, `zones` `other`);
+  `surface_issue` is `Text` on edges and `Array<Enum>` on nodes and points;
+  `width_in` is `Integer` on edges and `Float` on nodes.
+- **`listed_values` arrays do not survive publication intact.** v1.0 exports each
+  vocabulary from a spreadsheet cell. Splitting on newlines
+  fragments a hard-wrapped definition (`separation_permeable_car` becomes six
+  entries including `"curbs)"` and two empty strings) and turns a blank line into
+  an empty value (`markings`); a run-together line stays fused
+  (`separation_elements`'s `"trees  unknown"`, `allowed_uses`'s `"motor_vehicle
+  ebike class 2 ebike class 3 other"`); a pipe is never treated as a separator at
+  all (`presence` on nodes); `traffic_calming` interleaves section headings with
+  values; and `incline`, a Float with no vocabulary to publish, carries a leaked
+  Google Docs comment anchor as its only entry. Corrected in
   [`repairs.json`](repairs.json), which records every departure from the verbatim
-  snapshot and why.
+  snapshot and why. The repairs are not the whole defect: `edge_type`, `node_type`
+  and `street_parking` are mangled too and go unrepaired, because codegen routes
+  around them rather than reading their `listed_values`.
 - **Null-versus-omitted is unstated.** Nothing in `specification_jsons` says
   whether an unset property should be omitted or written as `null`, and the two
   published sample datasets choose differently -- Austin omits, Newark writes

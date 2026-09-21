@@ -10,12 +10,17 @@ roads they interact with. It is a US national effort convened by the Bureau of
 Transportation Statistics, published as five GeoJSON/JSON files -- `nodes`, `edges`,
 `points`, `zones` and `metadata`.
 
+Start at [**docs/reference/gatis/models/**](docs/reference/gatis/models/), the
+generated reference: every field with its type, its description, the feature types
+that carry it, what it is at each tier, its unit and its constraints, cross-linked
+to the enums and shared types.
+[`edge.md`](docs/reference/gatis/models/edge.md) is the big one.
+
 ## Status
 
-Early, and now tracking the version that was voted through rather than a draft.
-GATIS v1.0 passed unanimously on 2026-02-27 and is published as JSON in
-`dotbts/BPA`; this package regenerated against it on 2026-09-21, replacing a
-snapshot pinned to what upstream calls Draft #2.
+Early. GATIS v1.0 passed unanimously on 2026-02-27 and is published as JSON in
+`dotbts/BPA`; `spec/MANIFEST.json` pins the commit these models are generated
+from.
 
 - `spec/` -- pinned snapshot of `dotbts/BPA`, refreshed by `scripts/snapshot-spec`.
   See [`spec/README.md`](spec/README.md) for provenance and the upstream defects it
@@ -36,11 +41,17 @@ snapshot pinned to what upstream calls Draft #2.
 
 ## Why generate rather than hand-write
 
-Seventy-eight edge fields across fourteen edge types across four tiers is 4,368
-presence decisions. Hand-transcription would be stale on arrival, and its drift
-would be invisible -- which is exactly what happened to the previous snapshot,
-which sat two drafts behind for seven months without anything noticing. The spec is
-snapshotted at an upstream commit, and the models are a function of that snapshot.
+GATIS is authored in a spreadsheet and published by export: `specification_jsons/`
+is that workbook as structured JSON, `gatis_explorer/data/` the same content as CSV,
+`json_schemas/` a generated validator. The only `edge_type` that last one permits is
+the literal `"(Same as Edge Types)"` -- a note to a human reader, carried intact
+through every hop.
+
+Generating keeps this package on that chain rather than beside it: the models are a
+function of a commit-pinned snapshot, so a refresh is a diff instead of
+re-transcribing the presence matrix into a fourth rendering nothing can check. The models could eventually be the better source to derive from -- they carry
+constraints, units and relationships the workbook cannot state -- but upstream's
+export is what was authored and reviewed, so it is what this tracks.
 
 ## Design notes
 
@@ -52,21 +63,20 @@ the tier axis as a four-slot array, `null` meaning unchanged from the tier befor
 "sidewalk": ["optional", "required", null, null]
 ```
 
-`PresenceRule.at(tier)` resolves it. Draft 2 also had `conditionally_required`;
-v1.0 dropped the descriptor.
+`PresenceRule.at(tier)` resolves it.
 
 **`forbidden` never varies by tier** (asserted by a test). The set of fields a
 feature type may carry is fixed; only presence strength moves. That is what makes
 one generated model per feature type the right shape, rather than one wide model
 with a runtime matrix.
 
-**Units are in the field name.** v1.0's headline modelling change: `width_in`,
-`buffer_width_ft`, `posted_speed_limit_mph`, `crossing_time_sec`. Fifteen fields
-carry the unit as a suffix, which is what makes it machine-readable at all --
-draft 2 stated every one of them in prose only. They are not uniform (widths are
-inches, buffers are feet), so a consumer converting GATIS to another schema still
-needs to read the suffix. `gatis.annotations` lifts it into a `Unit` annotation.
-The slopes and `traffic_volume` are still prose-only.
+**Units are in the field name.** `width_in`, `buffer_width_ft`,
+`posted_speed_limit_mph`, `crossing_time_sec` -- the unit rides in the field name,
+which is what makes it machine-readable at all. They are not
+uniform (widths are inches, buffers are feet), so a consumer converting GATIS to
+another schema still needs to read the suffix. `gatis.annotations` lifts it into a
+`Unit` annotation. The slopes and `traffic_volume` state their units in prose
+only.
 
 **Booleans are OSM-style `"yes"`/`"no"` strings**, not JSON booleans.
 
@@ -93,13 +103,13 @@ neither, since it dispatches over a closed set of the system's own constraint ty
 **A road edge carries its parallel facilities as prefixed attributes.** v1.0 marks
 sidewalk, bikeway and multi_use_path `allowed_on_road`, so a roadway centerline can
 describe the sidewalk or bike lane beside it as `bikeway:left:width_in` rather than
-as a separate feature. `RoadEdge` declares all 292, typed and aliased — the same
-292 upstream's JSON Schema enumerates, derived here independently. Leaving them to
+as a separate feature. `RoadEdge` declares all 292, typed and aliased — the same set
+upstream's JSON Schema enumerates, derived here independently. Leaving them to
 `extra="allow"` was the alternative and it is worse than it looks: the values
 round-trip, so nothing fails, and a consumer silently reads conforming bikeway data
 as an unrecognised local extension.
 
-**Enums are named per feature class where the vocabularies differ.** Nine field
+**Enums are named per feature class where the vocabularies differ.** Some field
 names mean different things in different files -- `status` alone has three
 vocabularies -- so the generated enums are `EdgeStatus`, `NodeStatus`,
 `ZoneStatus` rather than one `Status` whose values depend on which module was

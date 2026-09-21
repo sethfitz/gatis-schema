@@ -48,10 +48,16 @@ file. [`docs/sample-data-validation.md`](docs/sample-data-validation.md) is what
 it found on the two published sample datasets, with data defects separated from
 spec gaps.
 
-**Count a figure from source before it goes in a document; never restate one.**
-Two ways this goes wrong. A defect-class subtotal in that report is not a count
-of whatever you would name the class after -- it holds unrelated causes, so
-quote the per-field lines and count anything narrower from the data. And a
+**A figure needs a job before it needs to be right**, and most do not have one.
+Name the thing instead of counting it -- "on every attribute" beats "on all 78
+attributes", "these disagree" beats "ten disagree: nine in vocabulary, seven in
+declared type, six in both". A count earns its place when the argument turns on
+magnitude; a run of them in one sentence means none of them does.
+
+**When one does earn it, count it from source; never restate one.** Two ways that
+goes wrong. A defect-class subtotal in that report is not a count of whatever you
+would name the class after -- it holds unrelated causes, so quote the per-field
+lines and count anything narrower from the data. And a
 number copied from another document, or from your own earlier sentence in the
 same session, has been written down twice and measured once. Re-derive it from
 `spec/`, the JSON Schemas, or the sample GeoJSON, whichever produces it, and
@@ -61,6 +67,13 @@ upstream.
 <!--
 Landed 2026-09-21, after a review of 806eef6 found the second half of this rule
 was missing and three figures in upstream-facing prose were wrong.
+
+The "needs a job" gate was added the same day, when the accuracy half turned out
+to have a cost of its own: it makes counting read as diligence, so figures
+accumulate until the prose is unreadable. Seth on the README: "The numbers in
+this section are overwhelming... not everything needs a number attached. (If this
+is coming from guidance, let's also relax it there so we don't keep getting
+overwhelmed.)" Both READMEs were thinned in the same pass.
 
 - `docs/sample-data-validation.md` claimed only road and multi-use-path edges
   carry endpoints. `docs/spec-review.md` inherited it as "all 33 bikeway,
