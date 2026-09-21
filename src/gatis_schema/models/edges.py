@@ -508,6 +508,2205 @@ class RoadEdge(EdgeBase):
         "see the ped_protection attribute on the crossing edge."
     )
 
+    # The on-road modifier form: this road's parallel facilities, carried as
+    # prefixed attributes rather than as their own features. See section 2.2.
+
+    sidewalk_left_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:reference_ids",
+        description="The sidewalk on the left side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    sidewalk_left_facility_name: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:facility_name",
+        description="The sidewalk on the left side of this road: see the "
+        "facility_name field on that type.",
+    )
+
+    sidewalk_left_curb_ramp_system_id: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:curb_ramp_system_id",
+            description="The sidewalk on the left side of this road: see the "
+            "curb_ramp_system_id field on that type.",
+        )
+    )
+
+    sidewalk_left_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:directionality",
+        description="The sidewalk on the left side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    sidewalk_left_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:width_in",
+        description="The sidewalk on the left side of this road: see the width_in "
+        "field on that type.",
+    )
+
+    sidewalk_left_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:height_max_passable_in",
+        description="The sidewalk on the left side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    sidewalk_left_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:width_min_passable_in",
+        description="The sidewalk on the left side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    sidewalk_left_width_tolerance_in: Annotated[Omitable[Inches], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:width_tolerance_in",
+            description="The sidewalk on the left side of this road: see the "
+            "width_tolerance_in field on that type.",
+        )
+    )
+
+    sidewalk_left_underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:underpass_tunnel",
+            description="The sidewalk on the left side of this road: see the "
+            "underpass_tunnel field on that type.",
+        )
+    )
+
+    sidewalk_left_overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:overpass_skywalk",
+            description="The sidewalk on the left side of this road: see the "
+            "overpass_skywalk field on that type.",
+        )
+    )
+
+    sidewalk_left_above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:above_below_grade_ft",
+            description="The sidewalk on the left side of this road: see the "
+            "above_below_grade_ft field on that type.",
+        )
+    )
+
+    sidewalk_left_building_level: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:building_level",
+        description="The sidewalk on the left side of this road: see the "
+        "building_level field on that type.",
+    )
+
+    sidewalk_left_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = Field(
+        alias="sidewalk:left:status",
+        description="The sidewalk on the left side of this road: see the status "
+        "field on that type.",
+    )
+
+    sidewalk_left_date_built: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        alias="sidewalk:left:date_built",
+        description="The sidewalk on the left side of this road: see the "
+        "date_built field on that type.",
+    )
+
+    sidewalk_left_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:last_inspection_date",
+        description="The sidewalk on the left side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    sidewalk_left_presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:presence",
+            description="The sidewalk on the left side of this road: see the presence "
+            "field on that type.",
+        )
+    )
+
+    sidewalk_left_measured_length_ft: Annotated[Omitable[Feet], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:measured_length_ft",
+            description="The sidewalk on the left side of this road: see the "
+            "measured_length_ft field on that type.",
+        )
+    )
+
+    sidewalk_left_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:separation_elements",
+        description="The sidewalk on the left side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    sidewalk_left_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:separation_permeable_car",
+        description="The sidewalk on the left side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    sidewalk_left_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:buffer_width_ft",
+        description="The sidewalk on the left side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    sidewalk_left_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:street_parking",
+        description="The sidewalk on the left side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    sidewalk_left_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:street_parking_buffer_ft",
+        description="The sidewalk on the left side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    sidewalk_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="sidewalk:left:markings",
+        description="The sidewalk on the left side of this road: see the markings "
+        "field on that type.",
+    )
+
+    sidewalk_left_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:prohibited_uses",
+        description="The sidewalk on the left side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    sidewalk_left_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:allowed_uses",
+        description="The sidewalk on the left side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    sidewalk_left_restricted_access: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:restricted_access",
+        description="The sidewalk on the left side of this road: see the "
+        "restricted_access field on that type.",
+    )
+
+    sidewalk_left_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:seasonal",
+        description="The sidewalk on the left side of this road: see the seasonal "
+        "field on that type.",
+    )
+
+    sidewalk_left_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:surface_material",
+        description="The sidewalk on the left side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    sidewalk_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:surface_issue",
+        description="The sidewalk on the left side of this road: see the "
+        "surface_issue field on that type.",
+    )
+
+    sidewalk_left_pedestrian_lane: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:pedestrian_lane",
+        description="The sidewalk on the left side of this road: see the "
+        "pedestrian_lane field on that type.",
+    )
+
+    sidewalk_left_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
+        alias="sidewalk:left:incline",
+        description="The sidewalk on the left side of this road: see the incline "
+        "field on that type.",
+    )
+
+    sidewalk_left_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:cross_slope",
+        description="The sidewalk on the left side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    sidewalk_left_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:cross_slope_max",
+        description="The sidewalk on the left side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    sidewalk_left_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:ada_compliance_date",
+        description="The sidewalk on the left side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    sidewalk_left_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:ada_compliant_with",
+        description="The sidewalk on the left side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    sidewalk_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="sidewalk:left:impediment",
+        description="The sidewalk on the left side of this road: see the "
+        "impediment field on that type.",
+    )
+
+    sidewalk_left_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:tactile_marking",
+        description="The sidewalk on the left side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    sidewalk_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:other_issue",
+        description="The sidewalk on the left side of this road: see the "
+        "other_issue field on that type.",
+    )
+
+    sidewalk_left_lrs_references: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:lrs_references",
+            description="The sidewalk on the left side of this road: see the "
+            "lrs_references field on that type.",
+        )
+    )
+
+    sidewalk_left_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:last_inspection_type",
+            description="The sidewalk on the left side of this road: see the "
+            "last_inspection_type field on that type.",
+        )
+    )
+
+    sidewalk_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:lifecycle_stage",
+        description="The sidewalk on the left side of this road: see the "
+        "lifecycle_stage field on that type.",
+    )
+
+    sidewalk_left_maintenance_schedule: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:maintenance_schedule",
+            description="The sidewalk on the left side of this road: see the "
+            "maintenance_schedule field on that type.",
+        )
+    )
+
+    sidewalk_left_planned_work: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:planned_work",
+        description="The sidewalk on the left side of this road: see the "
+        "planned_work field on that type.",
+    )
+
+    sidewalk_left_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:owner",
+        description="The sidewalk on the left side of this road: see the owner "
+        "field on that type.",
+    )
+
+    sidewalk_left_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:left:maintainer",
+        description="The sidewalk on the left side of this road: see the "
+        "maintainer field on that type.",
+    )
+
+    sidewalk_left_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="sidewalk:left:lighting",
+        description="The sidewalk on the left side of this road: see the lighting "
+        "field on that type.",
+    )
+
+    sidewalk_left_bike_dismount_area: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:left:bike_dismount_area",
+            description="The sidewalk on the left side of this road: see the "
+            "bike_dismount_area field on that type.",
+        )
+    )
+
+    sidewalk_left_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="sidewalk:left:detectable_warning",
+        description="The sidewalk on the left side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
+    sidewalk_right_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:reference_ids",
+        description="The sidewalk on the right side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    sidewalk_right_facility_name: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:facility_name",
+        description="The sidewalk on the right side of this road: see the "
+        "facility_name field on that type.",
+    )
+
+    sidewalk_right_curb_ramp_system_id: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:curb_ramp_system_id",
+            description="The sidewalk on the right side of this road: see the "
+            "curb_ramp_system_id field on that type.",
+        )
+    )
+
+    sidewalk_right_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:directionality",
+        description="The sidewalk on the right side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    sidewalk_right_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:width_in",
+        description="The sidewalk on the right side of this road: see the width_in "
+        "field on that type.",
+    )
+
+    sidewalk_right_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:height_max_passable_in",
+        description="The sidewalk on the right side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    sidewalk_right_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:width_min_passable_in",
+        description="The sidewalk on the right side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    sidewalk_right_width_tolerance_in: Annotated[Omitable[Inches], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:width_tolerance_in",
+            description="The sidewalk on the right side of this road: see the "
+            "width_tolerance_in field on that type.",
+        )
+    )
+
+    sidewalk_right_underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:underpass_tunnel",
+            description="The sidewalk on the right side of this road: see the "
+            "underpass_tunnel field on that type.",
+        )
+    )
+
+    sidewalk_right_overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:overpass_skywalk",
+            description="The sidewalk on the right side of this road: see the "
+            "overpass_skywalk field on that type.",
+        )
+    )
+
+    sidewalk_right_above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:above_below_grade_ft",
+            description="The sidewalk on the right side of this road: see the "
+            "above_below_grade_ft field on that type.",
+        )
+    )
+
+    sidewalk_right_building_level: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:building_level",
+        description="The sidewalk on the right side of this road: see the "
+        "building_level field on that type.",
+    )
+
+    sidewalk_right_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = Field(
+        alias="sidewalk:right:status",
+        description="The sidewalk on the right side of this road: see the status "
+        "field on that type.",
+    )
+
+    sidewalk_right_date_built: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        alias="sidewalk:right:date_built",
+        description="The sidewalk on the right side of this road: see the "
+        "date_built field on that type.",
+    )
+
+    sidewalk_right_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:last_inspection_date",
+        description="The sidewalk on the right side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    sidewalk_right_presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:presence",
+            description="The sidewalk on the right side of this road: see the presence "
+            "field on that type.",
+        )
+    )
+
+    sidewalk_right_measured_length_ft: Annotated[Omitable[Feet], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:measured_length_ft",
+            description="The sidewalk on the right side of this road: see the "
+            "measured_length_ft field on that type.",
+        )
+    )
+
+    sidewalk_right_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:separation_elements",
+        description="The sidewalk on the right side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    sidewalk_right_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:separation_permeable_car",
+        description="The sidewalk on the right side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    sidewalk_right_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:buffer_width_ft",
+        description="The sidewalk on the right side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    sidewalk_right_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:street_parking",
+        description="The sidewalk on the right side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    sidewalk_right_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:street_parking_buffer_ft",
+        description="The sidewalk on the right side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    sidewalk_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="sidewalk:right:markings",
+        description="The sidewalk on the right side of this road: see the markings "
+        "field on that type.",
+    )
+
+    sidewalk_right_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:prohibited_uses",
+        description="The sidewalk on the right side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    sidewalk_right_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:allowed_uses",
+        description="The sidewalk on the right side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    sidewalk_right_restricted_access: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:restricted_access",
+        description="The sidewalk on the right side of this road: see the "
+        "restricted_access field on that type.",
+    )
+
+    sidewalk_right_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:seasonal",
+        description="The sidewalk on the right side of this road: see the seasonal "
+        "field on that type.",
+    )
+
+    sidewalk_right_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:surface_material",
+        description="The sidewalk on the right side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    sidewalk_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:surface_issue",
+        description="The sidewalk on the right side of this road: see the "
+        "surface_issue field on that type.",
+    )
+
+    sidewalk_right_pedestrian_lane: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:pedestrian_lane",
+        description="The sidewalk on the right side of this road: see the "
+        "pedestrian_lane field on that type.",
+    )
+
+    sidewalk_right_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
+        alias="sidewalk:right:incline",
+        description="The sidewalk on the right side of this road: see the incline "
+        "field on that type.",
+    )
+
+    sidewalk_right_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:cross_slope",
+        description="The sidewalk on the right side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    sidewalk_right_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:cross_slope_max",
+        description="The sidewalk on the right side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    sidewalk_right_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:ada_compliance_date",
+        description="The sidewalk on the right side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    sidewalk_right_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:ada_compliant_with",
+        description="The sidewalk on the right side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    sidewalk_right_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="sidewalk:right:impediment",
+        description="The sidewalk on the right side of this road: see the "
+        "impediment field on that type.",
+    )
+
+    sidewalk_right_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:tactile_marking",
+        description="The sidewalk on the right side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    sidewalk_right_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:other_issue",
+        description="The sidewalk on the right side of this road: see the "
+        "other_issue field on that type.",
+    )
+
+    sidewalk_right_lrs_references: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:lrs_references",
+            description="The sidewalk on the right side of this road: see the "
+            "lrs_references field on that type.",
+        )
+    )
+
+    sidewalk_right_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:last_inspection_type",
+            description="The sidewalk on the right side of this road: see the "
+            "last_inspection_type field on that type.",
+        )
+    )
+
+    sidewalk_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:lifecycle_stage",
+        description="The sidewalk on the right side of this road: see the "
+        "lifecycle_stage field on that type.",
+    )
+
+    sidewalk_right_maintenance_schedule: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:maintenance_schedule",
+            description="The sidewalk on the right side of this road: see the "
+            "maintenance_schedule field on that type.",
+        )
+    )
+
+    sidewalk_right_planned_work: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:planned_work",
+        description="The sidewalk on the right side of this road: see the "
+        "planned_work field on that type.",
+    )
+
+    sidewalk_right_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:owner",
+        description="The sidewalk on the right side of this road: see the owner "
+        "field on that type.",
+    )
+
+    sidewalk_right_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="sidewalk:right:maintainer",
+        description="The sidewalk on the right side of this road: see the "
+        "maintainer field on that type.",
+    )
+
+    sidewalk_right_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="sidewalk:right:lighting",
+        description="The sidewalk on the right side of this road: see the lighting "
+        "field on that type.",
+    )
+
+    sidewalk_right_bike_dismount_area: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="sidewalk:right:bike_dismount_area",
+            description="The sidewalk on the right side of this road: see the "
+            "bike_dismount_area field on that type.",
+        )
+    )
+
+    sidewalk_right_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="sidewalk:right:detectable_warning",
+        description="The sidewalk on the right side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
+    bikeway_left_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:reference_ids",
+        description="The bikeway on the left side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    bikeway_left_facility_name: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:facility_name",
+        description="The bikeway on the left side of this road: see the "
+        "facility_name field on that type.",
+    )
+
+    bikeway_left_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:directionality",
+        description="The bikeway on the left side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    bikeway_left_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:width_in",
+        description="The bikeway on the left side of this road: see the width_in "
+        "field on that type.",
+    )
+
+    bikeway_left_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:height_max_passable_in",
+        description="The bikeway on the left side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    bikeway_left_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:width_min_passable_in",
+        description="The bikeway on the left side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    bikeway_left_width_tolerance_in: Annotated[Omitable[Inches], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:width_tolerance_in",
+            description="The bikeway on the left side of this road: see the "
+            "width_tolerance_in field on that type.",
+        )
+    )
+
+    bikeway_left_underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="bikeway:left:underpass_tunnel",
+        description="The bikeway on the left side of this road: see the "
+        "underpass_tunnel field on that type.",
+    )
+
+    bikeway_left_overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="bikeway:left:overpass_skywalk",
+        description="The bikeway on the left side of this road: see the "
+        "overpass_skywalk field on that type.",
+    )
+
+    bikeway_left_above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:above_below_grade_ft",
+            description="The bikeway on the left side of this road: see the "
+            "above_below_grade_ft field on that type.",
+        )
+    )
+
+    bikeway_left_building_level: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:building_level",
+        description="The bikeway on the left side of this road: see the "
+        "building_level field on that type.",
+    )
+
+    bikeway_left_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = Field(
+        alias="bikeway:left:status",
+        description="The bikeway on the left side of this road: see the status "
+        "field on that type.",
+    )
+
+    bikeway_left_date_built: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        alias="bikeway:left:date_built",
+        description="The bikeway on the left side of this road: see the date_built "
+        "field on that type.",
+    )
+
+    bikeway_left_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:last_inspection_date",
+        description="The bikeway on the left side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    bikeway_left_presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:presence",
+            description="The bikeway on the left side of this road: see the presence "
+            "field on that type.",
+        )
+    )
+
+    bikeway_left_measured_length_ft: Annotated[Omitable[Feet], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:measured_length_ft",
+            description="The bikeway on the left side of this road: see the "
+            "measured_length_ft field on that type.",
+        )
+    )
+
+    bikeway_left_bikeway_type: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:bikeway_type",
+        description="The bikeway on the left side of this road: see the "
+        "bikeway_type field on that type.",
+    )
+
+    bikeway_left_bikeway_grade_separation: Annotated[
+        Omitable[BikewayGradeSeparation], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:bikeway_grade_separation",
+        description="The bikeway on the left side of this road: see the "
+        "bikeway_grade_separation field on that type.",
+    )
+
+    bikeway_left_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:separation_elements",
+        description="The bikeway on the left side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    bikeway_left_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:separation_permeable_car",
+        description="The bikeway on the left side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    bikeway_left_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:buffer_width_ft",
+        description="The bikeway on the left side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    bikeway_left_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:street_parking",
+        description="The bikeway on the left side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    bikeway_left_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:street_parking_buffer_ft",
+        description="The bikeway on the left side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    bikeway_left_posted_speed_limit_mph: Annotated[
+        Omitable[Mph], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:posted_speed_limit_mph",
+        description="The bikeway on the left side of this road: see the "
+        "posted_speed_limit_mph field on that type.",
+    )
+
+    bikeway_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="bikeway:left:markings",
+        description="The bikeway on the left side of this road: see the markings "
+        "field on that type.",
+    )
+
+    bikeway_left_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:prohibited_uses",
+        description="The bikeway on the left side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    bikeway_left_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:allowed_uses",
+        description="The bikeway on the left side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    bikeway_left_restricted_access: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:restricted_access",
+            description="The bikeway on the left side of this road: see the "
+            "restricted_access field on that type.",
+        )
+    )
+
+    bikeway_left_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:seasonal",
+        description="The bikeway on the left side of this road: see the seasonal "
+        "field on that type.",
+    )
+
+    bikeway_left_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:surface_material",
+        description="The bikeway on the left side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    bikeway_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:surface_issue",
+        description="The bikeway on the left side of this road: see the "
+        "surface_issue field on that type.",
+    )
+
+    bikeway_left_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
+        alias="bikeway:left:incline",
+        description="The bikeway on the left side of this road: see the incline "
+        "field on that type.",
+    )
+
+    bikeway_left_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:cross_slope",
+        description="The bikeway on the left side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    bikeway_left_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:left:cross_slope_max",
+        description="The bikeway on the left side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    bikeway_left_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:ada_compliance_date",
+        description="The bikeway on the left side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    bikeway_left_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:ada_compliant_with",
+        description="The bikeway on the left side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    bikeway_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="bikeway:left:impediment",
+        description="The bikeway on the left side of this road: see the impediment "
+        "field on that type.",
+    )
+
+    bikeway_left_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:tactile_marking",
+        description="The bikeway on the left side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    bikeway_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:other_issue",
+        description="The bikeway on the left side of this road: see the "
+        "other_issue field on that type.",
+    )
+
+    bikeway_left_lrs_references: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:lrs_references",
+            description="The bikeway on the left side of this road: see the "
+            "lrs_references field on that type.",
+        )
+    )
+
+    bikeway_left_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:last_inspection_type",
+            description="The bikeway on the left side of this road: see the "
+            "last_inspection_type field on that type.",
+        )
+    )
+
+    bikeway_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:lifecycle_stage",
+        description="The bikeway on the left side of this road: see the "
+        "lifecycle_stage field on that type.",
+    )
+
+    bikeway_left_maintenance_schedule: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:maintenance_schedule",
+            description="The bikeway on the left side of this road: see the "
+            "maintenance_schedule field on that type.",
+        )
+    )
+
+    bikeway_left_planned_work: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:planned_work",
+        description="The bikeway on the left side of this road: see the "
+        "planned_work field on that type.",
+    )
+
+    bikeway_left_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:owner",
+        description="The bikeway on the left side of this road: see the owner "
+        "field on that type.",
+    )
+
+    bikeway_left_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:left:maintainer",
+        description="The bikeway on the left side of this road: see the maintainer "
+        "field on that type.",
+    )
+
+    bikeway_left_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="bikeway:left:lighting",
+        description="The bikeway on the left side of this road: see the lighting "
+        "field on that type.",
+    )
+
+    bikeway_left_bike_dismount_area: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="bikeway:left:bike_dismount_area",
+            description="The bikeway on the left side of this road: see the "
+            "bike_dismount_area field on that type.",
+        )
+    )
+
+    bikeway_left_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="bikeway:left:detectable_warning",
+        description="The bikeway on the left side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
+    bikeway_right_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:reference_ids",
+        description="The bikeway on the right side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    bikeway_right_facility_name: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:facility_name",
+        description="The bikeway on the right side of this road: see the "
+        "facility_name field on that type.",
+    )
+
+    bikeway_right_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:directionality",
+        description="The bikeway on the right side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    bikeway_right_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:width_in",
+        description="The bikeway on the right side of this road: see the width_in "
+        "field on that type.",
+    )
+
+    bikeway_right_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:height_max_passable_in",
+        description="The bikeway on the right side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    bikeway_right_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:width_min_passable_in",
+        description="The bikeway on the right side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    bikeway_right_width_tolerance_in: Annotated[Omitable[Inches], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:width_tolerance_in",
+            description="The bikeway on the right side of this road: see the "
+            "width_tolerance_in field on that type.",
+        )
+    )
+
+    bikeway_right_underpass_tunnel: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:underpass_tunnel",
+            description="The bikeway on the right side of this road: see the "
+            "underpass_tunnel field on that type.",
+        )
+    )
+
+    bikeway_right_overpass_skywalk: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:overpass_skywalk",
+            description="The bikeway on the right side of this road: see the "
+            "overpass_skywalk field on that type.",
+        )
+    )
+
+    bikeway_right_above_below_grade_ft: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:above_below_grade_ft",
+            description="The bikeway on the right side of this road: see the "
+            "above_below_grade_ft field on that type.",
+        )
+    )
+
+    bikeway_right_building_level: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:building_level",
+        description="The bikeway on the right side of this road: see the "
+        "building_level field on that type.",
+    )
+
+    bikeway_right_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = Field(
+        alias="bikeway:right:status",
+        description="The bikeway on the right side of this road: see the status "
+        "field on that type.",
+    )
+
+    bikeway_right_date_built: Annotated[Omitable[GatisDate], Tier("optional")] = Field(
+        alias="bikeway:right:date_built",
+        description="The bikeway on the right side of this road: see the "
+        "date_built field on that type.",
+    )
+
+    bikeway_right_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:last_inspection_date",
+        description="The bikeway on the right side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    bikeway_right_presence: Annotated[Omitable[FeaturePresence], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:presence",
+            description="The bikeway on the right side of this road: see the presence "
+            "field on that type.",
+        )
+    )
+
+    bikeway_right_measured_length_ft: Annotated[Omitable[Feet], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:measured_length_ft",
+            description="The bikeway on the right side of this road: see the "
+            "measured_length_ft field on that type.",
+        )
+    )
+
+    bikeway_right_bikeway_type: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:bikeway_type",
+        description="The bikeway on the right side of this road: see the "
+        "bikeway_type field on that type.",
+    )
+
+    bikeway_right_bikeway_grade_separation: Annotated[
+        Omitable[BikewayGradeSeparation], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:bikeway_grade_separation",
+        description="The bikeway on the right side of this road: see the "
+        "bikeway_grade_separation field on that type.",
+    )
+
+    bikeway_right_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:separation_elements",
+        description="The bikeway on the right side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    bikeway_right_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:separation_permeable_car",
+        description="The bikeway on the right side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    bikeway_right_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:buffer_width_ft",
+        description="The bikeway on the right side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    bikeway_right_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:street_parking",
+        description="The bikeway on the right side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    bikeway_right_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:street_parking_buffer_ft",
+        description="The bikeway on the right side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    bikeway_right_posted_speed_limit_mph: Annotated[
+        Omitable[Mph], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:posted_speed_limit_mph",
+        description="The bikeway on the right side of this road: see the "
+        "posted_speed_limit_mph field on that type.",
+    )
+
+    bikeway_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="bikeway:right:markings",
+        description="The bikeway on the right side of this road: see the markings "
+        "field on that type.",
+    )
+
+    bikeway_right_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:prohibited_uses",
+        description="The bikeway on the right side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    bikeway_right_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:allowed_uses",
+        description="The bikeway on the right side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    bikeway_right_restricted_access: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:restricted_access",
+        description="The bikeway on the right side of this road: see the "
+        "restricted_access field on that type.",
+    )
+
+    bikeway_right_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:seasonal",
+        description="The bikeway on the right side of this road: see the seasonal "
+        "field on that type.",
+    )
+
+    bikeway_right_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:surface_material",
+        description="The bikeway on the right side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    bikeway_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:surface_issue",
+        description="The bikeway on the right side of this road: see the "
+        "surface_issue field on that type.",
+    )
+
+    bikeway_right_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
+        alias="bikeway:right:incline",
+        description="The bikeway on the right side of this road: see the incline "
+        "field on that type.",
+    )
+
+    bikeway_right_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:cross_slope",
+        description="The bikeway on the right side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    bikeway_right_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="bikeway:right:cross_slope_max",
+        description="The bikeway on the right side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    bikeway_right_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:ada_compliance_date",
+        description="The bikeway on the right side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    bikeway_right_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:ada_compliant_with",
+        description="The bikeway on the right side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    bikeway_right_impediment: Annotated[Omitable[list[str]], Tier("optional")] = Field(
+        alias="bikeway:right:impediment",
+        description="The bikeway on the right side of this road: see the "
+        "impediment field on that type.",
+    )
+
+    bikeway_right_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:tactile_marking",
+        description="The bikeway on the right side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    bikeway_right_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:other_issue",
+        description="The bikeway on the right side of this road: see the "
+        "other_issue field on that type.",
+    )
+
+    bikeway_right_lrs_references: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:lrs_references",
+            description="The bikeway on the right side of this road: see the "
+            "lrs_references field on that type.",
+        )
+    )
+
+    bikeway_right_last_inspection_type: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:last_inspection_type",
+            description="The bikeway on the right side of this road: see the "
+            "last_inspection_type field on that type.",
+        )
+    )
+
+    bikeway_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:lifecycle_stage",
+        description="The bikeway on the right side of this road: see the "
+        "lifecycle_stage field on that type.",
+    )
+
+    bikeway_right_maintenance_schedule: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:maintenance_schedule",
+            description="The bikeway on the right side of this road: see the "
+            "maintenance_schedule field on that type.",
+        )
+    )
+
+    bikeway_right_planned_work: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:planned_work",
+        description="The bikeway on the right side of this road: see the "
+        "planned_work field on that type.",
+    )
+
+    bikeway_right_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:owner",
+        description="The bikeway on the right side of this road: see the owner "
+        "field on that type.",
+    )
+
+    bikeway_right_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="bikeway:right:maintainer",
+        description="The bikeway on the right side of this road: see the "
+        "maintainer field on that type.",
+    )
+
+    bikeway_right_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="bikeway:right:lighting",
+        description="The bikeway on the right side of this road: see the lighting "
+        "field on that type.",
+    )
+
+    bikeway_right_bike_dismount_area: Annotated[Omitable[YesNo], Tier("optional")] = (
+        Field(
+            alias="bikeway:right:bike_dismount_area",
+            description="The bikeway on the right side of this road: see the "
+            "bike_dismount_area field on that type.",
+        )
+    )
+
+    bikeway_right_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="bikeway:right:detectable_warning",
+        description="The bikeway on the right side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
+    multi_use_path_left_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:reference_ids",
+        description="The multi_use_path on the left side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    multi_use_path_left_facility_name: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:facility_name",
+            description="The multi_use_path on the left side of this road: see the "
+            "facility_name field on that type.",
+        )
+    )
+
+    multi_use_path_left_curb_ramp_system_id: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:curb_ramp_system_id",
+        description="The multi_use_path on the left side of this road: see the "
+        "curb_ramp_system_id field on that type.",
+    )
+
+    multi_use_path_left_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:directionality",
+        description="The multi_use_path on the left side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    multi_use_path_left_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:width_in",
+        description="The multi_use_path on the left side of this road: see the "
+        "width_in field on that type.",
+    )
+
+    multi_use_path_left_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:height_max_passable_in",
+        description="The multi_use_path on the left side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    multi_use_path_left_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:width_min_passable_in",
+        description="The multi_use_path on the left side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    multi_use_path_left_width_tolerance_in: Annotated[
+        Omitable[Inches], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:width_tolerance_in",
+        description="The multi_use_path on the left side of this road: see the "
+        "width_tolerance_in field on that type.",
+    )
+
+    multi_use_path_left_underpass_tunnel: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:underpass_tunnel",
+        description="The multi_use_path on the left side of this road: see the "
+        "underpass_tunnel field on that type.",
+    )
+
+    multi_use_path_left_overpass_skywalk: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:overpass_skywalk",
+        description="The multi_use_path on the left side of this road: see the "
+        "overpass_skywalk field on that type.",
+    )
+
+    multi_use_path_left_above_below_grade_ft: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:above_below_grade_ft",
+        description="The multi_use_path on the left side of this road: see the "
+        "above_below_grade_ft field on that type.",
+    )
+
+    multi_use_path_left_building_level: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:building_level",
+            description="The multi_use_path on the left side of this road: see the "
+            "building_level field on that type.",
+        )
+    )
+
+    multi_use_path_left_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:status",
+            description="The multi_use_path on the left side of this road: see the "
+            "status field on that type.",
+        )
+    )
+
+    multi_use_path_left_date_built: Annotated[Omitable[GatisDate], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:date_built",
+            description="The multi_use_path on the left side of this road: see the "
+            "date_built field on that type.",
+        )
+    )
+
+    multi_use_path_left_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:last_inspection_date",
+        description="The multi_use_path on the left side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    multi_use_path_left_presence: Annotated[
+        Omitable[FeaturePresence], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:presence",
+        description="The multi_use_path on the left side of this road: see the "
+        "presence field on that type.",
+    )
+
+    multi_use_path_left_measured_length_ft: Annotated[
+        Omitable[Feet], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:measured_length_ft",
+        description="The multi_use_path on the left side of this road: see the "
+        "measured_length_ft field on that type.",
+    )
+
+    multi_use_path_left_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:separation_elements",
+        description="The multi_use_path on the left side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    multi_use_path_left_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:separation_permeable_car",
+        description="The multi_use_path on the left side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    multi_use_path_left_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:buffer_width_ft",
+        description="The multi_use_path on the left side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    multi_use_path_left_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:street_parking",
+        description="The multi_use_path on the left side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    multi_use_path_left_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:street_parking_buffer_ft",
+        description="The multi_use_path on the left side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    multi_use_path_left_posted_speed_limit_mph: Annotated[
+        Omitable[Mph], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:posted_speed_limit_mph",
+        description="The multi_use_path on the left side of this road: see the "
+        "posted_speed_limit_mph field on that type.",
+    )
+
+    multi_use_path_left_markings: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:markings",
+            description="The multi_use_path on the left side of this road: see the "
+            "markings field on that type.",
+        )
+    )
+
+    multi_use_path_left_mup_modal_delineation: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:mup_modal_delineation",
+        description="The multi_use_path on the left side of this road: see the "
+        "mup_modal_delineation field on that type.",
+    )
+
+    multi_use_path_left_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:prohibited_uses",
+        description="The multi_use_path on the left side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    multi_use_path_left_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:allowed_uses",
+        description="The multi_use_path on the left side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    multi_use_path_left_restricted_access: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:restricted_access",
+        description="The multi_use_path on the left side of this road: see the "
+        "restricted_access field on that type.",
+    )
+
+    multi_use_path_left_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:seasonal",
+        description="The multi_use_path on the left side of this road: see the "
+        "seasonal field on that type.",
+    )
+
+    multi_use_path_left_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:surface_material",
+        description="The multi_use_path on the left side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    multi_use_path_left_surface_issue: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:surface_issue",
+            description="The multi_use_path on the left side of this road: see the "
+            "surface_issue field on that type.",
+        )
+    )
+
+    multi_use_path_left_incline: Annotated[Omitable[float64], Tier("optional")] = Field(
+        alias="multi_use_path:left:incline",
+        description="The multi_use_path on the left side of this road: see the "
+        "incline field on that type.",
+    )
+
+    multi_use_path_left_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:cross_slope",
+        description="The multi_use_path on the left side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    multi_use_path_left_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:cross_slope_max",
+        description="The multi_use_path on the left side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    multi_use_path_left_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:ada_compliance_date",
+        description="The multi_use_path on the left side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    multi_use_path_left_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:ada_compliant_with",
+        description="The multi_use_path on the left side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    multi_use_path_left_impediment: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:impediment",
+            description="The multi_use_path on the left side of this road: see the "
+            "impediment field on that type.",
+        )
+    )
+
+    multi_use_path_left_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:tactile_marking",
+        description="The multi_use_path on the left side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    multi_use_path_left_other_issue: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="multi_use_path:left:other_issue",
+        description="The multi_use_path on the left side of this road: see the "
+        "other_issue field on that type.",
+    )
+
+    multi_use_path_left_lrs_references: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:lrs_references",
+        description="The multi_use_path on the left side of this road: see the "
+        "lrs_references field on that type.",
+    )
+
+    multi_use_path_left_last_inspection_type: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:last_inspection_type",
+        description="The multi_use_path on the left side of this road: see the "
+        "last_inspection_type field on that type.",
+    )
+
+    multi_use_path_left_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:lifecycle_stage",
+            description="The multi_use_path on the left side of this road: see the "
+            "lifecycle_stage field on that type.",
+        )
+    )
+
+    multi_use_path_left_maintenance_schedule: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:maintenance_schedule",
+        description="The multi_use_path on the left side of this road: see the "
+        "maintenance_schedule field on that type.",
+    )
+
+    multi_use_path_left_planned_work: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:left:planned_work",
+            description="The multi_use_path on the left side of this road: see the "
+            "planned_work field on that type.",
+        )
+    )
+
+    multi_use_path_left_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="multi_use_path:left:owner",
+        description="The multi_use_path on the left side of this road: see the "
+        "owner field on that type.",
+    )
+
+    multi_use_path_left_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="multi_use_path:left:maintainer",
+        description="The multi_use_path on the left side of this road: see the "
+        "maintainer field on that type.",
+    )
+
+    multi_use_path_left_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="multi_use_path:left:lighting",
+        description="The multi_use_path on the left side of this road: see the "
+        "lighting field on that type.",
+    )
+
+    multi_use_path_left_bike_dismount_area: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:bike_dismount_area",
+        description="The multi_use_path on the left side of this road: see the "
+        "bike_dismount_area field on that type.",
+    )
+
+    multi_use_path_left_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:left:detectable_warning",
+        description="The multi_use_path on the left side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
+    multi_use_path_right_reference_ids: Annotated[
+        Omitable[list[ReferenceId]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:reference_ids",
+        description="The multi_use_path on the right side of this road: see the "
+        "reference_ids field on that type.",
+    )
+
+    multi_use_path_right_facility_name: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:facility_name",
+            description="The multi_use_path on the right side of this road: see the "
+            "facility_name field on that type.",
+        )
+    )
+
+    multi_use_path_right_curb_ramp_system_id: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:curb_ramp_system_id",
+        description="The multi_use_path on the right side of this road: see the "
+        "curb_ramp_system_id field on that type.",
+    )
+
+    multi_use_path_right_directionality: Annotated[
+        Omitable[Directionality], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:directionality",
+        description="The multi_use_path on the right side of this road: see the "
+        "directionality field on that type.",
+    )
+
+    multi_use_path_right_width_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:width_in",
+        description="The multi_use_path on the right side of this road: see the "
+        "width_in field on that type.",
+    )
+
+    multi_use_path_right_height_max_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:height_max_passable_in",
+        description="The multi_use_path on the right side of this road: see the "
+        "height_max_passable_in field on that type.",
+    )
+
+    multi_use_path_right_width_min_passable_in: Annotated[
+        Omitable[Inches], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:width_min_passable_in",
+        description="The multi_use_path on the right side of this road: see the "
+        "width_min_passable_in field on that type.",
+    )
+
+    multi_use_path_right_width_tolerance_in: Annotated[
+        Omitable[Inches], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:width_tolerance_in",
+        description="The multi_use_path on the right side of this road: see the "
+        "width_tolerance_in field on that type.",
+    )
+
+    multi_use_path_right_underpass_tunnel: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:underpass_tunnel",
+        description="The multi_use_path on the right side of this road: see the "
+        "underpass_tunnel field on that type.",
+    )
+
+    multi_use_path_right_overpass_skywalk: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:overpass_skywalk",
+        description="The multi_use_path on the right side of this road: see the "
+        "overpass_skywalk field on that type.",
+    )
+
+    multi_use_path_right_above_below_grade_ft: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:above_below_grade_ft",
+        description="The multi_use_path on the right side of this road: see the "
+        "above_below_grade_ft field on that type.",
+    )
+
+    multi_use_path_right_building_level: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:building_level",
+            description="The multi_use_path on the right side of this road: see the "
+            "building_level field on that type.",
+        )
+    )
+
+    multi_use_path_right_status: Annotated[Omitable[EdgeStatus], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:status",
+            description="The multi_use_path on the right side of this road: see the "
+            "status field on that type.",
+        )
+    )
+
+    multi_use_path_right_date_built: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:date_built",
+        description="The multi_use_path on the right side of this road: see the "
+        "date_built field on that type.",
+    )
+
+    multi_use_path_right_last_inspection_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:last_inspection_date",
+        description="The multi_use_path on the right side of this road: see the "
+        "last_inspection_date field on that type.",
+    )
+
+    multi_use_path_right_presence: Annotated[
+        Omitable[FeaturePresence], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:presence",
+        description="The multi_use_path on the right side of this road: see the "
+        "presence field on that type.",
+    )
+
+    multi_use_path_right_measured_length_ft: Annotated[
+        Omitable[Feet], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:measured_length_ft",
+        description="The multi_use_path on the right side of this road: see the "
+        "measured_length_ft field on that type.",
+    )
+
+    multi_use_path_right_separation_elements: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:separation_elements",
+        description="The multi_use_path on the right side of this road: see the "
+        "separation_elements field on that type.",
+    )
+
+    multi_use_path_right_separation_permeable_car: Annotated[
+        Omitable[SeparationPermeableCar], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:separation_permeable_car",
+        description="The multi_use_path on the right side of this road: see the "
+        "separation_permeable_car field on that type.",
+    )
+
+    multi_use_path_right_buffer_width_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:buffer_width_ft",
+        description="The multi_use_path on the right side of this road: see the "
+        "buffer_width_ft field on that type.",
+    )
+
+    multi_use_path_right_street_parking: Annotated[
+        Omitable[StreetParking], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:street_parking",
+        description="The multi_use_path on the right side of this road: see the "
+        "street_parking field on that type.",
+    )
+
+    multi_use_path_right_street_parking_buffer_ft: Annotated[
+        Omitable[Feet], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:street_parking_buffer_ft",
+        description="The multi_use_path on the right side of this road: see the "
+        "street_parking_buffer_ft field on that type.",
+    )
+
+    multi_use_path_right_posted_speed_limit_mph: Annotated[
+        Omitable[Mph], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:posted_speed_limit_mph",
+        description="The multi_use_path on the right side of this road: see the "
+        "posted_speed_limit_mph field on that type.",
+    )
+
+    multi_use_path_right_markings: Annotated[Omitable[list[str]], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:markings",
+            description="The multi_use_path on the right side of this road: see the "
+            "markings field on that type.",
+        )
+    )
+
+    multi_use_path_right_mup_modal_delineation: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:mup_modal_delineation",
+        description="The multi_use_path on the right side of this road: see the "
+        "mup_modal_delineation field on that type.",
+    )
+
+    multi_use_path_right_prohibited_uses: Annotated[
+        Omitable[list[ProhibitedUses]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:prohibited_uses",
+        description="The multi_use_path on the right side of this road: see the "
+        "prohibited_uses field on that type.",
+    )
+
+    multi_use_path_right_allowed_uses: Annotated[
+        Omitable[list[AllowedUses]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:allowed_uses",
+        description="The multi_use_path on the right side of this road: see the "
+        "allowed_uses field on that type.",
+    )
+
+    multi_use_path_right_restricted_access: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:restricted_access",
+        description="The multi_use_path on the right side of this road: see the "
+        "restricted_access field on that type.",
+    )
+
+    multi_use_path_right_seasonal: Annotated[
+        Omitable[list[SeasonalCondition]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:seasonal",
+        description="The multi_use_path on the right side of this road: see the "
+        "seasonal field on that type.",
+    )
+
+    multi_use_path_right_surface_material: Annotated[
+        Omitable[SurfaceMaterial], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:surface_material",
+        description="The multi_use_path on the right side of this road: see the "
+        "surface_material field on that type.",
+    )
+
+    multi_use_path_right_surface_issue: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:surface_issue",
+            description="The multi_use_path on the right side of this road: see the "
+            "surface_issue field on that type.",
+        )
+    )
+
+    multi_use_path_right_incline: Annotated[Omitable[float64], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:incline",
+            description="The multi_use_path on the right side of this road: see the "
+            "incline field on that type.",
+        )
+    )
+
+    multi_use_path_right_cross_slope: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:cross_slope",
+        description="The multi_use_path on the right side of this road: see the "
+        "cross_slope field on that type.",
+    )
+
+    multi_use_path_right_cross_slope_max: Annotated[
+        Omitable[float64], Field(ge=0), Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:cross_slope_max",
+        description="The multi_use_path on the right side of this road: see the "
+        "cross_slope_max field on that type.",
+    )
+
+    multi_use_path_right_ada_compliance_date: Annotated[
+        Omitable[GatisDate], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:ada_compliance_date",
+        description="The multi_use_path on the right side of this road: see the "
+        "ada_compliance_date field on that type.",
+    )
+
+    multi_use_path_right_ada_compliant_with: Annotated[
+        Omitable[EdgeAdaCompliantWith], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:ada_compliant_with",
+        description="The multi_use_path on the right side of this road: see the "
+        "ada_compliant_with field on that type.",
+    )
+
+    multi_use_path_right_impediment: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:impediment",
+        description="The multi_use_path on the right side of this road: see the "
+        "impediment field on that type.",
+    )
+
+    multi_use_path_right_tactile_marking: Annotated[
+        Omitable[TactileMarking], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:tactile_marking",
+        description="The multi_use_path on the right side of this road: see the "
+        "tactile_marking field on that type.",
+    )
+
+    multi_use_path_right_other_issue: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:other_issue",
+            description="The multi_use_path on the right side of this road: see the "
+            "other_issue field on that type.",
+        )
+    )
+
+    multi_use_path_right_lrs_references: Annotated[
+        Omitable[list[str]], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:lrs_references",
+        description="The multi_use_path on the right side of this road: see the "
+        "lrs_references field on that type.",
+    )
+
+    multi_use_path_right_last_inspection_type: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:last_inspection_type",
+        description="The multi_use_path on the right side of this road: see the "
+        "last_inspection_type field on that type.",
+    )
+
+    multi_use_path_right_lifecycle_stage: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:lifecycle_stage",
+            description="The multi_use_path on the right side of this road: see the "
+            "lifecycle_stage field on that type.",
+        )
+    )
+
+    multi_use_path_right_maintenance_schedule: Annotated[
+        Omitable[str], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:maintenance_schedule",
+        description="The multi_use_path on the right side of this road: see the "
+        "maintenance_schedule field on that type.",
+    )
+
+    multi_use_path_right_planned_work: Annotated[Omitable[str], Tier("optional")] = (
+        Field(
+            alias="multi_use_path:right:planned_work",
+            description="The multi_use_path on the right side of this road: see the "
+            "planned_work field on that type.",
+        )
+    )
+
+    multi_use_path_right_owner: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="multi_use_path:right:owner",
+        description="The multi_use_path on the right side of this road: see the "
+        "owner field on that type.",
+    )
+
+    multi_use_path_right_maintainer: Annotated[Omitable[str], Tier("optional")] = Field(
+        alias="multi_use_path:right:maintainer",
+        description="The multi_use_path on the right side of this road: see the "
+        "maintainer field on that type.",
+    )
+
+    multi_use_path_right_lighting: Annotated[Omitable[YesNo], Tier("optional")] = Field(
+        alias="multi_use_path:right:lighting",
+        description="The multi_use_path on the right side of this road: see the "
+        "lighting field on that type.",
+    )
+
+    multi_use_path_right_bike_dismount_area: Annotated[
+        Omitable[YesNo], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:bike_dismount_area",
+        description="The multi_use_path on the right side of this road: see the "
+        "bike_dismount_area field on that type.",
+    )
+
+    multi_use_path_right_detectable_warning: Annotated[
+        Omitable[DetectableWarning], Tier("optional")
+    ] = Field(
+        alias="multi_use_path:right:detectable_warning",
+        description="The multi_use_path on the right side of this road: see the "
+        "detectable_warning field on that type.",
+    )
+
 
 @all_or_none("ada_compliance_date", "ada_compliant_with")
 class SidewalkEdge(EdgeBase):

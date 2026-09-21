@@ -99,3 +99,125 @@ def test_generated_source_fits_the_line_budget() -> None:
         if len(line) > 88
     ]
     assert long_lines == []
+
+
+def test_the_on_road_modifier_fields_match_upstreams_schema_exactly() -> None:
+    # The set is derived here and enumerated there, independently, so agreement is
+    # a real cross-check rather than a restatement: every non-forbidden field of
+    # each `allowed_on_road` type, on each side, minus that type's
+    # `forbidden_field_if_allowed_on_road` list.
+    import json
+    from pathlib import Path
+
+    from gatis_schema.models.edges import RoadEdge
+    from gatis_schema.spec_source import SPEC_DIR
+
+    ours = {
+        field.alias
+        for field in RoadEdge.model_fields.values()
+        if field.alias and ":" in field.alias
+    }
+    schema = json.loads(
+        (Path(SPEC_DIR) / "json-schemas" / "edges_schema.json").read_text()
+    )
+    bag = schema["properties"]["features"]["items"]["properties"]["properties"]
+    theirs = {name for name in bag["properties"] if ":" in name}
+
+    assert len(ours) == 292
+    assert ours == theirs
+
+
+def test_an_on_road_modifier_is_typed_rather_than_an_extra() -> None:
+    # The bug this replaced: the values round-tripped through `model_extra`, so a
+    # conforming bikeway on a roadway centerline was indistinguishable from a local
+    # extension nobody has heard of, and its enum never validated.
+    import json
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    from gatis_schema.annotations import field_units
+    from gatis_schema.dataset import Dataset
+    from gatis_schema.models.edges import RoadEdge
+    from gatis_schema.models.enums import Directionality
+
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[-97.7, 30.3], [-97.6, 30.3]],
+        },
+        "properties": {
+            "edge_id": "r1",
+            "edge_type": "road",
+            "street_name": "Delaware Ave",
+            "directionality": "both",
+            "bikeway:left:bikeway_type": "Buffered Bike Lane",
+            "bikeway:left:directionality": "both",
+            "bikeway:left:width_in": 72,
+            "bikeway:right:presence": "yes",
+        },
+    }
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "edges.geojson"
+        path.write_text(
+            json.dumps({"type": "FeatureCollection", "features": [feature]})
+        )
+        loaded = Dataset.load(directory).edges.features[0]  # type: ignore[union-attr]
+
+    assert isinstance(loaded, RoadEdge)
+    edge = loaded
+    assert edge.model_extra == {}
+    # Typed, not just present: the enum validates and the unit annotation rides.
+    # Compared through model_dump so mypy sees values rather than the Omitable
+    # union, which it cannot narrow past the MISSING sentinel.
+    dumped = edge.model_dump(exclude_unset=True)
+    assert dumped["bikeway:left:directionality"] is Directionality.BOTH
+    assert dumped["bikeway:left:width_in"] == 72
+    assert str(field_units(RoadEdge)["bikeway_left_width_in"]) == "in"
+
+    # And the GATIS spelling survives the round trip.
+    properties = json.loads(edge.model_dump_json())["properties"]
+    assert properties["bikeway:left:bikeway_type"] == "Buffered Bike Lane"
+    assert "bikeway_left_bikeway_type" not in properties
+
+
+def test_an_unknown_field_is_still_an_extra() -> None:
+    # Control: modelling 292 new names must not turn `extra="allow"` off, or a real
+    # local extension would start failing instead of warning (section 6.1).
+    from gatis_schema.models.edges import RoadEdge
+
+    assert RoadEdge.model_config["extra"] == "allow"
+
+
+def test_an_on_road_modifier_rejects_a_bad_value() -> None:
+    # The other half of the control. Typing these fields is only worth anything if
+    # a wrong value now fails where it previously landed in `model_extra` unread.
+    import json
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    import pytest
+
+    from gatis_schema.dataset import Dataset
+
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[-97.7, 30.3], [-97.6, 30.3]],
+        },
+        "properties": {
+            "edge_id": "r1",
+            "edge_type": "road",
+            "street_name": "Delaware Ave",
+            "directionality": "both",
+            "bikeway:left:directionality": "sideways",
+        },
+    }
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "edges.geojson"
+        path.write_text(
+            json.dumps({"type": "FeatureCollection", "features": [feature]})
+        )
+        with pytest.raises(Exception, match=r"bikeway:left:directionality|sideways"):
+            Dataset.load(directory)

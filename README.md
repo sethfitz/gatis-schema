@@ -81,6 +81,15 @@ would make these models stricter than upstream's own validator on upstream's own
 sample data, and GATIS assigns no meaning to the difference, so
 `drop_null_properties` collapses them.
 
+**A road edge carries its parallel facilities as prefixed attributes.** v1.0 marks
+sidewalk, bikeway and multi_use_path `allowed_on_road`, so a roadway centerline can
+describe the sidewalk or bike lane beside it as `bikeway:left:width_in` rather than
+as a separate feature. `RoadEdge` declares all 292, typed and aliased — the same
+292 upstream's JSON Schema enumerates, derived here independently. Leaving them to
+`extra="allow"` was the alternative and it is worse than it looks: the values
+round-trip, so nothing fails, and a consumer silently reads conforming bikeway data
+as an unrecognised local extension.
+
 **Enums are named per feature class where the vocabularies differ.** Nine field
 names mean different things in different files -- `status` alone has three
 vocabularies -- so the generated enums are `EdgeStatus`, `NodeStatus`,

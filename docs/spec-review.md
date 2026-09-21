@@ -81,11 +81,16 @@ road is gone with no replacement.
 `multi_use_path:right:width_tolerance_in`, and they are internally consistent:
 exactly `{sidewalk, bikeway, multi_use_path} × {left, right} ×` that type's own
 non-forbidden fields, minus the six each lists in
-`forbidden_field_if_allowed_on_road`. They appear nowhere else.
+`forbidden_field_if_allowed_on_road`. Deriving the set from `specification_jsons`
+reproduces those 292 names exactly, so the mechanism is well defined — it is just
+not written down anywhere a reader will find it. They appear nowhere else.
 `specification_jsons` has zero colon-namespaced attributes, and so does the
 attribute table on the GATIS Explorer, which is what a publisher reads. The
 mechanism is referenced from `forbidden_field_if_allowed_on_road` without the
-names ever being given.
+names ever being given, and the specification never says which type does the
+carrying. It is the road, but that has to be inferred from the field's name and
+from how the sample data uses it: Austin ships `bikeway:left:bikeway_type` on
+4,003 road edges.
 
 **Two Listed Values cells hold an editorial comment instead of values.**
 `edge.incline` carries `[JG1]Grabbed from NACTO Bike design guide`; `point_type`
@@ -408,8 +413,9 @@ a declaration, and a validator can check none of them.
 
 ## What would move the most
 
-Ordered by what it unblocks, not by effort. Items 1, 2, 5 and 8 were raised against
-the previous draft and have not moved, which is itself the finding.
+Ordered by what it unblocks, not by effort. Items 1, 2, 5 and 8 were written
+against the previous draft and are unchanged here because the spec is: nothing in
+v1.0 touched them.
 
 1. **Specify identifiers.** Everything else compounds on it, and v1.0 shipped
    without it. The `[NOTE: We will fill in instructions here…]` has now survived a

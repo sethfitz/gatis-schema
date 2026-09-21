@@ -80,6 +80,13 @@ REFERENCES: dict[tuple[str, str], tuple[str, str]] = {
 # is set. Emitted as an `@all_or_none` decorator on any class carrying both.
 CO_PRESENT = ("ada_compliance_date", "ada_compliant_with")
 
+# The edge type that carries another facility as prefixed attributes. v1.0 marks
+# sidewalk, bikeway and multi_use_path `allowed_on_road: true` and lists what each
+# may not carry in that form, but it never names the type doing the carrying. It is
+# the road: the mechanism exists so a roadway centerline can describe the sidewalk
+# or bike lane beside it, and that is how the published sample data uses it.
+ON_ROAD_CARRIER = "road"
+
 # Generated enum names that would collide with a package symbol. `presence` is a
 # GATIS field (does this infrastructure exist?) and is unrelated to the presence
 # descriptors of document section 3.3.
@@ -290,6 +297,59 @@ class ClassWriter:
         # and a docstring beside it is the same sentence truncated.
         return [f"    {field.name}: {annotation}{assignment}", ""]
 
+    def _render_on_road(self, base_name: str) -> list[str]:
+        """The colon-namespaced attributes a road edge may carry for a parallel way.
+
+        `sidewalk:left:width_in` and its 291 siblings: every non-forbidden field of
+        each `allowed_on_road` type, on each side, minus that type's
+        `forbidden_field_if_allowed_on_road` list. Always optional -- the spec
+        assigns the modifier form no presence of its own.
+
+        Modelled rather than left to `extra="allow"` because the two are not the
+        same diagnostic. As extras these arrive untyped and indistinguishable from
+        a local extension nobody has heard of, so a consumer reading Austin's
+        roadway centerlines silently loses the bikeway on 4,003 of them while the
+        validator calls the features clean.
+        """
+        lines: list[str] = []
+        for feature_type in self.spec.type_names:
+            declaration = next(
+                (t for t in self.spec.types if t.name == feature_type), None
+            )
+            if declaration is None or not declaration.allowed_on_road:
+                continue
+            forbidden = set(declaration.forbidden_on_road)
+            for side in ("left", "right"):
+                for field, _ in self._fields_for(feature_type):
+                    if field.name in forbidden:
+                        continue
+                    base, extra = self._base_type(field, feature_type)
+                    metadata = [*extra, 'Tier("optional")']
+                    alias = f"{feature_type}:{side}:{field.name}"
+                    doc = _ON_ROAD_DOC % (feature_type, side, field.name)
+                    lines.extend(
+                        [
+                            f"    {feature_type}_{side}_{field.name}: Annotated[",
+                            f"        Omitable[{base}], {', '.join(metadata)}",
+                            "    ] = Field(",
+                            f'        alias="{alias}",',
+                            f"        description={_literal(doc)},",
+                            "    )",
+                            "",
+                        ]
+                    )
+        if lines:
+            lines = [
+                "",
+                "    # The on-road modifier form: this road's parallel facilities,"
+                " carried as",
+                "    # prefixed attributes rather than as their own features. See"
+                " section 2.2.",
+                "",
+                *lines,
+            ]
+        return lines
+
     # -- module ---------------------------------------------------------------
 
     def render(self) -> str:
@@ -330,6 +390,8 @@ class ClassWriter:
             ]
             for field, rule in fields:
                 body.extend(self._render_field(field, rule, feature_type))
+            if self.name == "edge" and feature_type == ON_ROAD_CARRIER:
+                body.extend(self._render_on_road(class_name))
             body.append("")
             classes.append("\n".join(body))
 
@@ -510,6 +572,9 @@ class ClassWriter:
             lines.extend(f"    {name}," for name in sorted(self.enums))
             lines.append(")")
         return "\n".join(lines)
+
+
+_ON_ROAD_DOC = "The %s on the %s side of this road: see the %s field on that type."
 
 
 def _is_enum(field: FieldSpec) -> bool:
