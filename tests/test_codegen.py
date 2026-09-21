@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from gatis_schema.codegen import enum_names, parse_listed_values
@@ -293,3 +295,49 @@ def test_a_forbidden_on_road_attribute_is_rejected() -> None:
     assert load({"bikeway:left:not_a_field": "x"}).model_extra == {
         "bikeway:left:not_a_field": "x"
     }
+
+
+def test_the_on_road_prohibition_reaches_the_json_schema() -> None:
+    # The reason this is a ModelConstraint rather than a @model_validator. A
+    # validator enforces the rule only for callers who import this package; the
+    # constraint's JSON Schema hook carries it to anyone who reads the schema.
+    # Asserted on the emitted schema's behaviour, not on its text: a `not` clause
+    # can be present and mean nothing.
+    import json
+    import subprocess
+
+    jsonschema = pytest.importorskip("jsonschema")
+
+    emitted = json.loads(
+        subprocess.run(
+            ["overture-schema", "json-schema", "--type", "gatis_edge"],
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+    )
+    road = dict(emitted["$defs"]["RoadEdge"]["properties"]["properties"])
+    road["$defs"] = emitted.get("$defs", {})
+
+    base = {
+        "edge_id": "r1",
+        "edge_type": "road",
+        "street_name": "Delaware Ave",
+        "directionality": "both",
+    }
+
+    def accepts(properties: Mapping[str, object]) -> bool:
+        try:
+            jsonschema.validate(properties, road)
+        except jsonschema.ValidationError:
+            return False
+        return True
+
+    # The positive control first: if the bare document did not validate, every
+    # assertion below would pass for the wrong reason.
+    assert accepts(base)
+    assert accepts({**base, "bikeway:left:width_in": 72})
+    assert accepts({**base, "city_asset_tag": "A-1723"})
+
+    assert not accepts({**base, "bikeway:left:edge_id": "x"})
+    assert not accepts({**base, "sidewalk:right:street_name": "x"})

@@ -28,6 +28,10 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    # The emitted JSON Schema is asserted on by behaviour, not by text -- see
+    # tests/test_codegen.py. Without this the test skips, and a skipped control
+    # reads as a pass.
+    "jsonschema>=4",
     "pytest>=8",
     "mypy>=1.11",
     "overture-schema-codegen>=2.0.0",

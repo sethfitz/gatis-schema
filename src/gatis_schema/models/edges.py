@@ -46,7 +46,7 @@ from gatis_schema.annotations import (
 from gatis_schema.constraints import (
     all_or_none,
     drop_null_properties,
-    reject_forbidden_on_road,
+    forbidden_on_road,
 )
 from gatis_schema.models.enums import (
     AllowedUses,
@@ -147,6 +147,7 @@ class EdgeBase(Identified, Feature):
     )
 
 
+@forbidden_on_road(*ROADEDGE_FORBIDDEN)
 class RoadEdge(EdgeBase):
     """A public road primarily intended for automobile travel."""
 
@@ -555,10 +556,6 @@ class RoadEdge(EdgeBase):
 
     # The on-road modifier form: this road's parallel facilities, carried as
     # prefixed attributes rather than as their own features. See section 2.2.
-
-    _reject_forbidden_on_road = model_validator(mode="before")(
-        staticmethod(reject_forbidden_on_road(ROADEDGE_FORBIDDEN))
-    )
 
     sidewalk_left_reference_ids: Annotated[
         Omitable[list[ReferenceId]], Tier("optional")

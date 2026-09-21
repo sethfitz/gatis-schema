@@ -204,6 +204,7 @@ class ClassWriter:
         self.enum_names = enum_names if enum_names is not None else {}
         self.enums: dict[str, list[EnumValue]] = {}
         self.uses_all_or_none = False
+        self.uses_forbidden_on_road = False
 
     # -- fields ---------------------------------------------------------------
 
@@ -297,7 +298,7 @@ class ClassWriter:
         # and a docstring beside it is the same sentence truncated.
         return [f"    {field.name}: {annotation}{assignment}", ""]
 
-    def _render_on_road(self, base_name: str) -> list[str]:
+    def _render_on_road(self) -> list[str]:
         """The colon-namespaced attributes a road edge may carry for a parallel way.
 
         `sidewalk:left:width_in` and its 291 siblings: every non-forbidden field of
@@ -353,11 +354,6 @@ class ClassWriter:
                 "    # prefixed attributes rather than as their own features. See"
                 " section 2.2.",
                 "",
-                '    _reject_forbidden_on_road = model_validator(mode="before")(',
-                f"        staticmethod(reject_forbidden_on_road({base_name.upper()}"
-                "_FORBIDDEN))",
-                "    )",
-                "",
                 *lines,
             ]
         return lines
@@ -390,6 +386,11 @@ class ClassWriter:
             if set(CO_PRESENT) <= names:
                 self.uses_all_or_none = True
                 decorators.append(f'@all_or_none("{CO_PRESENT[0]}", "{CO_PRESENT[1]}")')
+            if self.name == "edge" and feature_type == ON_ROAD_CARRIER:
+                self.uses_forbidden_on_road = True
+                decorators.append(
+                    f"@forbidden_on_road(*{class_name.upper()}_FORBIDDEN)"
+                )
 
             description = next(
                 (t.description for t in self.spec.types if t.name == feature_type), ""
@@ -403,7 +404,7 @@ class ClassWriter:
             for field, rule in fields:
                 body.extend(self._render_field(field, rule, feature_type))
             if self.name == "edge" and feature_type == ON_ROAD_CARRIER:
-                on_road = self._render_on_road(class_name)
+                on_road = self._render_on_road()
                 if on_road:
                     classes.append(
                         f"{class_name.upper()}_FORBIDDEN = frozenset({{\n"
@@ -567,17 +568,15 @@ class ClassWriter:
                 "    Relationship,\n"
                 ")"
             )
+        helpers = ["drop_null_properties"]
+        if self.uses_all_or_none:
+            helpers.append("all_or_none")
+        if self.uses_forbidden_on_road:
+            helpers.append("forbidden_on_road")
         lines.append(
             "from gatis_schema.constraints import (\n"
-            "    all_or_none,\n"
-            "    drop_null_properties,\n"
-            "    reject_forbidden_on_road,\n"
-            ")"
-            if self.uses_all_or_none
-            else "from gatis_schema.constraints import (\n"
-            "    drop_null_properties,\n"
-            "    reject_forbidden_on_road,\n"
-            ")"
+            + "".join(f"    {helper},\n" for helper in sorted(helpers))
+            + ")"
         )
         lines.extend(
             [

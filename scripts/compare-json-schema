@@ -111,6 +111,63 @@ def resolve(node: Any, defs: dict[str, Any], depth: int = 0) -> Any:
     }
 
 
+def rejected_by_us(arm: dict[str, Any]) -> set[str]:
+    """Modifier aliases our schema forbids, read out of its `not` composition."""
+    found: set[str] = set()
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            for name in node.get("required", []):
+                if ":" in str(name):
+                    found.add(str(name))
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(arm.get("not"))
+    return found
+
+
+def rejected_by_them(schema: dict[str, Any], expected: set[str]) -> set[str]:
+    """Modifier aliases upstream forbids.
+
+    Upstream encodes the rule as data rather than as a clause: it enumerates the
+    permitted modifier properties and closes the set with
+    `additionalProperties: false`, so a name is forbidden by being absent.
+    """
+    bag = schema["properties"]["features"]["items"]["properties"]["properties"]
+    if bag.get("additionalProperties") is not False:
+        return set()
+    return {name for name in expected if name not in bag["properties"]}
+
+
+def _report_on_road_constraint(
+    our_schema: dict[str, Any], their_schema: dict[str, Any], arms: dict[str, Any]
+) -> None:
+    """Whether both schemas refuse the same on-road attributes.
+
+    Neither reads the other. Ours carries an explicit `not` because `extra="allow"`
+    is mandatory (section 6.1), theirs carries a closed property set. The rule is
+    the same; only the encoding differs, which is what makes agreement worth
+    checking rather than assuming.
+    """
+    road = arms.get("road")
+    if road is None:
+        return
+    ours = rejected_by_us(road)
+    theirs = rejected_by_them(their_schema, ours)
+    print(
+        f"  on-road constraint: we reject {len(ours)}, upstream rejects "
+        f"{len(theirs)} of the same names"
+    )
+    if ours - theirs:
+        print(f"     we reject, upstream permits: {sorted(ours - theirs)}")
+    if not ours:
+        print("     WARNING: our schema carries no on-road prohibition at all")
+
+
 def main() -> int:
     findings = 0
     for feature_class, plural in CLASSES.items():
@@ -152,6 +209,9 @@ def main() -> int:
                 print(f"     upstream: {theirs_enum}")
             elif ours_enum and not theirs_enum:
                 print(f"  enum only ours: {name} ({len(ours_enum)} values)")
+
+        if feature_class == "edge":
+            _report_on_road_constraint(our_schema, their_schema, arms)
 
         nullable = sum(
             1
