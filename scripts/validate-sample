@@ -33,16 +33,36 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from overture.schema.cli.commands import resolve_types
 from pydantic import TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 
-from gatis_schema.models import EdgeAdapter, NodeAdapter, PointAdapter, ZoneAdapter
-
-ADAPTERS: dict[str, TypeAdapter[Any]] = {
-    "edges": EdgeAdapter,
-    "nodes": NodeAdapter,
-    "points": PointAdapter,
-    "zones": ZoneAdapter,
+# The registered type names from pyproject's `overture.models` entry points.
+# Discovery and union construction go through the CLI's `resolve_types`, so the
+# set of types and the shape of the union cannot drift from what
+# `overture-schema validate` sees.
+#
+# Two of the CLI's helpers are deliberately NOT used, both for cost rather than
+# correctness, and both measured on the 334k-feature Austin edges file:
+#
+#   `validate_feature`  builds a `TypeAdapter` per call -- 3 ms against this
+#                       union, so 334k features costs ~17 minutes. Built once
+#                       here instead. That reimplements two lines:
+#                       `validate_json`, because the Overture `Feature`
+#                       wrap-validator only unwraps the GeoJSON envelope in
+#                       JSON mode.
+#   `load_input`        parses every input through a YAML loader, including a
+#                       `.geojson` file. 178.7s against 1.3s for `json.loads`
+#                       on a 280 MB file, a 137x cost for no gain: JSON is a
+#                       YAML 1.2 subset, so the parse is equivalent.
+#
+# Both are filed upstream. Neither affects the verdict -- results are identical
+# either way -- so if they are fixed, delete this and call the helpers.
+TYPE_NAMES = {
+    "edges": "gatis_edge",
+    "nodes": "gatis_node",
+    "points": "gatis_point",
+    "zones": "gatis_zone",
 }
 
 NULL_FOR_ABSENT = "explicit null for an absent field"
@@ -75,9 +95,14 @@ def field_path(loc: tuple[Any, ...], tag: str | None) -> str:
 
 
 def validate(path: Path, kind: str, limit: int | None = None) -> dict[str, Any]:
-    adapter = ADAPTERS[kind]
+    adapter: TypeAdapter[Any] = TypeAdapter(
+        resolve_types(type_names=(TYPE_NAMES[kind],))
+    )
     tag_field = "edge_type" if kind == "edges" else f"{kind[:-1]}_type"
-    features = json.loads(path.read_text())["features"]
+    data = json.loads(path.read_text())
+    if not isinstance(data, dict) or "features" not in data:
+        raise SystemExit(f"{path}: not a GeoJSON FeatureCollection")
+    features = data["features"]
     if limit is not None:
         features = features[:limit]
 
@@ -90,9 +115,6 @@ def validate(path: Path, kind: str, limit: int | None = None) -> dict[str, Any]:
     for feature in features:
         tag = (feature.get("properties") or {}).get(tag_field)
         try:
-            # `validate_json`, never `validate_python`: the Overture `Feature`
-            # wrap-validator only unwraps the GeoJSON envelope in JSON mode, so a
-            # parsed dict validates as a flat model and every field reads missing.
             model = adapter.validate_json(json.dumps(feature))
         except ValidationError as exc:
             seen = set()
@@ -164,7 +186,7 @@ def main() -> int:
     parser.add_argument(
         "--as",
         dest="kind",
-        choices=sorted(ADAPTERS),
+        choices=sorted(TYPE_NAMES),
         help="which feature class; inferred from the filename when omitted",
     )
     parser.add_argument("--limit", type=int, help="validate only the first N features")
@@ -173,7 +195,7 @@ def main() -> int:
 
     kind = args.kind
     if kind is None:
-        matches = [k for k in ADAPTERS if k in args.path.name.lower()]
+        matches = [k for k in TYPE_NAMES if k in args.path.name.lower()]
         if len(matches) != 1:
             parser.error(f"cannot infer feature class from {args.path.name}; pass --as")
         kind = matches[0]
