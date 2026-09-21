@@ -135,7 +135,6 @@ the two sample datasets, 348,223 features carry an entry and not one uses a key
 called `id`: Austin writes `sidewalks_id`, `CURB_RAMPS_ID` and
 `asmp_street_network_id`, Newark writes `edge_id`. All four conform.
 
-This is the sharpest demonstration that the prose and the schema have come apart.
 Modelling the sentence — requiring `id` and `source` — rejects every one of those
 348,223 features; modelling the schema accepts any object at all. There is no
 third reading, and a consumer cannot join on this field without knowing in advance
@@ -425,9 +424,9 @@ v1.0 touched them.
    ratification vote.
 2. **Specify `reference_ids`**, and `lrs_references` with it. Between them they are
    the entire interoperability story and currently two sentences.
-3. **Fix the JSON Schema generator, and give it the required fields.** Seven fields
-   carry the wrong vocabulary, and the schema is what a publisher validates
-   against. A schema that requires nothing cannot express a tier.
+3. **Fix the JSON Schema generator, and give it the required fields.** Eighteen
+   fields carry the wrong vocabulary, and the schema is what a publisher
+   validates against. A schema that requires nothing cannot express a tier.
 4. **Define `forbidden` in the prose**, and publish the colon-namespaced on-road
    fields where a publisher will see them. Both exist in the data and in neither
    document.
@@ -534,10 +533,30 @@ pair rather than a different vocabulary, on the strength of that asymmetry.
 Not confirmed against the source cell, which we cannot see.
 
 The general fix is to store enum values as tokens and render display text
-separately. Seven cells are affected today — `separation_permeable_car`,
-`separation_elements`, `markings`, `traffic_calming`, `prohibited_uses` and
-`allowed_uses` on edges, and `presence` on nodes — and the cost grows with
-every dataset published against them.
+separately. **At least ten cells are mangled**, by four mechanisms. We repair
+seven of them — `separation_permeable_car`, `separation_elements`, `markings`,
+`traffic_calming`, `prohibited_uses` and `allowed_uses` on edges, and `presence`
+on nodes. The patch list is not the measurement: three more are mangled upstream
+and need no repair here, because the generator routes around them rather than
+because the cells are sound.
+
+- `edge_type` and `node_type` are `["(Same as Edge Types)"]` — the spreadsheet
+  cross-reference of item 1, exported as a vocabulary. Inert for us: codegen
+  takes feature types from the `.types` keys, never from `edge_type.listed_values`.
+- `street_parking`'s third member is `"floating: Also known as parking protected.
+  Put this value if present regardless if parking is parallel/angled parking."`
+  — the same value-carries-its-own-definition fault as
+  `separation_permeable_car`. Inert for us: codegen splits `"value: description"`
+  generically, so it yields `floating`.
+
+Ten is a floor, not a total. A signature scan — empty members, an unsplit pipe,
+an unbalanced paren, a `"value: description"` pair, a cross-reference string —
+flags eight of the ten. It misses `allowed_uses` and `prohibited_uses`, which
+arrive with `"motor_vehicle ebike class 2 ebike class 3 other"` as a single
+member: four values run together with single spaces and nothing to key on. That
+mechanism was found by reading a repair's reasoning, not by any detector, so
+cells nobody has read may carry it too. The cost grows with every dataset
+published against them.
 
 #### 4. `additionalProperties: false` contradicts the specification's own text
 

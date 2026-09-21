@@ -16,34 +16,96 @@
 set -euo pipefail
 
 REPO=dotbts/BPA
-REF=${GATIS_SAMPLE_REF:-main}
+RAW=https://raw.githubusercontent.com
 ARCGIS=https://usdot.maps.arcgis.com/sharing/rest/content/items
+
+# The commit spec/MANIFEST.json pins, so the data and the spec it is checked
+# against come from one upstream state. Upstream force-pushes, so tracking a
+# branch would make the counts in docs/ unreproducible. Override with
+# GATIS_SAMPLE_REF -- and delete sample-data/ when you do, because a file
+# already on disk is reused whatever ref it came from.
+REF=${GATIS_SAMPLE_REF:-ecc45ff86fba1cfeb76508d1569412ae894a9adc}
 
 # ArcGIS item ids, read out of maps.json's description HTML on 2026-09-21.
 # Pinned rather than re-scraped: the ids are stable, the HTML around them is not.
 AUSTIN_EDGES=85009c8a1f62415a938f75f671172d70
 AUSTIN_NODES=9ef08fa4b51241e8b3b02549d83ea043
 
+NEWARK=draft_gatis_specification/sample_data/newark_de
+
+out=
+
+usage() {
+  cat <<'EOF'
+usage: fetch-sample-data [--skip-austin-edges]
+
+  --skip-austin-edges   leave Austin's ~280 MB edges file undownloaded
+EOF
+}
+
 main() {
-  local root out skip_big=0
-  [[ ${1:-} == --skip-austin-edges ]] && skip_big=1
+  local root arg skip_big=0
+  for arg in "$@"; do
+    case $arg in
+      --skip-austin-edges) skip_big=1 ;;
+      -h | --help) usage; return 0 ;;
+      *) echo "unknown argument: $arg" >&2; usage >&2; return 2 ;;
+    esac
+  done
+
+  command -v curl >/dev/null || { echo "curl not on PATH" >&2; return 1; }
+  command -v jq >/dev/null || { echo "jq not on PATH" >&2; return 1; }
+
   root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
   out="$root/sample-data"
   mkdir -p "$out"
 
-  fetch_github newark_edges \
-    "draft_gatis_specification/sample_data/newark_de/newarkDE_sample_edges.geojson"
-  fetch_github newark_nodes \
-    "draft_gatis_specification/sample_data/newark_de/newarkDE_sample_nodes.geojson"
-  fetch_arcgis austin_nodes "$AUSTIN_NODES"
+  fetch newark_edges "$RAW/$REPO/$REF/$NEWARK/newarkDE_sample_edges.geojson"
+  fetch newark_nodes "$RAW/$REPO/$REF/$NEWARK/newarkDE_sample_nodes.geojson"
+  fetch austin_nodes "$ARCGIS/$AUSTIN_NODES/data"
   if (( skip_big )); then
     echo "skipped austin_edges (--skip-austin-edges)"
   else
-    fetch_arcgis austin_edges "$AUSTIN_EDGES"
+    fetch austin_edges "$ARCGIS/$AUSTIN_EDGES/data"
   fi
 
+  summary
+}
+
+is_collection() {
+  jq -e 'has("features")' "$1" >/dev/null 2>&1
+}
+
+# Two ways to end up with a file that is not the dataset, and a size check sees
+# neither: GitHub and ArcGIS both answer some errors with 200 and an HTML or
+# JSON body, and an interrupted transfer leaves a truncated file that would be
+# reused as complete on the next run. So each file is parsed before it counts
+# as downloaded, and again before it is reused.
+fetch() {
+  local name=$1 url=$2 dest="$out/$1.geojson"
+  if [[ -s $dest ]] && is_collection "$dest"; then
+    echo "have    $name"
+    return
+  fi
+  [[ -e $dest ]] && echo "refetch $name (on-disk copy is not a FeatureCollection)"
+  rm -f "$dest"
+
+  echo "fetch   $name"
+  curl -fsSL -o "$dest.part" "$url"
+  if ! is_collection "$dest.part"; then
+    echo "error: $name did not download a FeatureCollection." >&2
+    echo "       first bytes: $(head -c 120 "$dest.part")" >&2
+    rm -f "$dest.part"
+    return 1
+  fi
+  mv "$dest.part" "$dest"
+}
+
+summary() {
+  local f
   echo
   for f in "$out"/*.geojson; do
+    [[ -e $f ]] || continue
     printf '%-28s %8s features  %s\n' \
       "$(basename "$f")" \
       "$(jq '.features | length' "$f")" \
@@ -53,34 +115,4 @@ main() {
   echo "validate with: ./scripts/validate-sample sample-data/<file>.geojson"
 }
 
-# A GeoJSON that is not valid JSON means the transfer failed, not that the data
-# is bad: GitHub and ArcGIS both answer errors with 200 and an HTML or JSON body.
-check_json() {
-  local path=$1 name=$2
-  if ! jq -e 'has("features")' "$path" >/dev/null 2>&1; then
-    echo "error: $name did not download a FeatureCollection." >&2
-    echo "       first bytes: $(head -c 120 "$path")" >&2
-    rm -f "$path"
-    return 1
-  fi
-}
-
-fetch_github() {
-  local name=$1 path=$2 dest="$out/$1.geojson"
-  [[ -s $dest ]] && { echo "have    $name"; return; }
-  echo "fetch   $name  (raw.githubusercontent.com, $REF)"
-  curl -fsSL -o "$dest" \
-    "https://raw.githubusercontent.com/$REPO/$REF/$path"
-  check_json "$dest" "$name"
-}
-
-fetch_arcgis() {
-  local name=$1 item=$2 dest="$out/$1.geojson"
-  [[ -s $dest ]] && { echo "have    $name"; return; }
-  echo "fetch   $name  (ArcGIS item $item)"
-  curl -fsSL -o "$dest" "$ARCGIS/$item/data"
-  check_json "$dest" "$name"
-}
-
-out=""
 main "$@"

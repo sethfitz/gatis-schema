@@ -167,10 +167,14 @@ def test_the_snapshot_reads_clean_once_repairs_are_applied(
 
 
 def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
-    # Control, in both directions. Without repairs the six cells load verbatim and
-    # are visibly broken -- empty strings and fragments; with them they are clean.
-    # A repair whose values already matched upstream would pass the assertion above
-    # while changing nothing, so assert the difference, not just the application.
+    # Control, in both directions. Without repairs the seven cells load verbatim
+    # and are visibly broken -- empty strings and fragments; with them they are
+    # clean. A repair whose values already matched upstream would pass the
+    # assertion above while changing nothing, so assert the difference, not just
+    # the application -- and assert it for EVERY repair, driven off repairs.json
+    # rather than a hand-kept list, so a new entry cannot land uncovered. Three
+    # of the seven were spot-checked here once; the other four were applied and
+    # never proven to do anything.
     spec = SpecReader().spec_dir
     shutil.copytree(spec, tmp_path / "spec")
     (tmp_path / "spec" / "repairs.json").unlink()
@@ -188,13 +192,23 @@ def test_repairs_are_what_the_upstream_values_are_not(tmp_path: Path) -> None:
     }
     assert "no | missing" in node_verbatim["presence"]
 
-    repaired = {
-        f.name: f.listed_values
-        for f in SpecReader().load().feature_classes["edge"].fields
-    }
-    for field in ("separation_permeable_car", "separation_elements", "markings"):
-        assert repaired[field] != verbatim[field], field
-        assert all(value.strip() for value in repaired[field]), field
+    entries = json.loads((spec / "repairs.json").read_text())["listed_values"]
+    assert entries, "no repairs to control for"
+    repaired_snapshot = SpecReader().load()
+    for entry in entries:
+        feature_class, field = entry["feature_class"], entry["field"]
+        before = next(
+            f.listed_values
+            for f in raw.feature_classes[feature_class].fields
+            if f.name == field
+        )
+        after = next(
+            f.listed_values
+            for f in repaired_snapshot.feature_classes[feature_class].fields
+            if f.name == field
+        )
+        assert after != before, f"{feature_class}.{field} repair changes nothing"
+        assert all(value.strip() for value in after), f"{feature_class}.{field}"
 
 
 def test_the_two_presence_vocabularies_agree_once_repaired(

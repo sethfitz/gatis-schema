@@ -52,7 +52,7 @@ Two more faults matter if you ever repair it enough to run:
   off the first branch matches *any* string: `"banana"` validates, while
   `"2007-01"` and `"2007"` are **rejected** for matching two branches when
   `oneOf` demands one. Assert it and all four behave correctly. Upstream's own
-  `validator/draft_gatis_validator.ipynb` passes
+  `draft_gatis_specification/validator/draft_gatis_validator.ipynb` passes
   `format_checker=Draft202012Validator.FORMAT_CHECKER`, so this is correct as
   upstream uses it and a trap for everyone else. Pass a format checker.
 
@@ -63,9 +63,14 @@ branches remain the only machine-readable statement upstream makes about
 whether an absent field may be written as `null`.
 
 `specification_jsons` is the artifact to trust, not an artifact that is correct.
-Its `listed_values` are mangled for at least eight fields, by two separate
-mechanisms -- a newline split against hard-wrapped workbook cells, and a pipe
-that was never treated as a separator at all. See
+Its `listed_values` are mangled for at least ten cells, of which we repair
+seven, by four mechanisms -- a newline split against hard-wrapped workbook
+cells, a pipe never treated as a separator, a value carrying its own definition
+after a colon, and values run together with single spaces and no separator at
+all. Ten is a floor from a detector with a known blind spot, and "mangled
+upstream" is a larger set than "needs a repair entry": `edge_type`, `node_type`
+and `street_parking` are mangled and unrepaired because codegen routes around
+them. Never quote the repair count as the defect count. See
 [`validating-gatis-data.md`](validating-gatis-data.md) for the cases, and
 `spec/repairs.json` for the local corrections. Check the file for the feature
 class you care about: 1.0 gives one field name different vocabularies across

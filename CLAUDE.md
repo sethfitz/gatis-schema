@@ -48,9 +48,37 @@ file. [`docs/sample-data-validation.md`](docs/sample-data-validation.md) is what
 it found on the two published sample datasets, with data defects separated from
 spec gaps.
 
-**Quote per-field counts from that report, never a defect-class subtotal.** A
-class holds several unrelated causes, so its total is not a count of whatever
-you would name it after. Count anything narrower from the data.
+**Count a figure from source before it goes in a document; never restate one.**
+Two ways this goes wrong. A defect-class subtotal in that report is not a count
+of whatever you would name the class after -- it holds unrelated causes, so
+quote the per-field lines and count anything narrower from the data. And a
+number copied from another document, or from your own earlier sentence in the
+same session, has been written down twice and measured once. Re-derive it from
+`spec/`, the JSON Schemas, or the sample GeoJSON, whichever produces it, and
+put the command that produces it beside it. This binds hardest on text headed
+upstream.
+
+<!--
+Landed 2026-09-21, after a review of 806eef6 found the second half of this rule
+was missing and three figures in upstream-facing prose were wrong.
+
+- `docs/sample-data-validation.md` claimed only road and multi-use-path edges
+  carry endpoints. `docs/spec-review.md` inherited it as "all 33 bikeway,
+  crossing and traffic_island edges ... the file conforms". Measured: 46 edges
+  have null `from_node`/`to_node` (bikeway 21, crossing 9, traffic_island 3,
+  road 10, multi_use_path 3), and both fields are `required` from Tier 2 for
+  road/bikeway/multi_use_path/trail/ramp. Newark is Tier 3, so 34 are presence
+  violations -- the draft asserted the opposite to upstream.
+- The `Array<Enum>` loop-variable bug: written as six fields, restated as
+  seven, actually eighteen across three files (16 in `edges_schema.json`,
+  including all twelve on-road modifier forms).
+- "All on one separated bike lane on Delaware Avenue": 9 of the 23 are
+  crossing edges.
+
+Every one read as sourced. The pre-existing rule was keyed to the validator
+report, so it did not fire on counts derived from the schemas or the data and
+then copied document-to-document.
+-->
 
 ## Express a rule as a declaration, not as a validator
 
