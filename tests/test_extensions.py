@@ -616,3 +616,41 @@ def test_model_vocabularies_match_the_transcription(
         assert actual == published, f"{table}.{field['name']}"
         checked += 1
     assert checked, f"{table}: no vocabulary checked, so agreement is vacuous"
+
+
+@pytest.mark.parametrize(
+    ("table", "column", "vocabulary"),
+    [("lrs", "Type", LrsFeatureType), ("events", "type", EventFeatureType)],
+)
+def test_exactly_the_unrecognised_members_carry_a_note(
+    table: str,
+    column: str,
+    vocabulary: type[Enum],
+    transcription: dict[str, Any],
+) -> None:
+    """A member's note is derived, so the set carrying one is derivable too.
+
+    `DocumentedEnum` lets a member carry its own docstring, and the markdown
+    template renders it beside the value. What each note says is a judgement;
+    *which* members get one is not -- it is exactly the values the extension
+    table offers that v1.0 does not declare as a feature type. Asserting the
+    two sets are equal keeps a note from being forgotten on a new bad value, or
+    left behind on one upstream has fixed.
+    """
+    declared: set[str] = set()
+    for path in sorted((SPEC_DIR / "specification").glob("*.json")):
+        payload = json.loads(path.read_text())
+        declared |= set(payload.get("types") or {})
+
+    published = next(
+        field["listed_values"]
+        for field in transcription[table]["fields"]
+        if field["name"] == column
+    )
+    unrecognised = {value for value in published if value not in declared}
+    documented = {member.value for member in vocabulary if member.__doc__}
+
+    assert documented == unrecognised
+    # Both halves non-empty, so equality is not two empty sets agreeing.
+    assert unrecognised
+    assert declared

@@ -13,15 +13,15 @@ and `open` -- keeps `virtual_link`, and drops `generic`, `open` and
 - `footway`
 - `crossing`
 - `ramp`
-- `traffic island`
+- `traffic island` - Not a v1.0 feature type: v1.0 spells it `traffic_island`. This list spells `traffic_calming` with an underscore.
 - `steps`
 - `elevator`
 - `escalator`
 - `bikeway`
 - `multi_use_path`
 - `trail`
-- `virtual_link`
-- `virtual_node`
+- `virtual_link` - Not a v1.0 feature type: removed from the edge types, though its presence column survives on all 78 edge attributes.
+- `virtual_node` - Not a v1.0 feature type: the draft-2 name for what v1.0 calls `generic`, which this list does not offer.
 - `curb_ramp`
 - `object`
 - `sign`
@@ -29,7 +29,7 @@ and `open` -- keeps `virtual_link`, and drops `generic`, `open` and
 - `issue`
 - `counter`
 - `bike_parking`
-- `open_movement`
+- `open_movement` - Not a v1.0 feature type: the draft-2 name for what v1.0 calls the `open` zone, which this list does not offer.
 
 ## Used By
 

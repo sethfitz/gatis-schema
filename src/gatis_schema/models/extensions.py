@@ -103,22 +103,32 @@ class LrsFeatureType(str, DocumentedEnum):
     name a road.
 
     Kept verbatim anyway. Correcting it here would fork the spec and hide the
-    defect; `docs/spec-review.md` reports it and
-    `test_extension_type_vocabularies_still_predate_v1_0` pins it.
+    defect; `docs/spec-review.md` reports it, each bad value carries its own
+    note through `DocumentedEnum` so a reader meets it at the value rather than
+    here, and `test_exactly_the_unrecognised_members_carry_a_note` derives which
+    members those are rather than trusting this list.
     """
 
     SIDEWALK = "sidewalk"
     FOOTWAY = "footway"
     CROSSING = "crossing"
     RAMP = "ramp"
-    TRAFFIC_ISLAND = "traffic island"
+    TRAFFIC_ISLAND = (
+        "traffic island",
+        "Not a v1.0 feature type: v1.0 spells it `traffic_island`. This list "
+        "spells `traffic_calming` with an underscore.",
+    )
     STEPS = "steps"
     ELEVATOR = "elevator"
     ESCALATOR = "escalator"
     BIKEWAY = "bikeway"
     MULTI_USE_PATH = "multi_use_path"
     TRAIL = "trail"
-    VIRTUAL_LINK = "virtual_link"
+    VIRTUAL_LINK = (
+        "virtual_link",
+        "Not a v1.0 feature type: removed from the edge types, though its "
+        "presence column survives on all 78 edge attributes.",
+    )
     GENERIC = "generic"
     CURB_RAMP = "curb_ramp"
     OBJECT = "object"
@@ -144,15 +154,27 @@ class EventFeatureType(str, DocumentedEnum):
     FOOTWAY = "footway"
     CROSSING = "crossing"
     RAMP = "ramp"
-    TRAFFIC_ISLAND = "traffic island"
+    TRAFFIC_ISLAND = (
+        "traffic island",
+        "Not a v1.0 feature type: v1.0 spells it `traffic_island`. This list "
+        "spells `traffic_calming` with an underscore.",
+    )
     STEPS = "steps"
     ELEVATOR = "elevator"
     ESCALATOR = "escalator"
     BIKEWAY = "bikeway"
     MULTI_USE_PATH = "multi_use_path"
     TRAIL = "trail"
-    VIRTUAL_LINK = "virtual_link"
-    VIRTUAL_NODE = "virtual_node"
+    VIRTUAL_LINK = (
+        "virtual_link",
+        "Not a v1.0 feature type: removed from the edge types, though its "
+        "presence column survives on all 78 edge attributes.",
+    )
+    VIRTUAL_NODE = (
+        "virtual_node",
+        "Not a v1.0 feature type: the draft-2 name for what v1.0 calls "
+        "`generic`, which this list does not offer.",
+    )
     CURB_RAMP = "curb_ramp"
     OBJECT = "object"
     SIGN = "sign"
@@ -160,7 +182,11 @@ class EventFeatureType(str, DocumentedEnum):
     ISSUE = "issue"
     COUNTER = "counter"
     BIKE_PARKING = "bike_parking"
-    OPEN_MOVEMENT = "open_movement"
+    OPEN_MOVEMENT = (
+        "open_movement",
+        "Not a v1.0 feature type: the draft-2 name for what v1.0 calls the "
+        "`open` zone, which this list does not offer.",
+    )
 
 
 class LrsSide(str, DocumentedEnum):

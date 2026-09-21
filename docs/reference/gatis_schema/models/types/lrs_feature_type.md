@@ -19,14 +19,14 @@ defect; `docs/spec-review.md` reports it and
 - `footway`
 - `crossing`
 - `ramp`
-- `traffic island`
+- `traffic island` - Not a v1.0 feature type: v1.0 spells it `traffic_island`. This list spells `traffic_calming` with an underscore.
 - `steps`
 - `elevator`
 - `escalator`
 - `bikeway`
 - `multi_use_path`
 - `trail`
-- `virtual_link`
+- `virtual_link` - Not a v1.0 feature type: removed from the edge types, though its presence column survives on all 78 edge attributes.
 - `generic`
 - `curb_ramp`
 - `object`
