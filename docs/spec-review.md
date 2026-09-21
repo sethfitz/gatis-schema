@@ -267,7 +267,10 @@ same place from the other direction, with scoped properties and `between:
 What GATIS has done is make geometry the identity of the attribute set. Once a
 feature can carry only one set of values, the only way to express variation is
 to make more features. Both alternatives keep one feature and move the
-variation into its properties.
+variation into its properties — and, as the CDS entry below sets out, both cost
+something in return. GATIS does not appear to have chosen between them: the
+segmentation rule is stated as a consequence of how edges work, with no
+alternative considered.
 
 **Everything offset from a centerline is flattened onto it.** `buffer_width`,
 `street_parking`, `street_parking_buffer`, `separation_elements`,
@@ -306,16 +309,33 @@ Optional. So a CDS publisher maintains an independent polygon per curb zone,
 and the linear reference — where present — annotates it rather than defining
 it.
 
-The inversion costs CDS the two things worth having here. Its first rule for a
-curb zone is GATIS's segmentation mandate in different words: a zone must
-"always have a common regulation along their entire extent", so half loading
-and half metered means two zones and two polygons. And identity rides on
-geometry — "a new `curb_zone_id` is required if this geometry changes", which
-its own criteria then soften to "SHOULD remain consistent as long as the Curb
-Zone's geography remains substantially the same". There is also a `length`
-field, in centimetres, "projected along the street centerline" and explicitly
-"not the edge length of the geographic polygon": a field added to recover what
-a linear reference answers for free.
+The inversion costs CDS both properties. Its first rule for a curb zone is
+GATIS's segmentation mandate in different words: a zone must "always have a
+common regulation along their entire extent", so half loading and half metered
+means two zones and two polygons. And identity rides on geometry — "a new
+`curb_zone_id` is required if this geometry changes", which its own criteria
+then soften to "SHOULD remain consistent as long as the Curb Zone's geography
+remains substantially the same". There is also a `length` field, in
+centimetres, "projected along the street centerline" and explicitly "not the
+edge length of the geographic polygon": a field added to recover what a linear
+reference answers for free.
+
+CDS documents no reason for the change, so what follows is inference. The
+likeliest one is that geometry-as-identity works in the tools its users already
+have, and a linear reference does not. A polygon opens in ArcGIS or QGIS,
+renders, edits and exports; `shstRefId` plus two offsets resolves to a place on
+a map only against a basemap, through software written for the purpose.
+CurbLR's own documentation describes that software as a prerequisite rather
+than a convenience: collect points, tag each as the beginning, middle or end of
+a regulation, run the SharedStreets CLI to snap and segment them, then run
+conversion scripts to emit the feed. Its strongest tell is that a CurbLR
+feature ships a GeoJSON geometry anyway, which the reference makes redundant
+for identity and which exists so the data can be seen.
+
+The dependency has since gone quiet. `sharedstreets-js` was last pushed in
+January 2023, the reference system in February 2023, and the builder in
+December 2020. A spec whose identifiers resolve only through a dormant
+toolchain is a different proposition from one whose features are polygons.
 
 Two CDS ideas are still worth taking. `location_references` is an *array*, each
 entry carrying a `source` URL naming its referencing system — SharedStreets,
@@ -373,12 +393,17 @@ Ordered by what it unblocks, not by effort.
    section 2.3. Tier 1 publishers have nothing to implement.
 4. **Regenerate the document from the workbook, and stop hand-pasting.** The
    published artifact currently describes a schema that does not exist.
-5. **Give an edge a way to reference another edge, with an extent.** A
-   reference plus start and end offsets plus a side would retire
-   `road_associated`, carry the buffers and parking that are currently scalars
-   with no extent, and remove most of the reason to split an edge at all.
-   CurbLR is the worked example, in GeoJSON; take CDS's array of references,
-   each naming its own system, rather than CurbLR's single one.
+5. **Give an edge an optional reference to another edge, with an extent.**
+   Alongside the geometry, not instead of it: guiding principle 3 promises that
+   "a text editor and common web-based tools that can produce a GeoJSON" are
+   enough at Tier 1, and a reference that only resolves through a linear
+   referencing toolchain would break that promise for exactly the city GIS
+   staff section 1.4 names as the audience. Optional, it costs those publishers
+   nothing and lets the rest retire `road_associated`, give buffers and parking
+   an extent, and stop splitting an edge every time a measurement improves.
+   CDS is the model to copy rather than CurbLR: geometry stays authoritative,
+   and `location_references` is an array whose entries each name their own
+   referencing system.
 6. **Tokenise enum values** before the first dataset ships.
 7. **Give the eighteen dimensioned fields a structural unit.**
 8. **Separate the tier model from the field tables.** Presence becomes
