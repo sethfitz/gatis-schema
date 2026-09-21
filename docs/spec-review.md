@@ -181,6 +181,20 @@ between `optional` and `required`, and a validator can do nothing with it that i
 cannot do with `optional`. It is documentation wearing a schema's clothes, and it
 roughly doubles the size of the presence matrix.
 
+**Referential integrity is nobody's job, and the spec should say so.**
+`from_node` and `to_node` reference `nodes.node_id` across files, and the files
+are validated separately -- nothing holds both an edge and its endpoints at
+validation time. A dangling `from_node` is therefore a conforming dataset. This
+is not a criticism of the split: Overture has the identical shape, with
+`Segment.connectors[].connector_id` referencing a `Connector` that ships in its
+own partition, and it declares the relationship in the schema while checking
+nothing. The declaration is for downstream tooling; enforcement is a
+dataset-level step. What GATIS is missing is the *declaration* -- there is no
+machine-readable statement that `from_node` points at `nodes.node_id` at all,
+only the sentence "Value needs to be from the nodes table in the node ID field."
+This package declares it with an Overture `Reference` and implements the
+integrity check at the dataset level.
+
 **Relation tables are named and not defined.** *"At this time, the specification
 does not explicitly define how to create or utilize relation tables. We expect to
 address this more fully in the second draft."* They are the stated mechanism for
