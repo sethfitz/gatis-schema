@@ -115,3 +115,15 @@ uv run mypy .
 ./scripts/bootstrap-models        # reseed the models from spec/
 ./scripts/compare-json-schema     # ours vs upstream's JSON Schema
 ```
+
+## Licence
+
+MIT, in [`LICENSE`](LICENSE).
+
+That covers this repository's own work -- the models, the generator, the scripts
+and the documentation. It does not cover what `spec/` vendors. Those files are a
+pinned snapshot of [`dotbts/BPA`](https://github.com/dotbts/BPA), whose
+`LICENSE.md` dedicates them to the public domain under CC0 1.0 as a work of the
+United States Government under 17 USC 105. `spec/playbook.md` states the same
+dedication in its own text. The commit each is pinned to is in
+`spec/MANIFEST.json` and `spec/PLAYBOOK-MANIFEST.json`.

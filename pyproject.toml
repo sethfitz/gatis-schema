@@ -3,6 +3,8 @@ name = "gatis-schema"
 dynamic = ["version"]
 description = "Pydantic models for the General Active Transportation Infrastructure Specification (GATIS), generated from the upstream spec workbook"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Seth Fitzsimmons", email = "seth@mojodna.net" }
 ]
