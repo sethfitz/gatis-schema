@@ -48,51 +48,6 @@ file. [`docs/sample-data-validation.md`](docs/sample-data-validation.md) is what
 it found on the two published sample datasets, with data defects separated from
 spec gaps.
 
-**A figure needs a job before it needs to be right**, and most do not have one.
-Name the thing instead of counting it -- "on every attribute" beats "on all 78
-attributes", "these disagree" beats "ten disagree: nine in vocabulary, seven in
-declared type, six in both". A count earns its place when the argument turns on
-magnitude; a run of them in one sentence means none of them does.
-
-**When one does earn it, count it from source; never restate one.** Two ways that
-goes wrong. A defect-class subtotal in that report is not a count of whatever you
-would name the class after -- it holds unrelated causes, so quote the per-field
-lines and count anything narrower from the data. And a
-number copied from another document, or from your own earlier sentence in the
-same session, has been written down twice and measured once. Re-derive it from
-`spec/`, the JSON Schemas, or the sample GeoJSON, whichever produces it, and
-put the command that produces it beside it. This binds hardest on text headed
-upstream.
-
-<!--
-Landed 2026-09-21, after a review of 806eef6 found the second half of this rule
-was missing and three figures in upstream-facing prose were wrong.
-
-The "needs a job" gate was added the same day, when the accuracy half turned out
-to have a cost of its own: it makes counting read as diligence, so figures
-accumulate until the prose is unreadable. Seth on the README: "The numbers in
-this section are overwhelming... not everything needs a number attached. (If this
-is coming from guidance, let's also relax it there so we don't keep getting
-overwhelmed.)" Both READMEs were thinned in the same pass.
-
-- `docs/sample-data-validation.md` claimed only road and multi-use-path edges
-  carry endpoints. `docs/spec-review.md` inherited it as "all 33 bikeway,
-  crossing and traffic_island edges ... the file conforms". Measured: 46 edges
-  have null `from_node`/`to_node` (bikeway 21, crossing 9, traffic_island 3,
-  road 10, multi_use_path 3), and both fields are `required` from Tier 2 for
-  road/bikeway/multi_use_path/trail/ramp. Newark is Tier 3, so 34 are presence
-  violations -- the draft asserted the opposite to upstream.
-- The `Array<Enum>` loop-variable bug: written as six fields, restated as
-  seven, actually eighteen across three files (16 in `edges_schema.json`,
-  including all twelve on-road modifier forms).
-- "All on one separated bike lane on Delaware Avenue": 9 of the 23 are
-  crossing edges.
-
-Every one read as sourced. The pre-existing rule was keyed to the validator
-report, so it did not fire on counts derived from the schemas or the data and
-then copied document-to-document.
--->
-
 ## The Playbook is a second source, and descriptions are not ours to write
 
 `spec/playbook.md` is the specification's companion prose, linked from
